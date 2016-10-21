@@ -186,7 +186,11 @@ public class MediaCarMenuCallbacks extends CarMenuCallbacks {
         if (mMenuResult != null) {
             if (mUpdateMenuRunnable != null) {
                 mHandler.removeCallbacks(mUpdateMenuRunnable);
-                mUpdateMenuRunnable = null;
+                // Spot fix. This runnable is being used in the subscription callbacks and is
+                // causing a crash. The lifecycle here is a little messed up and needs to be
+                // straightened out but for now just set it to a new object instead of setting
+                // it to null.
+                mUpdateMenuRunnable = new UpdateMenuRunnable();
             }
             if (mLoadMenuBitmapRunnable != null) {
                 mHandler.removeCallbacks(mLoadMenuBitmapRunnable);
