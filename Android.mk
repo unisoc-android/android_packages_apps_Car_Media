@@ -22,6 +22,8 @@ LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 
 LOCAL_PACKAGE_NAME := CarMediaApp
 
+LOCAL_CERTIFICATE := platform
+
 LOCAL_DEX_PREOPT := false
 
 LOCAL_MODULE_TAGS := optional
