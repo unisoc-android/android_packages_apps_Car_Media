@@ -16,21 +16,23 @@
 package com.android.car.media;
 
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.car.Car;
-import android.support.car.app.menu.CarDrawerActivity;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.View;
 
+import com.android.car.app.CarDrawerActivity;
+import com.android.car.app.CarDrawerAdapter;
+import com.android.car.media.drawer.MediaDrawerController;
+
 /**
  * This activity controls the UI of media. It also updates the connection status for the media app
- * by broadcast. Drawer menu is controlled by {@link MediaCarMenuCallbacks}.
+ * by broadcast. Drawer menu is controlled by {@link MediaDrawerController}.
  */
 public class MediaActivity extends CarDrawerActivity {
     private static final String ACTION_MEDIA_APP_STATE_CHANGE
@@ -59,21 +61,17 @@ public class MediaActivity extends CarDrawerActivity {
      */
     private boolean mContentFragmentChangeQueued;
 
+    private MediaDrawerController mDrawerController;
     private View mScrimView;
     private CrossfadeImageView mAlbumArtView;
     private MediaPlaybackFragment mMediaPlaybackFragment;
-    private MediaCarMenuCallbacks mMediaCarMenuCallbacks;
-
-    public MediaActivity(Proxy proxy, Context context, Car car) {
-        super(proxy, context, car);
-    }
 
     @Override
     protected void onStart() {
         super.onStart();
         Intent i = new Intent(ACTION_MEDIA_APP_STATE_CHANGE);
         i.putExtra(EXTRA_MEDIA_APP_FOREGROUND, true);
-        getContext().sendBroadcast(i);
+        sendBroadcast(i);
 
         mIsStarted = true;
 
@@ -91,22 +89,21 @@ public class MediaActivity extends CarDrawerActivity {
         super.onStop();
         Intent i = new Intent(ACTION_MEDIA_APP_STATE_CHANGE);
         i.putExtra(EXTRA_MEDIA_APP_FOREGROUND, false);
-        getContext().sendBroadcast(i);
+        sendBroadcast(i);
 
         mIsStarted = false;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mDrawerController = new MediaDrawerController(this);
         super.onCreate(savedInstanceState);
-        setLightMode();
-        mMediaCarMenuCallbacks = new MediaCarMenuCallbacks(this);
-        setCarMenuCallbacks(mMediaCarMenuCallbacks);
-        setContentView(R.layout.media_activity);
+
+        setMainContent(R.layout.media_activity);
         mScrimView = findViewById(R.id.scrim);
         mAlbumArtView = (CrossfadeImageView) findViewById(R.id.album_art);
-        setBackgroundColor(getContext().getColor(R.color.music_default_artwork));
-        MediaManager.getInstance(getContext()).addListener(mListener);
+        setBackgroundColor(getColor(R.color.music_default_artwork));
+        MediaManager.getInstance(this).addListener(mListener);
     }
 
     @Override
@@ -114,10 +111,15 @@ public class MediaActivity extends CarDrawerActivity {
         super.onDestroy();
         // Send the broadcast to let the current connected media app know it is disconnected now.
         sendMediaConnectionStatusBroadcast(
-                MediaManager.getInstance(getContext()).getCurrentComponent(),
+                MediaManager.getInstance(this).getCurrentComponent(),
                 MediaConstants.MEDIA_DISCONNECTED);
-        mMediaCarMenuCallbacks.cleanup();
-        MediaManager.getInstance(getContext()).removeListener(mListener);
+        mDrawerController.cleanup();
+        MediaManager.getInstance(this).removeListener(mListener);
+    }
+
+    @Override
+    protected CarDrawerAdapter getRootAdapter() {
+        return mDrawerController.getRootAdapter();
     }
 
     @Override
@@ -149,9 +151,7 @@ public class MediaActivity extends CarDrawerActivity {
         }
 
         setIntent(intent);
-        if (isDrawerShowing()) {
-            closeDrawer();
-        }
+        closeDrawer();
     }
 
     @Override
@@ -230,19 +230,19 @@ public class MediaActivity extends CarDrawerActivity {
                     intent.getStringExtra(MediaManager.KEY_MEDIA_PACKAGE),
                     intent.getStringExtra(MediaManager.KEY_MEDIA_CLASS)
             );
-            MediaManager.getInstance(getContext()).setMediaClientComponent(component);
+            MediaManager.getInstance(this).setMediaClientComponent(component);
         } else {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "Launching most recent / default component.");
             }
 
             // Set it to the default GPM component.
-            MediaManager.getInstance(getContext()).connectToMostRecentMediaComponent(
-                    new CarClientServiceAdapter(getContext().getPackageManager()));
+            MediaManager.getInstance(this).connectToMostRecentMediaComponent(
+                    new CarClientServiceAdapter(getPackageManager()));
         }
 
         if (isSearchIntent(intent)) {
-            MediaManager.getInstance(getContext()).processSearchIntent(intent);
+            MediaManager.getInstance(this).processSearchIntent(intent);
             setIntent(null);
         }
     }
@@ -253,7 +253,7 @@ public class MediaActivity extends CarDrawerActivity {
     }
 
     private void sendMediaConnectionStatusBroadcast(
-            ComponentName componentName, @Car.ConnectionType String connectionStatus) {
+            ComponentName componentName, String connectionStatus) {
         // It will be no current component if no media app is chosen before.
         if (componentName == null) {
             return;
@@ -262,10 +262,10 @@ public class MediaActivity extends CarDrawerActivity {
         Intent intent = new Intent(MediaConstants.ACTION_MEDIA_STATUS);
         intent.setPackage(componentName.getPackageName());
         intent.putExtra(MediaConstants.MEDIA_CONNECTION_STATUS, connectionStatus);
-        getContext().sendBroadcast(intent);
+        sendBroadcast(intent);
     }
 
-    public void attachContentFragment() {
+    void attachContentFragment() {
         if (mMediaPlaybackFragment == null) {
             mMediaPlaybackFragment = new MediaPlaybackFragment();
         }
@@ -298,4 +298,15 @@ public class MediaActivity extends CarDrawerActivity {
         @Override
         public void onStatusMessageChanged(String msg) {}
     };
+
+    private void setContentFragment(Fragment fragment) {
+        getSupportFragmentManager().beginTransaction()
+                .replace(getContentContainerId(), fragment)
+                .commit();
+    }
+
+
+    void showQueueInDrawer() {
+        mDrawerController.showQueueInDrawer();
+    }
 }

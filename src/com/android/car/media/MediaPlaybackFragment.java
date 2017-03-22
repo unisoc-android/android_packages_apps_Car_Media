@@ -144,11 +144,10 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
         mActivity = (MediaActivity) getHost();
         mShowTitleDelayMs =
                 mActivity.getResources().getInteger(R.integer.new_album_art_fade_in_offset);
-        mMediaPlaybackModel =
-                new MediaPlaybackModel(mActivity.getContext(), null /* browserExtras */);
+        mMediaPlaybackModel = new MediaPlaybackModel(mActivity, null /* browserExtras */);
         mMediaPlaybackModel.addListener(this);
-        mTelephonyManager = (TelephonyManager) mActivity.getContext()
-                .getSystemService(Context.TELEPHONY_SERVICE);
+        mTelephonyManager =
+                (TelephonyManager) mActivity.getSystemService(Context.TELEPHONY_SERVICE);
     }
 
     @Override
@@ -156,7 +155,6 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
         super.onDestroy();
         mCurrentView = null;
         mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-        mMediaPlaybackModel.onDestroy();
         mMediaPlaybackModel = null;
         mActivity = null;
         // Calling this with null will clear queue of callbacks and message.
@@ -237,7 +235,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
     @Override
     public void onPause() {
         super.onPause();
-        mMediaPlaybackModel.onPause();
+        mMediaPlaybackModel.stop();
         mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
     }
 
@@ -252,7 +250,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
     @Override
     public void onResume() {
         super.onResume();
-        mMediaPlaybackModel.onResume();
+        mMediaPlaybackModel.start();
         // Note: at registration, TelephonyManager will invoke the callback with the current state.
         mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
     }
@@ -271,8 +269,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
         int overflowViewColor = mMediaPlaybackModel.getPrimaryColorDark();
         mOverflowView.getBackground().setColorFilter(overflowViewColor, PorterDuff.Mode.SRC_IN);
         // Tint the overflow actions light or dark depending on contrast.
-        int overflowTintColor = ColorChecker.getTintColor(
-                mActivity.getContext(), overflowViewColor);
+        int overflowTintColor = ColorChecker.getTintColor(mActivity, overflowViewColor);
         for (ImageView v : mCustomActionButtons) {
             v.setColorFilter(overflowTintColor, PorterDuff.Mode.SRC_IN);
         }
@@ -335,7 +332,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
             }
             showInitialNoContentView(state.getErrorMessage() != null ?
                     state.getErrorMessage().toString() :
-                    mActivity.getContext().getString(R.string.unknown_error), true);
+                    mActivity.getString(R.string.unknown_error), true);
             return;
         }
 
@@ -400,7 +397,6 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
                     icon == null || mReturnFromOnStop ? 0 : mShowTitleDelayMs);
         }
         Uri iconUri = getMetadataIconUri(metadata);
-        Context context = mActivity.getContext();
         if (icon != null) {
             Bitmap scaledIcon = cropAlbumArt(icon);
             if (scaledIcon != icon && !icon.isRecycled()) {
@@ -412,7 +408,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
             mActivity.setBackgroundBitmap(scaledIcon, !mReturnFromOnStop /* showAnimation */);
         } else if (iconUri != null) {
             if (mDownloader == null) {
-                mDownloader = new BitmapDownloader(context);
+                mDownloader = new BitmapDownloader(mActivity);
             }
             final int flags = BitmapWorkerOptions.CACHE_FLAG_DISK_DISABLED
                     | BitmapWorkerOptions.CACHE_FLAG_MEM_DISABLED;
@@ -420,7 +416,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
                 Log.v(TAG, "Album art size " + mAlbumArtWidth + "x" + mAlbumArtHeight);
             }
 
-            mDownloader.getBitmap(new BitmapWorkerOptions.Builder(context).resource(iconUri)
+            mDownloader.getBitmap(new BitmapWorkerOptions.Builder(mActivity).resource(iconUri)
                             .height(mAlbumArtHeight).width(mAlbumArtWidth).cacheFlag(flags).build(),
                     new BitmapDownloader.BitmapCallback() {
                         @Override
@@ -505,7 +501,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
                         }
                     });
 
-            int tint = ColorChecker.getTintColor(mActivity.getContext(),
+            int tint = ColorChecker.getTintColor(mActivity,
                     mMediaPlaybackModel.getPrimaryColorDark());
             mSeekBar.getProgressDrawable().setColorFilter(tint, PorterDuff.Mode.SRC_IN);
         } else {
@@ -870,9 +866,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
             } else {
                 switch (v.getId()) {
                     case R.id.play_queue:
-                        CharSequence title = mMediaPlaybackModel.getQueueTitle();
-                        mActivity.showMenu(MediaCarMenuCallbacks.QUEUE_ROOT, title.toString());
-                        mActivity.openDrawer();
+                        mActivity.showQueueInDrawer();
                         break;
                     case R.id.prev:
                         transportControls.skipToPrevious();

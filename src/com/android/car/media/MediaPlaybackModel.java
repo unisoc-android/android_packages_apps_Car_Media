@@ -46,7 +46,7 @@ import java.util.function.Consumer;
  * main thread. Intended to provide a much more usable model interface to UI code.
  */
 public class MediaPlaybackModel {
-    private static final String TAG = "GH.MediaPlaybackModel";
+    private static final String TAG = "MediaPlaybackModel";
 
     private final Context mContext;
     private final Bundle mBrowserExtras;
@@ -55,6 +55,7 @@ public class MediaPlaybackModel {
     private Handler mHandler;
     private MediaController mController;
     private MediaBrowser mBrowser;
+    private int mPrimaryColor;
     private int mPrimaryColorDark;
     private int mAccentColor;
     private ComponentName mCurrentComponentName;
@@ -94,6 +95,29 @@ public class MediaPlaybackModel {
         void onSessionDestroyed(CharSequence destroyedMediaClientName);
     }
 
+    /** Convenient Listener base class for extension */
+    public static abstract class AbstractListener implements Listener {
+        @Override
+        public void onMediaAppChanged(@Nullable ComponentName currentName,
+                @Nullable ComponentName newName) {}
+        @Override
+        public void onMediaAppStatusMessageChanged(@Nullable String message) {}
+        @Override
+        public void onMediaConnected() {}
+        @Override
+        public void onMediaConnectionSuspended() {}
+        @Override
+        public void onMediaConnectionFailed(CharSequence failedMediaClientName) {}
+        @Override
+        public void onPlaybackStateChanged(@Nullable PlaybackState state) {}
+        @Override
+        public void onMetadataChanged(@Nullable MediaMetadata metadata) {}
+        @Override
+        public void onQueueChanged(List<MediaSession.QueueItem> queue) {}
+        @Override
+        public void onSessionDestroyed(CharSequence destroyedMediaClientName) {}
+    }
+
     public MediaPlaybackModel(Context context, Bundle browserExtras) {
         mContext = context;
         mBrowserExtras = browserExtras;
@@ -101,13 +125,13 @@ public class MediaPlaybackModel {
     }
 
     @MainThread
-    public void onDestroy() {
+    public void start() {
         Assert.isMainThread();
-        mHandler = null;
+        MediaManager.getInstance(mContext).addListener(mMediaManagerListener);
     }
 
     @MainThread
-    public void onPause() {
+    public void stop() {
         Assert.isMainThread();
         MediaManager.getInstance(mContext).removeListener(mMediaManagerListener);
         if (mBrowser != null) {
@@ -126,12 +150,6 @@ public class MediaPlaybackModel {
     }
 
     @MainThread
-    public void onResume() {
-        Assert.isMainThread();
-        MediaManager.getInstance(mContext).addListener(mMediaManagerListener);
-    }
-
-    @MainThread
     public void addListener(MediaPlaybackModel.Listener listener) {
         Assert.isMainThread();
         mListeners.add(listener);
@@ -146,14 +164,23 @@ public class MediaPlaybackModel {
     @MainThread
     private void notifyListeners(Consumer<Listener> callback) {
         Assert.isMainThread();
+        // Clone mListeners in case any of the callbacks made triggers a listener to be added or
+        // removed to/from mListeners.
+        List<Listener> listenersCopy = new LinkedList<>(mListeners);
         // Invokes callback.accept(listener) for each listener.
-        mListeners.forEach(callback);
+        listenersCopy.forEach(callback);
     }
 
     @MainThread
     public Resources getPackageResources() {
         Assert.isMainThread();
         return mPackageResources;
+    }
+
+    @MainThread
+    public int getPrimaryColor() {
+        Assert.isMainThread();
+        return mPrimaryColor;
     }
 
     @MainThread
@@ -227,6 +254,12 @@ public class MediaPlaybackModel {
     }
 
     @MainThread
+    public MediaBrowser getMediaBrowser() {
+        Assert.isMainThread();
+        return mBrowser;
+    }
+
+    @MainThread
     public MediaController.TransportControls getTransportControls() {
         Assert.isMainThread();
         if (mController == null) {
@@ -266,10 +299,10 @@ public class MediaPlaybackModel {
                 mBrowser.connect();
 
                 // reset the colors and views if we switch to another app.
-                mAccentColor = MediaManager.getInstance(mContext)
-                        .getMediaClientAccentColor();
-                mPrimaryColorDark = MediaManager.getInstance(mContext)
-                        .getMediaClientPrimaryColorDark();
+                MediaManager manager = MediaManager.getInstance(mContext);
+                mPrimaryColor = manager.getMediaClientPrimaryColor();
+                mAccentColor = manager.getMediaClientAccentColor();
+                mPrimaryColorDark = manager.getMediaClientPrimaryColorDark();
 
                 final ComponentName currentName = mCurrentComponentName;
                 notifyListeners((listener) -> listener.onMediaAppChanged(currentName, name));
