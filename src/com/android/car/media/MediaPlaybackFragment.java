@@ -52,6 +52,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
 import com.android.car.apps.common.BitmapDownloader;
 import com.android.car.apps.common.BitmapWorkerOptions;
 import com.android.car.apps.common.util.Assert;
@@ -143,7 +144,9 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
         mActivity = (MediaActivity) getHost();
         mShowTitleDelayMs =
                 mActivity.getResources().getInteger(R.integer.new_album_art_fade_in_offset);
-        mMediaPlaybackModel = new MediaPlaybackModel(mActivity.getContext(), this);
+        mMediaPlaybackModel =
+                new MediaPlaybackModel(mActivity.getContext(), null /* browserExtras */);
+        mMediaPlaybackModel.addListener(this);
         mTelephonyManager = (TelephonyManager) mActivity.getContext()
                 .getSystemService(Context.TELEPHONY_SERVICE);
     }
