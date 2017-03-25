@@ -19,12 +19,13 @@ import android.content.Context;
 import android.graphics.PorterDuff;
 import android.media.session.PlaybackState;
 import android.support.annotation.IntDef;
-import android.support.car.ui.ColorChecker;
-import android.support.car.ui.FabDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.ImageView;
 import com.android.car.media.R;
+
+import com.android.car.apps.common.ColorChecker;
+import com.android.car.apps.common.FabDrawable;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -38,7 +39,10 @@ import java.lang.annotation.RetentionPolicy;
  */
 public class PlayPauseStopImageView extends ImageView {
     private static final String TAG = "GH.PlayPauseImageView";
-    /** All existing play states in {@link android.media.session.PlaybackState} are positive integers. */
+    /**
+     * All existing play states in {@link android.media.session.PlaybackState} are
+     * positive integers.
+     */
     public static final int PLAYBACKSTATE_DISABLED = -2;
 
     @Retention(RetentionPolicy.SOURCE)

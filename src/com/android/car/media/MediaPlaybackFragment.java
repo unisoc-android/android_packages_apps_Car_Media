@@ -35,7 +35,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.car.ui.ColorChecker;
 import android.support.v4.app.Fragment;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -55,6 +54,7 @@ import android.widget.TextView;
 
 import com.android.car.apps.common.BitmapDownloader;
 import com.android.car.apps.common.BitmapWorkerOptions;
+import com.android.car.apps.common.ColorChecker;
 import com.android.car.apps.common.util.Assert;
 import com.android.car.media.util.widgets.MusicPanelLayout;
 import com.android.car.media.util.widgets.PlayPauseStopImageView;

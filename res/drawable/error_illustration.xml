@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright 2016, The Android Open Source Project
+  Copyright 2017, The Android Open Source Project
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -14,15 +14,18 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<resources>
-    <!-- Music -->
-    <item name="media_scrim_alpha" format="float" type="dimen">0.6</item>
-    <dimen name="apps_max_content_width">748dp</dimen>
 
-    <!-- Music now playing screen -->
-    <dimen name="music_action_icon_inset">0dp</dimen>
-    <dimen name="music_action_ripple_inset">32dp</dimen>
-    <dimen name="now_playing_metadata_top_margin">0dp</dimen>
 
-    <dimen name="missing_permission_icon_size">208dp</dimen>
-</resources>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <path
+        android:pathData="M0 0h48v48H0z" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M24 4C12.96 4 4 12.95 4 24s8.96 20 20 20 20-8.95 20-20S35.04 4 24 4zm2
+30h-4v-4h4v4zm0-8h-4V14h4v12z" />
+</vector>
