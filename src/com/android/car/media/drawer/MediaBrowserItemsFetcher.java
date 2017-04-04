@@ -108,6 +108,14 @@ class MediaBrowserItemsFetcher implements MediaItemsFetcher {
     }
 
     @Override
+    public boolean usesSmallLayout(int position) {
+        if (mQueueAvailable && position == mItems.size()) {
+            return true;
+        }
+        return MediaItemsFetcher.usesSmallLayout(mItems.get(position).getDescription());
+    }
+
+    @Override
     public void populateViewHolder(DrawerItemViewHolder holder, int position) {
         if (mQueueAvailable && position == mItems.size()) {
             holder.getTitle().setText(mMediaPlaybackModel.getQueueTitle());
@@ -116,8 +124,6 @@ class MediaBrowserItemsFetcher implements MediaItemsFetcher {
         MediaBrowser.MediaItem item = mItems.get(position);
         MediaItemsFetcher.populateViewHolderFrom(holder, item.getDescription());
 
-        // TODO(sriniv): Once we use smallLayout, text and rightIcon fields may be unavailable.
-        // Related to b/36573125.
         if (item.isBrowsable()) {
             int iconColor = mActivity.getColor(R.color.car_tint);
             Drawable drawable = mActivity.getDrawable(R.drawable.ic_chevron_right);
@@ -154,7 +160,7 @@ class MediaBrowserItemsFetcher implements MediaItemsFetcher {
     }
 
     private void setupAdapterAndSwitch(MediaItemsFetcher fetcher, CharSequence title) {
-        MediaDrawerAdapter subAdapter = new MediaDrawerAdapter(mActivity, false /* smallLayout */);
+        MediaDrawerAdapter subAdapter = new MediaDrawerAdapter(mActivity);
         subAdapter.setFetcher(fetcher);
         subAdapter.setTitle(title);
         mActivity.switchToAdapter(subAdapter);

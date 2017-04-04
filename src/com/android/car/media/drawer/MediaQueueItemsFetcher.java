@@ -67,6 +67,11 @@ class MediaQueueItemsFetcher implements MediaItemsFetcher {
     }
 
     @Override
+    public boolean usesSmallLayout(int position) {
+        return MediaItemsFetcher.usesSmallLayout(mItems.get(position).getDescription());
+    }
+
+    @Override
     public void populateViewHolder(DrawerItemViewHolder holder, int position) {
         MediaSession.QueueItem item = mItems.get(position);
         MediaItemsFetcher.populateViewHolderFrom(holder, item.getDescription());

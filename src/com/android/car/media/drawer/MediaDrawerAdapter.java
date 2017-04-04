@@ -29,8 +29,8 @@ class MediaDrawerAdapter extends CarDrawerAdapter {
     private final CarDrawerActivity mActivity;
     private MediaItemsFetcher mCurrentFetcher;
 
-    MediaDrawerAdapter(CarDrawerActivity activity, boolean useSmallLayout) {
-        super(activity, true /* showDisabledListOnEmpty */, useSmallLayout);
+    MediaDrawerAdapter(CarDrawerActivity activity) {
+        super(activity, true /* showDisabledListOnEmpty */);
         mActivity = activity;
     }
 
@@ -58,6 +58,11 @@ class MediaDrawerAdapter extends CarDrawerAdapter {
     @Override
     protected int getActualItemCount() {
         return mCurrentFetcher != null ? mCurrentFetcher.getItemCount() : 0;
+    }
+
+    @Override
+    protected boolean usesSmallLayout(int position) {
+        return mCurrentFetcher.usesSmallLayout(position);
     }
 
     @Override

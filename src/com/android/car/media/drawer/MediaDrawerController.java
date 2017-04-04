@@ -51,8 +51,7 @@ public class MediaDrawerController {
         mMediaPlaybackModel = new MediaPlaybackModel(mActivity, extras);
         mMediaPlaybackModel.addListener(mModelListener);
 
-        // TODO(sriniv): Needs smallLayout below. But breaks when showing queue items (b/36573125).
-        mRootAdapter = new MediaDrawerAdapter(mActivity, false /* useSmallLayout */);
+        mRootAdapter = new MediaDrawerAdapter(mActivity);
         // Start with a empty title since we depend on the mMediaManagerListener callback to
         // know which app is being used and set the actual title there.
         mRootAdapter.setTitle("");
