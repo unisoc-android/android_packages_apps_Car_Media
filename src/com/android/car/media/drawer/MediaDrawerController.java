@@ -123,6 +123,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
         MediaDrawerAdapter subAdapter = new MediaDrawerAdapter(mActivity);
         subAdapter.setFetcher(fetcher);
         subAdapter.setTitle(title);
+        subAdapter.setFetchCallback(this);
         mActivity.switchToAdapter(subAdapter);
     }
 
@@ -131,7 +132,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
      * the view is switched back to the drawer root.
      */
     public void showPlayQueue() {
-        mRootAdapter.setFetcher(createMediaQueueItemsFetcher());
+        mRootAdapter.setFetcherAndInvoke(createMediaQueueItemsFetcher());
         mRootAdapter.setTitle(mMediaPlaybackModel.getQueueTitle());
         mActivity.openDrawer();
         mRootAdapter.scrollToCurrent();
@@ -187,7 +188,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
             new DrawerLayout.DrawerListener() {
         @Override
         public void onDrawerClosed(View drawerView) {
-            mRootAdapter.setFetcher(createRootMediaItemsFetcher());
+            mRootAdapter.setFetcherAndInvoke(createRootMediaItemsFetcher());
             mRootAdapter.setTitle(
                     MediaManager.getInstance(mActivity).getMediaClientName());
             mActivity.removeDrawerListener(this);
@@ -213,7 +214,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
 
         @Override
         public void onMediaConnected() {
-            mRootAdapter.setFetcher(createRootMediaItemsFetcher());
+            mRootAdapter.setFetcherAndInvoke(createRootMediaItemsFetcher());
         }
     };
 }

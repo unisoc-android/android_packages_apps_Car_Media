@@ -15,8 +15,8 @@
  */
 package com.android.car.media.drawer;
 
-import android.content.Context;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.RecyclerView;
 import com.android.car.app.CarDrawerActivity;
 import com.android.car.app.CarDrawerAdapter;
 import com.android.car.app.DrawerItemViewHolder;
@@ -68,11 +68,8 @@ class MediaDrawerAdapter extends CarDrawerAdapter {
      *
      * @param fetcher New {@link MediaItemsFetcher} to use for display Drawer items.
      */
-    void setFetcher(MediaItemsFetcher fetcher) {
-        if (mCurrentFetcher != null) {
-            mCurrentFetcher.cleanup();
-        }
-        mCurrentFetcher = fetcher;
+    void setFetcherAndInvoke(MediaItemsFetcher fetcher) {
+        setFetcher(fetcher);
         mCurrentFetcher.start(() -> {
             if (mFetchCallback != null) {
                 mFetchCallback.onFetchEnd();
@@ -83,6 +80,13 @@ class MediaDrawerAdapter extends CarDrawerAdapter {
         if (mFetchCallback != null) {
             mFetchCallback.onFetchStart();
         }
+    }
+
+    void setFetcher(MediaItemsFetcher fetcher) {
+        if (mCurrentFetcher != null) {
+            mCurrentFetcher.cleanup();
+        }
+        mCurrentFetcher = fetcher;
     }
 
     @Override
@@ -133,4 +137,14 @@ class MediaDrawerAdapter extends CarDrawerAdapter {
             mCurrentScrollPosition = scrollPosition;
         }
     }
+
+    @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        if (mCurrentFetcher != null) {
+            MediaItemsFetcher fetcher = mCurrentFetcher;
+            fetcher.cleanup();
+            setFetcherAndInvoke(fetcher);
+        }
+    }
+
 }
