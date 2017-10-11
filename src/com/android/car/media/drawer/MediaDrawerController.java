@@ -91,7 +91,6 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
         } else if (item.isPlayable()) {
             MediaController.TransportControls controls = mMediaPlaybackModel.getTransportControls();
             if (controls != null) {
-                controls.pause();
                 controls.playFromMediaId(item.getMediaId(), item.getDescription().getExtras());
             }
             mActivity.closeDrawer();
