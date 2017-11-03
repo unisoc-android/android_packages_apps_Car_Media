@@ -49,7 +49,7 @@
             android:layout_width="@dimen/metadata_width"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginStart="@dimen/stream_content_keyline_1"
+            android:layout_marginStart="@dimen/car_keyline_1"
             android:layout_marginTop="@dimen/now_playing_metadata_top_margin"
             android:visibility="gone" >
 
