@@ -16,16 +16,18 @@
 package com.android.car.media.drawer;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.media.browse.MediaBrowser;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.car.drawer.CarDrawerAdapter;
+import android.support.car.drawer.CarDrawerController;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.View;
-import com.android.car.app.CarDrawerActivity;
-import com.android.car.app.CarDrawerAdapter;
+
 import com.android.car.media.MediaManager;
 import com.android.car.media.MediaPlaybackModel;
 import com.android.car.media.R;
@@ -44,19 +46,23 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
     private static final String EXTRA_ICON_SIZE =
             "com.google.android.gms.car.media.BrowserIconSize";
 
-    private final CarDrawerActivity mActivity;
+    private final Context mContext;
+    private final CarDrawerController mDrawerController;
     private final MediaPlaybackModel mMediaPlaybackModel;
     private MediaDrawerAdapter mRootAdapter;
 
-    public MediaDrawerController(CarDrawerActivity activity) {
-        mActivity = activity;
+    public MediaDrawerController(Context context, CarDrawerController drawerController) {
+        mContext = context;
+        mDrawerController = drawerController;
+
         Bundle extras = new Bundle();
         extras.putInt(EXTRA_ICON_SIZE,
-                mActivity.getResources().getDimensionPixelSize(R.dimen.car_list_item_icon_size));
-        mMediaPlaybackModel = new MediaPlaybackModel(mActivity, extras);
+                mContext.getResources().getDimensionPixelSize(R.dimen.car_list_item_icon_size));
+
+        mMediaPlaybackModel = new MediaPlaybackModel(mContext, extras);
         mMediaPlaybackModel.addListener(mModelListener);
 
-        mRootAdapter = new MediaDrawerAdapter(mActivity);
+        mRootAdapter = new MediaDrawerAdapter(mContext, mDrawerController);
         // Start with a empty title since we depend on the mMediaManagerListener callback to
         // know which app is being used and set the actual title there.
         mRootAdapter.setTitle("");
@@ -74,7 +80,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
             controls.skipToQueueItem(queueItem.getQueueId());
         }
 
-        mActivity.closeDrawer();
+        mDrawerController.closeDrawer();
     }
 
     @Override
@@ -93,7 +99,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
             if (controls != null) {
                 controls.playFromMediaId(item.getMediaId(), item.getDescription().getExtras());
             }
-            mActivity.closeDrawer();
+            mDrawerController.closeDrawer();
         } else {
             Log.w(TAG, "Unknown item type; don't know how to handle!");
         }
@@ -103,12 +109,12 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
     public void onFetchStart() {
         // Initially there will be no items and we don't want to show empty-list indicator
         // briefly until items are fetched.
-        mActivity.showLoadingProgressBar(true);
+        mDrawerController.showLoadingProgressBar(true);
     }
 
     @Override
     public void onFetchEnd() {
-        mActivity.showLoadingProgressBar(false);
+        mDrawerController.showLoadingProgressBar(false);
     }
 
     /**
@@ -119,11 +125,11 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
      * @param title The title text of the new view in the drawer.
      */
     private void setupAdapterAndSwitch(MediaItemsFetcher fetcher, CharSequence title) {
-        MediaDrawerAdapter subAdapter = new MediaDrawerAdapter(mActivity);
+        MediaDrawerAdapter subAdapter = new MediaDrawerAdapter(mContext, mDrawerController);
         subAdapter.setFetcher(fetcher);
         subAdapter.setTitle(title);
         subAdapter.setFetchCallback(this);
-        mActivity.switchToAdapter(subAdapter);
+        mDrawerController.pushAdapter(subAdapter);
     }
 
     /**
@@ -133,13 +139,13 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
     public void showPlayQueue() {
         mRootAdapter.setFetcherAndInvoke(createMediaQueueItemsFetcher());
         mRootAdapter.setTitle(mMediaPlaybackModel.getQueueTitle());
-        mActivity.openDrawer();
+        mDrawerController.openDrawer();
         mRootAdapter.scrollToCurrent();
-        mActivity.addDrawerListener(mQueueDrawerListener);
+        mDrawerController.addDrawerListener(mQueueDrawerListener);
     }
 
     public void cleanup() {
-        mActivity.removeDrawerListener(mQueueDrawerListener);
+        mDrawerController.removeDrawerListener(mQueueDrawerListener);
         mRootAdapter.cleanup();
         mMediaPlaybackModel.removeListener(mModelListener);
         mMediaPlaybackModel.stop();
@@ -158,7 +164,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
      */
     private MediaBrowserItemsFetcher createMediaBrowserItemFetcher(String mediaId,
             boolean showQueueItem) {
-        return new MediaBrowserItemsFetcher(mActivity, mMediaPlaybackModel, this /* listener */,
+        return new MediaBrowserItemsFetcher(mContext, mMediaPlaybackModel, this /* listener */,
                 mediaId, showQueueItem);
     }
 
@@ -167,7 +173,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
      * current play queue.
      */
     private MediaQueueItemsFetcher createMediaQueueItemsFetcher() {
-        return new MediaQueueItemsFetcher(mActivity, mMediaPlaybackModel, this /* listener */);
+        return new MediaQueueItemsFetcher(mContext, mMediaPlaybackModel, this /* listener */);
     }
 
     /**
@@ -189,8 +195,8 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
         public void onDrawerClosed(View drawerView) {
             mRootAdapter.setFetcherAndInvoke(createRootMediaItemsFetcher());
             mRootAdapter.setTitle(
-                    MediaManager.getInstance(mActivity).getMediaClientName());
-            mActivity.removeDrawerListener(this);
+                    MediaManager.getInstance(mContext).getMediaClientName());
+            mDrawerController.removeDrawerListener(this);
         }
 
         @Override
@@ -207,7 +213,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
         public void onMediaAppChanged(@Nullable ComponentName currentName,
                 @Nullable ComponentName newName) {
             // Only store MediaManager instance to a local variable when it is short lived.
-            MediaManager mediaManager = MediaManager.getInstance(mActivity);
+            MediaManager mediaManager = MediaManager.getInstance(mContext);
             mRootAdapter.setTitle(mediaManager.getMediaClientName());
         }
 

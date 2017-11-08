@@ -21,9 +21,9 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaDescription;
 import android.media.browse.MediaBrowser;
 import android.media.session.MediaSession;
-import android.support.annotation.Nullable;
+import android.support.car.drawer.DrawerItemViewHolder;
 import android.util.Log;
-import com.android.car.app.DrawerItemViewHolder;
+
 import com.android.car.media.MediaPlaybackModel;
 import com.android.car.media.R;
 
@@ -133,7 +133,7 @@ class MediaBrowserItemsFetcher implements MediaItemsFetcher {
         MediaBrowser.MediaItem item = mItems.get(position);
         MediaItemsFetcher.populateViewHolderFrom(holder, item.getDescription());
 
-        if (holder.getRightIcon() == null) {
+        if (holder.getEndIcon() == null) {
             return;
         }
 
@@ -141,9 +141,9 @@ class MediaBrowserItemsFetcher implements MediaItemsFetcher {
             int iconColor = mContext.getColor(R.color.car_tint);
             Drawable drawable = mContext.getDrawable(R.drawable.ic_chevron_right);
             drawable.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN);
-            holder.getRightIcon().setImageDrawable(drawable);
+            holder.getEndIcon().setImageDrawable(drawable);
         } else {
-            holder.getRightIcon().setImageDrawable(null);
+            holder.getEndIcon().setImageDrawable(null);
         }
     }
 

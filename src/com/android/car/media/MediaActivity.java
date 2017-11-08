@@ -19,9 +19,10 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.car.drawer.CarDrawerActivity;
+import android.support.car.drawer.CarDrawerAdapter;
 import android.util.Log;
-import com.android.car.app.CarDrawerActivity;
-import com.android.car.app.CarDrawerAdapter;
+
 import com.android.car.media.drawer.MediaDrawerController;
 
 /**
@@ -84,12 +85,10 @@ public class MediaActivity extends CarDrawerActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // The drawer must be initialized before the super call because CarDrawerActivity.onCreate
-        // looks up the rootAdapter from its subclasses. The MediaDrawerController provides the
-        // root adapter.
-        mDrawerController = new MediaDrawerController(this);
-
         super.onCreate(savedInstanceState);
+
+        mDrawerController = new MediaDrawerController(this /* context */, getDrawerController());
+        getDrawerController().setRootAdapter(getRootAdapter());
 
         setMainContent(R.layout.media_activity);
         MediaManager.getInstance(this).addListener(mListener);
@@ -109,7 +108,7 @@ public class MediaActivity extends CarDrawerActivity
 
     @Override
     protected CarDrawerAdapter getRootAdapter() {
-        return mDrawerController.getRootAdapter();
+        return mDrawerController == null ? null : mDrawerController.getRootAdapter();
     }
 
     @Override
@@ -130,7 +129,7 @@ public class MediaActivity extends CarDrawerActivity
         }
 
         setIntent(intent);
-        closeDrawer();
+        getDrawerController().closeDrawer();
     }
 
     @Override
