@@ -39,7 +39,7 @@
         android:background="@color/album_art_color_overlay" />
 
     <LinearLayout
-        android:layout_marginTop="@dimen/lens_header_height"
+        android:layout_marginTop="@dimen/car_app_bar_height"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical" >

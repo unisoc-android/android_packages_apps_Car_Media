@@ -115,7 +115,7 @@ interface MediaItemsFetcher {
         holder.getIcon().setImageBitmap(iconBitmap);    // Ok to set null here for clearing.
         if (iconBitmap == null && description.getIconUri() != null) {
             int bitmapSize =
-                    context.getResources().getDimensionPixelSize(R.dimen.car_list_item_icon_size);
+                    context.getResources().getDimensionPixelSize(R.dimen.car_primary_icon_size);
             // We don't want to cache android resources as they are needed to be refreshed after
             // configuration changes.
             int cacheFlag = UriUtils.isAndroidResourceUri(description.getIconUri())

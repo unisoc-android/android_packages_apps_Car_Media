@@ -57,7 +57,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
 
         Bundle extras = new Bundle();
         extras.putInt(EXTRA_ICON_SIZE,
-                mContext.getResources().getDimensionPixelSize(R.dimen.car_list_item_icon_size));
+                mContext.getResources().getDimensionPixelSize(R.dimen.car_primary_icon_size));
 
         mMediaPlaybackModel = new MediaPlaybackModel(mContext, extras);
         mMediaPlaybackModel.addListener(mModelListener);

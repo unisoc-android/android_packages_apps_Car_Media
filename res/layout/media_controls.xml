@@ -18,11 +18,11 @@ limitations under the License.
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/music_panel"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/action_panel_height"
+    android:layout_height="@dimen/car_action_bar_height"
     android:elevation="@dimen/music_panel_elevation"
     android:layout_gravity="bottom"
     android:visibility="gone"
-    app:cardCornerRadius="@dimen/car_card_view_corner_radius" >
+    app:cardCornerRadius="@dimen/car_radius_1" >
     <LinearLayout
         android:id="@+id/controls"
         android:layout_width="match_parent"

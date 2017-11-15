@@ -15,7 +15,6 @@
   limitations under the License.
 -->
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
-
     <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:colorControlHighlight">@color/car_card_ripple_background_light</item>
         <item name="android:windowBackground">@null</item>
@@ -25,5 +24,9 @@
         <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textSize">@dimen/car_body2_size</item>
         <item name="android:textColor">@color/no_content_text_color</item>
+    </style>
+
+    <style name="CarHeadline1.Light" >
+        <item name="android:textColor">@color/car_headline1_light</item>
     </style>
 </resources>

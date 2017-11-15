@@ -14,12 +14,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<com.android.car.view.MaxWidthLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:carMaxWidth="@dimen/apps_max_content_width"
     android:animateLayoutChanges="true" >
 
     <RelativeLayout
@@ -31,7 +30,7 @@
         <ProgressBar
             android:id="@+id/loading_spinner"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/car_list_item_height"
+            android:layout_height="@dimen/car_double_line_list_item_height"
             android:layout_centerInParent="true"
             android:layout_alignWithParentIfMissing="true"
             android:indeterminateDrawable="@drawable/music_buffering"
@@ -57,4 +56,4 @@
             android:text="@string/nothing_to_play"
             android:visibility="gone" />
     </RelativeLayout>
-</com.android.car.view.MaxWidthLayout>
+</FrameLayout>
