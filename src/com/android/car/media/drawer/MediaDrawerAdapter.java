@@ -17,10 +17,11 @@ package com.android.car.media.drawer;
 
 import android.content.Context;
 import android.support.annotation.Nullable;
-import android.support.car.drawer.CarDrawerAdapter;
-import android.support.car.drawer.CarDrawerController;
-import android.support.car.drawer.DrawerItemViewHolder;
 import android.support.v7.widget.RecyclerView;
+
+import androidx.car.drawer.CarDrawerAdapter;
+import androidx.car.drawer.CarDrawerController;
+import androidx.car.drawer.DrawerItemViewHolder;
 
 /**
  * Subclass of CarDrawerAdapter used by the Media app.

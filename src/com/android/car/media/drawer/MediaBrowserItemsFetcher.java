@@ -21,7 +21,6 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaDescription;
 import android.media.browse.MediaBrowser;
 import android.media.session.MediaSession;
-import android.support.car.drawer.DrawerItemViewHolder;
 import android.util.Log;
 
 import com.android.car.media.MediaPlaybackModel;
@@ -29,6 +28,8 @@ import com.android.car.media.R;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.car.drawer.DrawerItemViewHolder;
 
 /**
  * {@link MediaItemsFetcher} implementation that fetches items from a specific {@link MediaBrowser}

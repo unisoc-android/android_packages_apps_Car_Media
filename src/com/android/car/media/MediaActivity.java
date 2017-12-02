@@ -19,11 +19,12 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.car.drawer.CarDrawerActivity;
-import android.support.car.drawer.CarDrawerAdapter;
 import android.util.Log;
 
 import com.android.car.media.drawer.MediaDrawerController;
+
+import androidx.car.drawer.CarDrawerActivity;
+import androidx.car.drawer.CarDrawerAdapter;
 
 /**
  * This activity controls the UI of media. It also updates the connection status for the media app

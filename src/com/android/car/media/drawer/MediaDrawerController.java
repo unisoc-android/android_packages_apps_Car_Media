@@ -22,8 +22,6 @@ import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.car.drawer.CarDrawerAdapter;
-import android.support.car.drawer.CarDrawerController;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.View;
@@ -31,6 +29,9 @@ import android.view.View;
 import com.android.car.media.MediaManager;
 import com.android.car.media.MediaPlaybackModel;
 import com.android.car.media.R;
+
+import androidx.car.drawer.CarDrawerAdapter;
+import androidx.car.drawer.CarDrawerController;
 
 /**
  * Manages drawer navigation and item selection.
