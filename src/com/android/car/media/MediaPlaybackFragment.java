@@ -727,6 +727,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
         if (!mShowingMessage) {
             setScrimVisible(true);
         }
+        mMediaPlaybackModel.getTransportControls().prepare();
         mTapToSelectText.setVisibility(View.GONE);
         mInitialNoContentView.setVisibility(View.GONE);
         mMetadata.setVisibility(View.VISIBLE);
