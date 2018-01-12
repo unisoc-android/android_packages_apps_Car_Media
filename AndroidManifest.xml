@@ -31,7 +31,7 @@
             android:resource="@xml/automotive_app_desc" />
 
         <activity android:name=".MediaActivity"
-            android:theme="@style/CarDrawerActivityTheme"
+            android:theme="@style/MediaActivityTheme"
             android:label="CarMediaApp"
             android:resizeableActivity="true"
             android:launchMode="singleTop">

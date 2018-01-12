@@ -87,6 +87,7 @@ public class MediaActivity extends CarDrawerActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setToolbarElevation(0f);
 
         mDrawerController = new MediaDrawerController(this /* context */, getDrawerController());
         getDrawerController().setRootAdapter(getRootAdapter());
