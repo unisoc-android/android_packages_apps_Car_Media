@@ -383,6 +383,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
             return;
         }
 
+        long actions = state.getActions();
         mStartProgress = state.getPosition();
         mStartTime = System.currentTimeMillis();
         mSeekBar.setProgress((int) mStartProgress);
@@ -394,15 +395,16 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
         if (!mInCall) {
             int playbackState = state.getState();
             mPlayPauseStopButton.setPlayState(playbackState);
+
+            boolean hasPause = (actions & (PlaybackState.ACTION_PAUSE
+                    | PlaybackState.ACTION_PLAY_PAUSE)) != 0;
+            boolean hasStop = (actions & PlaybackState.ACTION_STOP) != 0;
             // Due to the action of PlaybackState will be changed when the state of PlaybackState is
             // changed, we set mode every time onPlaybackStateChanged() is called.
-            if (playbackState == PlaybackState.STATE_PLAYING ||
-                    playbackState == PlaybackState.STATE_BUFFERING) {
-                mPlayPauseStopButton.setMode(((state.getActions() & PlaybackState.ACTION_STOP) != 0)
-                        ? PlayPauseStopImageView.MODE_STOP : PlayPauseStopImageView.MODE_PAUSE);
-            } else {
-                mPlayPauseStopButton.setMode(PlayPauseStopImageView.MODE_PAUSE);
-            }
+            if (hasPause) mPlayPauseStopButton.setMode(PlayPauseStopImageView.MODE_PAUSE);
+            else if (hasStop) mPlayPauseStopButton.setMode(PlayPauseStopImageView.MODE_STOP);
+            else mPlayPauseStopButton.setVisibility(View.GONE);
+
             mPlayPauseStopButton.refreshDrawableState();
         }
         if (state.getState() == PlaybackState.STATE_BUFFERING) {
@@ -411,7 +413,7 @@ public class MediaPlaybackFragment extends Fragment implements MediaPlaybackMode
             mSpinner.setVisibility(View.GONE);
         }
 
-        updateActions(state.getActions(), state.getCustomActions());
+        updateActions(actions, state.getCustomActions());
 
         if (mMediaPlaybackModel.getMetadata() == null) {
             return;
