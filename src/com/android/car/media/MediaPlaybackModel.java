@@ -44,7 +44,10 @@ import java.util.function.Consumer;
  * and controller connection and callbacks. On each stage of the connection, error, or disconnect
  * this model will call back to the presenter. All call backs to the presenter will be done on the
  * main thread. Intended to provide a much more usable model interface to UI code.
+ *
+ * @deprecated This model is being replaced by {@link com.android.car.media.common.PlaybackModel}.
  */
+@Deprecated
 public class MediaPlaybackModel {
     private static final String TAG = "MediaPlaybackModel";
 
