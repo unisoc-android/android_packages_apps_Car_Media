@@ -110,13 +110,9 @@ public class MediaActivity extends CarDrawerActivity {
             );
             MediaManager.getInstance(this).setMediaClientComponent(component);
         } else {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Launching most recent / default component.");
-            }
-
-            // Set it to the default GPM component.
-            MediaManager.getInstance(this).connectToMostRecentMediaComponent(
-                    new CarClientServiceAdapter(getPackageManager()));
+            // TODO (b/77334804): Implement the correct initialization logic when no component is
+            // given. For example, it should either connect the user to the currently playing
+            // session, bring the user to the app selector, or open the last known media source.
         }
 
         if (isSearchIntent(intent)) {

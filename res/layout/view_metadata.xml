@@ -15,13 +15,12 @@
         android:contentDescription="@string/album_art"
         android:layout_marginStart="@dimen/car_keyline_1"
         android:layout_marginEnd="@dimen/car_keyline_1"
-        android:layout_width="200dp"
-        android:layout_height="190dp"
+        android:layout_width="@dimen/playback_album_art_height"
+        android:layout_height="@dimen/playback_album_art_width"
         android:scaleType="centerCrop"
         android:transitionName="@string/album_art"/>
 
-    <LinearLayout
-        android:orientation="vertical"
+    <RelativeLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/car_keyline_1"
@@ -32,33 +31,43 @@
             android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/car_padding_1"
             android:textAppearance="@style/TextAppearance.Car.Body1.Light"
-            android:gravity="start"
             android:maxLines="@integer/playback_title_text_max_lines"
             android:ellipsize="end"
-            android:textAlignment="center"
             android:includeFontPadding="false"/>
         <TextView
             android:id="@+id/subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/playback_secondary_text_margin_top"
+            android:layout_below="@+id/title"
+            android:layout_marginBottom="@dimen/car_padding_2"
             android:textAppearance="@style/TextAppearance.Car.Body2.Light"
-            android:gravity="start"
             android:maxLines="@integer/playback_subtitle_text_max_lines"
             android:ellipsize="end"
-            android:textAlignment="center"/>
+            android:includeFontPadding="false"/>
+        <TextView
+            android:id="@+id/time"
+            android:text="3:27 / 4:03"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_below="@+id/title"
+            android:textAppearance="@style/TextAppearance.Car.Body2.Light"
+            android:maxLines="@integer/playback_subtitle_text_max_lines"
+            android:ellipsize="end"
+            android:includeFontPadding="false"/>
         <SeekBar
             android:id="@+id/seek_bar"
             android:layout_width="match_parent"
             android:layout_height="@dimen/playback_seekbar_height"
-            android:layout_marginTop="@dimen/playback_seekbar_margin_top"
-            android:visibility="invisible"
+            android:layout_below="@+id/subtitle"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
+            android:visibility="invisible"
             android:progressDrawable="@drawable/seekbar_background"
             android:background="@color/car_grey_900"
             android:thumb="@null"/>
 
-    </LinearLayout>
+    </RelativeLayout>
 </LinearLayout>
