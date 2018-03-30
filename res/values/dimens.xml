@@ -32,4 +32,6 @@
     <dimen name="controls_margin">46dp</dimen>
     <dimen name="controls_spacing_inner">16dp</dimen>
     <dimen name="controls_spacing_outer">81dp</dimen>
+
+    <dimen name="playback_controls_margin">48dp</dimen>
 </resources>

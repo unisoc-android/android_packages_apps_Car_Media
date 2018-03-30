@@ -22,7 +22,11 @@ import java.util.List;
 
 /**
  * A Media Manager adapter which uses the car api client to query for allowed media services.
+ *
+ * @deprecated This adapter will be removed as we are not sharing this code with the projected
+ * team.
  */
+@Deprecated
 public class CarClientServiceAdapter implements MediaManager.ServiceAdapter {
     private PackageManager mPackageManager;
 

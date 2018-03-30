@@ -30,59 +30,11 @@ import androidx.car.drawer.CarDrawerAdapter;
  * This activity controls the UI of media. It also updates the connection status for the media app
  * by broadcast. Drawer menu is controlled by {@link MediaDrawerController}.
  */
-public class MediaActivity extends CarDrawerActivity
-        implements MediaPlaybackFragment.PlayQueueRevealer {
-    private static final String ACTION_MEDIA_APP_STATE_CHANGE
-            = "android.intent.action.MEDIA_APP_STATE_CHANGE";
-    private static final String EXTRA_MEDIA_APP_FOREGROUND
-            = "android.intent.action.MEDIA_APP_STATE";
-
+public class MediaActivity extends CarDrawerActivity {
     private static final String TAG = "MediaActivity";
 
-    /**
-     * Whether or not {@link #onStart()} has been called.
-     */
-    private boolean mIsStarted;
-
-    /**
-     * {@code true} if there was a request to change the content fragment of this Activity when
-     * it is not started. Then, when onStart() is called, the content fragment will be added.
-     *
-     * <p>This prevents a bug where the content fragment is added when the app is not running,
-     * causing a StateLossException.
-     */
-    private boolean mContentFragmentChangeQueued;
-
     private MediaDrawerController mDrawerController;
-    private MediaPlaybackFragment mMediaPlaybackFragment;
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Intent i = new Intent(ACTION_MEDIA_APP_STATE_CHANGE);
-        i.putExtra(EXTRA_MEDIA_APP_FOREGROUND, true);
-        sendBroadcast(i);
-
-        mIsStarted = true;
-
-        if (mContentFragmentChangeQueued) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Content fragment queued. Attaching now.");
-            }
-            showMediaPlaybackFragment();
-            mContentFragmentChangeQueued = false;
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Intent i = new Intent(ACTION_MEDIA_APP_STATE_CHANGE);
-        i.putExtra(EXTRA_MEDIA_APP_FOREGROUND, false);
-        sendBroadcast(i);
-
-        mIsStarted = false;
-    }
+    private PlaybackFragment mPlaybackFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,18 +46,17 @@ public class MediaActivity extends CarDrawerActivity
 
         setMainContent(R.layout.media_activity);
         MediaManager.getInstance(this).addListener(mListener);
+
+        mPlaybackFragment = new PlaybackFragment();
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, mPlaybackFragment)
+                .commit();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Send the broadcast to let the current connected media app know it is disconnected now.
-        sendMediaConnectionStatusBroadcast(
-                MediaManager.getInstance(this).getCurrentComponent(),
-                MediaConstants.MEDIA_DISCONNECTED);
         mDrawerController.cleanup();
-        MediaManager.getInstance(this).removeListener(mListener);
-        mMediaPlaybackFragment = null;
     }
 
     @Override
@@ -136,9 +87,7 @@ public class MediaActivity extends CarDrawerActivity
 
     @Override
     public void onBackPressed() {
-        if (mMediaPlaybackFragment != null) {
-            mMediaPlaybackFragment.closeOverflowMenu();
-        }
+        mPlaybackFragment.closeOverflowMenu();
         super.onBackPressed();
     }
 
@@ -198,44 +147,10 @@ public class MediaActivity extends CarDrawerActivity
         sendBroadcast(intent);
     }
 
-    private void showMediaPlaybackFragment() {
-        // If the fragment has already been created, then it has been attached already.
-        if (mMediaPlaybackFragment != null) {
-            return;
-        }
-
-        mMediaPlaybackFragment = new MediaPlaybackFragment();
-        mMediaPlaybackFragment.setPlayQueueRevealer(this);
-
-       getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragment_container, mMediaPlaybackFragment)
-                .commit();
-    }
-
-    @Override
-    public void showPlayQueue() {
-        mDrawerController.showPlayQueue();
-    }
-
     private final MediaManager.Listener mListener = new MediaManager.Listener() {
         @Override
         public void onMediaAppChanged(ComponentName componentName) {
             sendMediaConnectionStatusBroadcast(componentName, MediaConstants.MEDIA_CONNECTED);
-
-            // Since this callback happens asynchronously, ensure that the Activity has been
-            // started before changing fragments. Otherwise, the attach fragment will throw
-            // an IllegalStateException due to Fragment's checkStateLoss.
-            if (mIsStarted) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "onMediaAppChanged: attaching content fragment");
-                }
-                showMediaPlaybackFragment();
-            } else {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "onMediaAppChanged: queuing content fragment change");
-                }
-                mContentFragmentChangeQueued = true;
-            }
         }
 
         @Override
