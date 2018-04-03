@@ -25,10 +25,4 @@
         <item name="android:textSize">@dimen/car_body2_size</item>
         <item name="android:textColor">@color/no_content_text_color</item>
     </style>
-
-    <style name="ListItemTransparent" parent="Theme.Car.Light.List">
-        <item name="listItemBackgroundColor">@android:color/transparent</item>
-        <item name="listItemTitleTextAppearance">@style/TextAppearance.Car.Body1.Light</item>
-        <item name="listItemBodyTextAppearance">@style/TextAppearance.Car.Body2.Light</item>
-    </style>
 </resources>
