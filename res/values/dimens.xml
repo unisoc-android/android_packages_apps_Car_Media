@@ -33,5 +33,16 @@
     <dimen name="controls_spacing_inner">16dp</dimen>
     <dimen name="controls_spacing_outer">81dp</dimen>
 
-    <dimen name="playback_controls_margin">48dp</dimen>
+    <!-- Height of the gradient scrim over the background image -->
+    <dimen name="playback_scrim_transition_height">256dp</dimen>
+    <!-- Image size used to generate the background -->
+    <dimen name="playback_background_raw_image_size">300px</dimen>
+    <!-- Blurring radius used to blur background images -->
+    <item name="playback_background_blur_radius" format="float" type="dimen">25</item>
+    <!-- Scale to apply to images before blurring them to create the playback background -->
+    <item name="playback_background_blur_scale" format="float" type="dimen">1</item>
+    <!-- Size of the album art thumbnail -->
+    <dimen name="playback_album_art_height">190dp</dimen>
+    <dimen name="playback_album_art_width">200dp</dimen>
+
 </resources>
