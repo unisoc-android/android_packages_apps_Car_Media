@@ -206,11 +206,13 @@ public class PlaybackFragment extends Fragment {
 
     private void updateProgress() {
         long maxProgress = mModel.getMaxProgress();
+        int visibility = maxProgress > 0 ? View.VISIBLE : View.INVISIBLE;
         String time = String.format("%s / %s",
                 TIME_FORMAT.format(new Date(mModel.getProgress())),
                 TIME_FORMAT.format(new Date(maxProgress)));
+        mTime.setVisibility(visibility);
         mTime.setText(time);
-        mSeekbar.setVisibility(maxProgress > 0 ? View.VISIBLE : View.INVISIBLE);
+        mSeekbar.setVisibility(visibility);
         mSeekbar.setMax((int) mModel.getMaxProgress());
         mSeekbar.setProgress((int) mModel.getProgress());
     }
