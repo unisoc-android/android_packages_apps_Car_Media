@@ -325,45 +325,38 @@ public class MediaPlaybackModel {
             new MediaBrowser.ConnectionCallback() {
                 @Override
                 public void onConnected() {
-                    mHandler.post(()->{
-                        // Existing mController has already been disconnected before we call
-                        // MediaBrowser.connect()
-                        // getSessionToken returns a non null token
-                        MediaSession.Token token = mBrowser.getSessionToken();
-                        if (mController != null) {
-                            mController.unregisterCallback(mMediaControllerCallback);
-                        }
-                        mController = new MediaController(mContext, token);
-                        mController.registerCallback(mMediaControllerCallback);
-                        notifyListeners(Listener::onMediaConnected);
-                    });
+                    // Existing mController has already been disconnected before we call
+                    // MediaBrowser.connect()
+                    // getSessionToken returns a non null token
+                    MediaSession.Token token = mBrowser.getSessionToken();
+                    if (mController != null) {
+                        mController.unregisterCallback(mMediaControllerCallback);
+                    }
+                    mController = new MediaController(mContext, token);
+                    mController.registerCallback(mMediaControllerCallback);
+                    notifyListeners(Listener::onMediaConnected);
                 }
 
                 @Override
                 public void onConnectionSuspended() {
-                    mHandler.post(() -> {
-                        if (Log.isLoggable(TAG, Log.VERBOSE)) {
-                            Log.v(TAG, "Media browser service connection suspended."
-                                    + " Waiting to be reconnected....");
-                        }
-                        notifyListeners(Listener::onMediaConnectionSuspended);
-                    });
+                    if (Log.isLoggable(TAG, Log.VERBOSE)) {
+                        Log.v(TAG, "Media browser service connection suspended."
+                                + " Waiting to be reconnected....");
+                    }
+                    notifyListeners(Listener::onMediaConnectionSuspended);
                 }
 
                 @Override
                 public void onConnectionFailed() {
-                    mHandler.post(() -> {
-                        Log.e(TAG, "Media browser service connection FAILED!");
-                        // disconnect anyway to make sure we get into a sanity state
-                        mBrowser.disconnect();
-                        mBrowser = null;
-                        mCurrentComponentName = null;
+                    // disconnect anyway to make sure we get into a sanity state
+                    mBrowser.disconnect();
+                    mBrowser = null;
+                    mCurrentComponentName = null;
 
-                        CharSequence failedClientName = MediaManager.getInstance(mContext)
-                                .getMediaClientName();
-                        notifyListeners(
-                                (listener) -> listener.onMediaConnectionFailed(failedClientName));
-                    });
+                    CharSequence failedClientName = MediaManager.getInstance(mContext)
+                            .getMediaClientName();
+                    notifyListeners(
+                            (listener) -> listener.onMediaConnectionFailed(failedClientName));
                 }
             };
 

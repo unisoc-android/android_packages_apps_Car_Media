@@ -8,10 +8,14 @@
 
     <com.android.car.media.CrossfadeImageView
         android:id="@+id/album_background"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:background="@color/car_dark_blue_grey_800"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop" />
+        android:scaleType="centerCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/playback_scrim_bottom"/>
 
     <View
         android:id="@+id/playback_scrim"
@@ -23,17 +27,15 @@
     <View
         android:id="@+id/playback_scrim_bottom"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="@dimen/playback_scrim_transition_height"
         android:background="@drawable/car_playback_bottom_scrim"
-        app:layout_constraintTop_toTopOf="@+id/playback_controls"
-        app:layout_constraintBottom_toBottomOf="@+id/playback_controls"/>
+        app:layout_constraintTop_toBottomOf="@+id/metadata_container"/>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@+id/playback_controls"
+        app:layout_constraintTop_toBottomOf="@+id/playback_scrim_bottom"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
     <FrameLayout
@@ -50,17 +52,6 @@
 
     </FrameLayout>
 
-    <com.android.car.media.common.PlaybackControls
-        android:id="@+id/playback_controls"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="@dimen/playback_controls_margin"
-        android:paddingBottom="@dimen/playback_controls_margin"
-        android:layout_marginLeft="@dimen/car_margin"
-        android:layout_marginRight="@dimen/car_margin"
-        app:columns="5"
-        app:layout_constraintTop_toBottomOf="@+id/metadata_container"/>
-
     <androidx.car.widget.PagedListView
         android:id="@+id/browse_list"
         android:layout_width="match_parent"
@@ -71,7 +62,18 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:dividerStartMargin="@dimen/car_keyline_1"
         app:dividerEndMargin="@dimen/car_keyline_1"
-        app:layout_constraintTop_toBottomOf="@+id/playback_controls"
+        app:layout_constraintTop_toBottomOf="@+id/metadata_container"
+        app:layout_constraintBottom_toTopOf="@+id/playback_controls"/>
+
+    <com.android.car.media.common.PlaybackControls
+        android:id="@+id/playback_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/car_margin"
+        android:layout_marginRight="@dimen/car_margin"
+        android:layout_marginTop="@dimen/car_padding_1"
+        android:layout_marginBottom="@dimen/car_padding_1"
+        app:columns="5"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
 </android.support.constraint.ConstraintLayout>

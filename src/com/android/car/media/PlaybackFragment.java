@@ -1,11 +1,14 @@
 package com.android.car.media;
 
+import static java.security.AccessController.getContext;
+
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.support.v7.widget.RecyclerView;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,13 +16,16 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.android.car.apps.common.ImageUtils;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.PlaybackModel;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
-
-import android.support.v7.widget.RecyclerView;
+import java.util.Locale;
 
 import androidx.car.widget.ListItem;
 import androidx.car.widget.ListItemAdapter;
@@ -34,16 +40,21 @@ import androidx.car.widget.TextListItem;
  */
 public class PlaybackFragment extends Fragment {
     private static final String TAG = "PlaybackFragment";
+    private static final DateFormat TIME_FORMAT = new SimpleDateFormat("m:ss", Locale.US);
 
     private PlaybackModel mModel;
     private CrossfadeImageView mAlbumBackground;
     private PlaybackControls mPlaybackControls;
     private ImageView mAlbumArt;
     private TextView mTitle;
+    private TextView mTime;
     private TextView mSubtitle;
     private SeekBar mSeekbar;
     private PagedListView mBrowseList;
     private ListItemAdapter mMediaAdapter;
+    private int mBackgroundRawImageSize;
+    private float mBackgroundBlurRadius;
+    private float mBackgroundBlurScale;
 
     private PlaybackModel.PlaybackObserver mObserver = new PlaybackModel.PlaybackObserver() {
         @Override
@@ -77,9 +88,9 @@ public class PlaybackFragment extends Fragment {
             }
             MediaItemMetadata item = queue.get(position);
             TextListItem textListItem = new TextListItem(getContext());
-            textListItem.setTitle(item.mTitle.toString());
-            textListItem.setBody(item.mSubtitle.toString());
-            textListItem.setOnClickListener(v -> mModel.onSkipToQueueItem(item.mQueueId));
+            textListItem.setTitle(item.getTitle().toString());
+            textListItem.setBody(item.getSubtitle().toString());
+            textListItem.setOnClickListener(v -> mModel.onSkipToQueueItem(item.getQueueId()));
             return textListItem;
         }
 
@@ -107,6 +118,7 @@ public class PlaybackFragment extends Fragment {
         mTitle = view.findViewById(R.id.title);
         mSubtitle = view.findViewById(R.id.subtitle);
         mSeekbar = view.findViewById(R.id.seek_bar);
+        mTime = view.findViewById(R.id.time);
         mBrowseList = view.findViewById(R.id.browse_list);
         mMediaAdapter = new ListItemAdapter(getContext(), mMediaItemsProvider);
         mBrowseList.setAdapter(mMediaAdapter);
@@ -114,6 +126,13 @@ public class PlaybackFragment extends Fragment {
         recyclerView.setVerticalFadingEdgeEnabled(true);
         recyclerView.setFadingEdgeLength(getResources()
                 .getDimensionPixelSize(R.dimen.car_padding_3));
+        TypedValue outValue = new TypedValue();
+        getResources().getValue(R.dimen.playback_background_blur_radius, outValue, true);
+        mBackgroundBlurRadius = outValue.getFloat();
+        getResources().getValue(R.dimen.playback_background_blur_scale, outValue, true);
+        mBackgroundBlurScale = outValue.getFloat();
+        mBackgroundRawImageSize = getContext().getResources().getDimensionPixelSize(
+                R.dimen.playback_background_raw_image_size);
         return view;
     }
 
@@ -132,9 +151,8 @@ public class PlaybackFragment extends Fragment {
     }
 
     private void updateState() {
-        int maxProgress = mModel.getMaxProgress();
-        mSeekbar.setVisibility(maxProgress > 0 ? View.VISIBLE : View.INVISIBLE);
-        mSeekbar.setMax(maxProgress);
+        updateProgress();
+
         if (mModel.isPlaying()) {
             mSeekbar.post(mSeekBarRunnable);
         } else {
@@ -145,11 +163,26 @@ public class PlaybackFragment extends Fragment {
 
     private void updateMetadata() {
         MediaItemMetadata metadata = mModel.getMetadata();
-        mTitle.setText(metadata != null ? metadata.mTitle : null);
-        mSubtitle.setText(metadata != null ? metadata.mSubtitle : null);
-        Bitmap art = metadata != null ? metadata.getAlbumArt() : null;
-        mAlbumArt.setImageBitmap(art);
-        mAlbumBackground.setImageBitmap(art, true);
+        mTitle.setText(metadata != null ? metadata.getTitle() : null);
+        mSubtitle.setText(metadata != null ? metadata.getSubtitle() : null);
+        MediaItemMetadata.updateImageView(getContext(), metadata, mAlbumArt, 0);
+        if (metadata != null) {
+            metadata.getAlbumArt(getContext(),
+                    mBackgroundRawImageSize,
+                    mBackgroundRawImageSize,
+                    false)
+                    .thenAccept(this::setBackgroundImage);
+        } else {
+            mAlbumBackground.setImageBitmap(null, true);
+        }
+    }
+
+    private void setBackgroundImage(Bitmap bitmap) {
+        // TODO(b/77551865): Implement image blurring once the following issue is solved:
+        // b/77551557
+        // bitmap = ImageUtils.blur(getContext(), bitmap, mBackgroundBlurScale,
+        //        mBackgroundBlurRadius);
+        mAlbumBackground.setImageBitmap(bitmap, true);
     }
 
     private void updateAccentColor() {
@@ -165,10 +198,24 @@ public class PlaybackFragment extends Fragment {
             if (!mModel.isPlaying()) {
                 return;
             }
-            mSeekbar.setProgress(mModel.getProgress());
+            updateProgress();
             mSeekbar.postDelayed(this, SEEK_BAR_UPDATE_TIME_INTERVAL_MS);
+
         }
     };
+
+    private void updateProgress() {
+        long maxProgress = mModel.getMaxProgress();
+        int visibility = maxProgress > 0 ? View.VISIBLE : View.INVISIBLE;
+        String time = String.format("%s / %s",
+                TIME_FORMAT.format(new Date(mModel.getProgress())),
+                TIME_FORMAT.format(new Date(maxProgress)));
+        mTime.setVisibility(visibility);
+        mTime.setText(time);
+        mSeekbar.setVisibility(visibility);
+        mSeekbar.setMax((int) mModel.getMaxProgress());
+        mSeekbar.setProgress((int) mModel.getProgress());
+    }
 
     /**
      * Collapses the playback controls.
