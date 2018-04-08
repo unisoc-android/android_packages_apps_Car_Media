@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <TextView
+        android:id="@+id/title"
+        android:text="@string/media_browse_more"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/car_padding_1"
+        android:includeFontPadding="false"
+        android:textAppearance="@style/TextAppearance.Car.Body1.Light"/>
+</FrameLayout>
