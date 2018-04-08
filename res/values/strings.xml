@@ -26,4 +26,6 @@
     <string name="loading">Getting your selection&#8230;</string>
     <!-- The text for unknown playback error. [CHAR LIMIT=50] -->
     <string name="unknown_error">Something went wrong</string>
+    <!-- Text of the button displayed at the bottom of a media browse section to provide access to additional items. [CHAR LIMIT=100] -->
+    <string name="media_browse_more">More …</string>
 </resources>
