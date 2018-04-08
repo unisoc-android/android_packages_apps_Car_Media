@@ -56,12 +56,9 @@
         android:id="@+id/browse_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        app:showPagedListViewDivider="true"
-        app:listDividerColor="@color/car_list_divider_inverse"
+        android:layout_marginBottom="@dimen/car_padding_4"
+        app:showPagedListViewDivider="false"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        app:dividerStartMargin="@dimen/car_keyline_1"
-        app:dividerEndMargin="@dimen/car_keyline_1"
         app:layout_constraintTop_toBottomOf="@+id/metadata_container"
         app:layout_constraintBottom_toTopOf="@+id/playback_controls"/>
 
