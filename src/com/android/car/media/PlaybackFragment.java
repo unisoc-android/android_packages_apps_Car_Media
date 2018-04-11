@@ -174,7 +174,8 @@ public class PlaybackFragment extends Fragment implements PlaybackModel.Playback
 
     private void updateAccentColor() {
         int defaultColor = getResources().getColor(android.R.color.background_dark, null);
-        int color = mModel.getMediaSource().getAccentColor(defaultColor);
+        MediaSource mediaSource = mModel.getMediaSource();
+        int color = mediaSource == null ? defaultColor : mediaSource.getAccentColor(defaultColor);
         mSeekbar.getProgressDrawable().setColorFilter(color, PorterDuff.Mode.SRC_IN);
     }
 
@@ -221,6 +222,7 @@ public class PlaybackFragment extends Fragment implements PlaybackModel.Playback
             mMediaSource.unsubscribe(this);
         }
         mMediaSource = newSource;
+        if (newSource == null) return;
         mMediaSource.subscribe(this);
         MediaManager.getInstance(getContext())
                 .setMediaClientComponent(mMediaSource.getBrowseServiceComponentName());
