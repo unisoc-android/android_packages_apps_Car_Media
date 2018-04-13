@@ -51,6 +51,7 @@ public class MediaActivity extends CarDrawerActivity {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, mPlaybackFragment)
                 .commit();
+        handleIntent(getIntent());
     }
 
     @Override
@@ -65,16 +66,6 @@ public class MediaActivity extends CarDrawerActivity {
     }
 
     @Override
-    public void onResumeFragments() {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "onResumeFragments");
-        }
-
-        super.onResumeFragments();
-        handleIntent(getIntent());
-    }
-
-    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
@@ -83,6 +74,7 @@ public class MediaActivity extends CarDrawerActivity {
 
         setIntent(intent);
         getDrawerController().closeDrawer();
+        handleIntent(getIntent());
     }
 
     @Override
