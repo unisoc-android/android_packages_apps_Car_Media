@@ -1,12 +1,16 @@
 package com.android.car.media;
 
+import android.content.ComponentName;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.media.browse.MediaBrowser;
+import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,8 +40,7 @@ import androidx.car.widget.PagedListView;
  * It observes a {@link PlaybackModel} and updates its information depending on the currently
  * playing media source through the {@link android.media.session.MediaSession} API.
  */
-public class PlaybackFragment extends Fragment implements PlaybackModel.PlaybackObserver,
-        MediaSource.Observer, BrowseAdapter.Observer {
+public class PlaybackFragment extends Fragment implements BrowseAdapter.Observer {
     private static final String TAG = "PlaybackFragment";
     private static final DateFormat TIME_FORMAT = new SimpleDateFormat("m:ss", Locale.US);
 
@@ -55,13 +58,42 @@ public class PlaybackFragment extends Fragment implements PlaybackModel.Playback
     private float mBackgroundBlurScale;
     private MediaSource mMediaSource;
     private BrowseAdapter mBrowseAdapter;
+    private PlaybackModel.PlaybackObserver mPlaybackObserver = new PlaybackModel.PlaybackObserver() {
+        @Override
+        public void onPlaybackStateChanged() {
+            updateState();
+        }
+
+        @Override
+        public void onSourceChanged() {
+            updateState();
+            updateMetadata();
+            updateAccentColor();
+            updateBrowse();
+        }
+
+        @Override
+        public void onMetadataChanged() {
+            updateMetadata();
+        }
+    };
+    private MediaSource.Observer mMediaSourceObserver = new MediaSource.Observer() {
+        @Override
+        protected void onBrowseConnected(boolean success) {
+            PlaybackFragment.this.onBrowseConnected(success);
+        }
+
+        @Override
+        protected void onBrowseDisconnected() {
+            PlaybackFragment.this.onBrowseDisconnected();
+        }
+    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_playback, container, false);
         mModel = new PlaybackModel(getContext());
-        mModel.registerObserver(this);
         mAlbumBackground = view.findViewById(R.id.album_background);
         mPlaybackControls = view.findViewById(R.id.playback_controls);
         mPlaybackControls.setModel(mModel);
@@ -94,43 +126,22 @@ public class PlaybackFragment extends Fragment implements PlaybackModel.Playback
     @Override
     public void onStart() {
         super.onStart();
-        mModel.start();
+        mModel.registerObserver(mPlaybackObserver);
         if (mMediaSource != null) {
-            mMediaSource.subscribe(this);
-        }
-        if (mBrowseAdapter != null) {
-            mBrowseAdapter.start();
+            mMediaSource.subscribe(mMediaSourceObserver);
         }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        mModel.stop();
+        mModel.unregisterObserver(mPlaybackObserver);
         if (mMediaSource != null) {
-            mMediaSource.unsubscribe(this);
+            mMediaSource.unsubscribe(mMediaSourceObserver);
         }
         if (mBrowseAdapter != null) {
             mBrowseAdapter.stop();
         }
-    }
-
-    @Override
-    public void onPlaybackStateChanged() {
-        updateState();
-    }
-
-    @Override
-    public void onSourceChanged() {
-        updateState();
-        updateMetadata();
-        updateAccentColor();
-        updateBrowse();
-    }
-
-    @Override
-    public void onMetadataChanged() {
-        updateMetadata();
     }
 
     private void updateState() {
@@ -214,40 +225,50 @@ public class PlaybackFragment extends Fragment implements PlaybackModel.Playback
     }
 
     private void updateBrowse() {
-        MediaSource newSource = mModel.getMediaSource();
+        MediaSource newSource = getCurrentMediaSource();
         if (Objects.equals(mMediaSource, newSource)) {
             return;
         }
         if (mMediaSource != null) {
-            mMediaSource.unsubscribe(this);
+            mMediaSource.unsubscribe(mMediaSourceObserver);
         }
         mMediaSource = newSource;
         if (newSource == null) return;
-        mMediaSource.subscribe(this);
+        mMediaSource.subscribe(mMediaSourceObserver);
+
         MediaManager.getInstance(getContext())
                 .setMediaClientComponent(mMediaSource.getBrowseServiceComponentName());
     }
 
-    @Override
-    public void onBrowseConnected(MediaBrowser mediaBrowser) {
+    private MediaSource getCurrentMediaSource() {
+        if (getActivity().getIntent() == null || !getActivity().getIntent().hasExtra(
+                MediaManager.KEY_MEDIA_PACKAGE)) {
+            return mModel.getMediaSource();
+        } else {
+            String packageName = getActivity().getIntent().getStringExtra(
+                    MediaManager.KEY_MEDIA_PACKAGE);
+            return new MediaSource(getContext(), packageName);
+        }
+    }
+
+    private void onBrowseConnected(boolean success) {
         if (mBrowseAdapter != null) {
             mBrowseAdapter.stop();
             mBrowseAdapter = null;
         }
-        if (mediaBrowser == null) {
+        if (!success) {
             mBrowseList.setVisibility(View.GONE);
             // TODO(b/77647430) implement intermediate states.
             return;
         }
-        mBrowseAdapter = new BrowseAdapter(getContext(), mediaBrowser, null,
+        mBrowseAdapter = new BrowseAdapter(getContext(), mMediaSource.getMediaBrowser(), null,
                 ContentForwardStrategy.DEFAULT_STRATEGY);
         mBrowseList.setAdapter(mBrowseAdapter);
         mBrowseAdapter.registerObserver(this);
         mBrowseAdapter.start();
     }
 
-    @Override
-    public void onBrowseDisconnected() {
+    private void onBrowseDisconnected() {
         mBrowseAdapter.stop();
     }
 
@@ -264,7 +285,9 @@ public class PlaybackFragment extends Fragment implements PlaybackModel.Playback
 
     @Override
     public void onPlayableItemClicked(MediaItemMetadata item) {
-        mModel.onPlayItem(item.getId());
+        mModel.onStop();
+        getActivity().setIntent(null);
+        mMediaSource.getPlaybackModel().onPlayItem(item.getId());
     }
 
     @Override
