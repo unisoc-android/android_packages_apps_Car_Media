@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import com.android.car.media.common.MediaSource;
 import com.android.car.media.drawer.MediaDrawerController;
 
 import androidx.car.drawer.CarDrawerActivity;
@@ -90,16 +91,16 @@ public class MediaActivity extends CarDrawerActivity {
         }
 
         // If the intent has a media component name set, connect to it directly
-        if (extras != null && extras.containsKey(MediaManager.KEY_MEDIA_PACKAGE) &&
-                extras.containsKey(MediaManager.KEY_MEDIA_CLASS)) {
+        if (extras != null && extras.containsKey(MediaManager.KEY_MEDIA_PACKAGE)) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "Media component in intent.");
             }
 
-            ComponentName component = new ComponentName(
-                    intent.getStringExtra(MediaManager.KEY_MEDIA_PACKAGE),
-                    intent.getStringExtra(MediaManager.KEY_MEDIA_CLASS)
-            );
+            String packageName = intent.getStringExtra(MediaManager.KEY_MEDIA_PACKAGE);
+            MediaSource mediaSource = new MediaSource(this, packageName);
+            ComponentName component = mediaSource.getBrowseServiceComponentName();
+
+            Log.i(TAG, "Browsing: " + component + " from " + packageName);
             MediaManager.getInstance(this).setMediaClientComponent(component);
         } else {
             // TODO (b/77334804): Implement the correct initialization logic when no component is
