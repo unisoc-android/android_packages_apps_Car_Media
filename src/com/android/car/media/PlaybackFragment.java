@@ -1,12 +1,25 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.android.car.media;
 
-import android.content.ComponentName;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
-import android.media.browse.MediaBrowser;
-import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -58,6 +71,8 @@ public class PlaybackFragment extends Fragment implements BrowseAdapter.Observer
     private float mBackgroundBlurScale;
     private MediaSource mMediaSource;
     private BrowseAdapter mBrowseAdapter;
+    private ViewGroup mMetadataContainer;
+    private MediaItemMetadata mCurrentMetadata;
     private PlaybackModel.PlaybackObserver mPlaybackObserver = new PlaybackModel.PlaybackObserver() {
         @Override
         public void onPlaybackStateChanged() {
@@ -105,6 +120,7 @@ public class PlaybackFragment extends Fragment implements BrowseAdapter.Observer
         mSeekbar = view.findViewById(R.id.seek_bar);
         mTime = view.findViewById(R.id.time);
         mBrowseList = view.findViewById(R.id.browse_list);
+        mMetadataContainer = view.findViewById(R.id.metadata_container);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), 4);
         RecyclerView recyclerView = mBrowseList.getRecyclerView();
         recyclerView.setLayoutManager(gridLayoutManager);
@@ -161,6 +177,10 @@ public class PlaybackFragment extends Fragment implements BrowseAdapter.Observer
 
     private void updateMetadata() {
         MediaItemMetadata metadata = mModel.getMetadata();
+        if (Objects.equals(mCurrentMetadata, metadata)) {
+            return;
+        }
+        mCurrentMetadata = metadata;
         mTitle.setText(metadata != null ? metadata.getTitle() : null);
         mSubtitle.setText(metadata != null ? metadata.getSubtitle() : null);
         MediaItemMetadata.updateImageView(getContext(), metadata, mAlbumArt, 0);
@@ -224,11 +244,51 @@ public class PlaybackFragment extends Fragment implements BrowseAdapter.Observer
         mPlaybackControls.close();
     }
 
-    private void updateBrowse() {
+    /**
+     * Updates the information on the media source being browsed.
+     */
+    public void updateBrowse() {
         MediaSource newSource = getCurrentMediaSource();
+
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, "Updating browse: new source "
+                    + (newSource != null ? newSource.getPackageName() : null)
+                    + ", current source: "
+                    + (mMediaSource != null ? mMediaSource.getPackageName() : null)
+                    + ", currently playing: "
+                    + (mModel.getMediaSource() != null
+                        ? mModel.getMediaSource().getPackageName() : null));
+        }
+
+        // Visibility might change both because the browsed source changed or because the
+        // source being played changed.
+        if (Objects.equals(newSource, mModel.getMediaSource())) {
+            // We are playing: show everything
+            mAlbumBackground.setVisibility(View.VISIBLE);
+            mPlaybackControls.setVisibility(View.VISIBLE);
+            mAlbumArt.setVisibility(View.VISIBLE);
+            mTitle.setVisibility(View.VISIBLE);
+            mTime.setVisibility(View.VISIBLE);
+            mSubtitle.setVisibility(View.VISIBLE);
+            mSeekbar.setVisibility(View.VISIBLE);
+            mMetadataContainer.setVisibility(View.VISIBLE);
+        } else {
+            // Hide playback
+            mAlbumBackground.setVisibility(View.INVISIBLE);
+            mPlaybackControls.setVisibility(View.GONE);
+            mAlbumArt.setVisibility(View.VISIBLE);
+            mTitle.setVisibility(View.GONE);
+            mTime.setVisibility(View.GONE);
+            mSubtitle.setVisibility(View.GONE);
+            mSeekbar.setVisibility(View.GONE);
+            mMetadataContainer.setVisibility(View.GONE);
+        }
+
         if (Objects.equals(mMediaSource, newSource)) {
+            // Browse information hasn't changed. Nothing to do.
             return;
         }
+
         if (mMediaSource != null) {
             mMediaSource.unsubscribe(mMediaSourceObserver);
         }
@@ -241,7 +301,8 @@ public class PlaybackFragment extends Fragment implements BrowseAdapter.Observer
     }
 
     private MediaSource getCurrentMediaSource() {
-        if (getActivity().getIntent() == null || !getActivity().getIntent().hasExtra(
+        if (getActivity() == null || getActivity().getIntent() == null
+                || !getActivity().getIntent().hasExtra(
                 MediaManager.KEY_MEDIA_PACKAGE)) {
             return mModel.getMediaSource();
         } else {
@@ -260,8 +321,10 @@ public class PlaybackFragment extends Fragment implements BrowseAdapter.Observer
             mBrowseList.setVisibility(View.GONE);
             // TODO(b/77647430) implement intermediate states.
             return;
+        } else {
+            mBrowseList.setVisibility(View.VISIBLE);
         }
-        mBrowseAdapter = new BrowseAdapter(getContext(), mMediaSource.getMediaBrowser(), null,
+        mBrowseAdapter = new BrowseAdapter(getContext(), mMediaSource, null,
                 ContentForwardStrategy.DEFAULT_STRATEGY);
         mBrowseList.setAdapter(mBrowseAdapter);
         mBrowseAdapter.registerObserver(this);
@@ -286,8 +349,8 @@ public class PlaybackFragment extends Fragment implements BrowseAdapter.Observer
     @Override
     public void onPlayableItemClicked(MediaItemMetadata item) {
         mModel.onStop();
-        getActivity().setIntent(null);
         mMediaSource.getPlaybackModel().onPlayItem(item.getId());
+        getActivity().setIntent(null);
     }
 
     @Override

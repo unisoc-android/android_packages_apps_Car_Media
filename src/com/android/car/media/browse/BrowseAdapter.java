@@ -30,6 +30,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.android.car.media.common.MediaItemMetadata;
+import com.android.car.media.common.MediaSource;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,7 +67,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
     private static final String TAG = "MediaBrowseAdapter";
     @NonNull
     private final Context mContext;
-    private final MediaBrowser mMediaBrowser;
+    private final MediaSource mMediaSource;
     private final MediaItemMetadata mParentMediaItem;
     private final ContentForwardStrategy mCFBStrategy;
     private LinkedHashMap<String, MediaItemState> mItemStates = new LinkedHashMap<>();
@@ -178,15 +179,15 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
     /**
      * Creates a {@link BrowseAdapter} that displays the children of the given media tree node.
      *
-     * @param mediaBrowser the {@link MediaBrowser} to get data from.
+     * @param mediaSource the {@link MediaSource} to get data from.
      * @param parentItem the node to display children of, or NULL if the
      * @param strategy a {@link ContentForwardStrategy} that would determine which items would be
      *                 expanded and how.
      */
-    public BrowseAdapter(Context context, @NonNull MediaBrowser mediaBrowser,
+    public BrowseAdapter(Context context, @NonNull MediaSource mediaSource,
             @Nullable MediaItemMetadata parentItem, @NonNull ContentForwardStrategy strategy) {
         mContext = context;
-        mMediaBrowser = mediaBrowser;
+        mMediaSource = mediaSource;
         mParentMediaItem = parentItem;
         mCFBStrategy = strategy;
     }
@@ -198,8 +199,8 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
     public void start() {
         mParentMediaItemId = mParentMediaItem != null
                 ? mParentMediaItem.getId()
-                : mMediaBrowser.getRoot();
-        mMediaBrowser.subscribe(mParentMediaItemId, mSubscriptionCallback);
+                : mMediaSource.getMediaBrowser().getRoot();
+        mMediaSource.getMediaBrowser().subscribe(mParentMediaItemId, mSubscriptionCallback);
         for (MediaItemState itemState : mItemStates.values()) {
             subscribe(itemState);
         }
@@ -213,7 +214,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
             // Not started
             return;
         }
-        mMediaBrowser.unsubscribe(mParentMediaItemId, mSubscriptionCallback);
+        mMediaSource.getMediaBrowser().unsubscribe(mParentMediaItemId, mSubscriptionCallback);
         for (MediaItemState itemState : mItemStates.values()) {
             unsubscribe(itemState);
         }
@@ -296,14 +297,14 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
 
     private void subscribe(MediaItemState state) {
         if (!state.mIsSubscribed && state.mItem.isBrowsable()) {
-            mMediaBrowser.subscribe(state.mItem.getId(), mSubscriptionCallback);
+            mMediaSource.getMediaBrowser().subscribe(state.mItem.getId(), mSubscriptionCallback);
             state.mIsSubscribed = true;
         }
     }
 
     private void unsubscribe(MediaItemState state) {
         if (state.mIsSubscribed) {
-            mMediaBrowser.unsubscribe(state.mItem.getId(), mSubscriptionCallback);
+            mMediaSource.getMediaBrowser().unsubscribe(state.mItem.getId(), mSubscriptionCallback);
             state.mIsSubscribed = false;
         }
     }
