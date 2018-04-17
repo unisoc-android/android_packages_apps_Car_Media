@@ -39,13 +39,12 @@ LOCAL_DEX_PREOPT := false
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     android-support-car \
-    android-support-constraint-layout
+    android-support-constraint-layout \
+    car-apps-common \
+    car-media-common
 
 LOCAL_STATIC_JAVA_LIBRARIES += \
     android-support-constraint-layout-solver
-
-include packages/apps/Car/libs/car-apps-common/car-apps-common.mk
-include packages/apps/Car/libs/car-media-common/car-media-common.mk
 
 include $(BUILD_PACKAGE)
 
