@@ -26,13 +26,16 @@ import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.android.car.media.common.CrossfadeImageView;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.MediaSource;
+import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.PlaybackModel;
 import com.android.car.media.drawer.MediaDrawerController;
-import com.android.car.media.util.widgets.MediaItemTabView;
+import com.android.car.media.widgets.MediaItemTabView;
+import com.android.car.media.widgets.MetadataView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +73,10 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     private PlaybackFragment mPlaybackFragment;
     private AppBarLayout mAppBarLayout;
     private View mBrowseScrim;
+    private PlaybackControls mPlaybackControls;
+    private MetadataView mMetadataView;
+    private ViewGroup mBrowseControlsContainer;
+
 
     /** Current state */
     private MediaItemMetadata mCurrentMetadata;
@@ -106,6 +113,7 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
             new TabLayout.OnTabSelectedListener() {
         @Override
         public void onTabSelected(TabLayout.Tab tab) {
+            Log.i(TAG, "onTabSelected: " + tab.getTag());
             mMode = Mode.BROWSING;
             updateBrowseFragment((MediaItemMetadata) tab.getTag());
             updateMetadata();
@@ -118,6 +126,7 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
 
         @Override
         public void onTabReselected(TabLayout.Tab tab) {
+            Log.i(TAG, "onTabReselected: " + tab.getTag());
             mMode = Mode.BROWSING;
             updateBrowseFragment((MediaItemMetadata) tab.getTag());
             updateMetadata();
@@ -151,6 +160,12 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
         mAppBarLayout = findViewById(androidx.car.R.id.appbar);
         mAlbumBackground = findViewById(R.id.media_background);
         mBrowseScrim = findViewById(R.id.browse_scrim);
+        mPlaybackControls = findViewById(R.id.controls);
+        mPlaybackControls.setModel(mPlaybackModel);
+        mMetadataView = findViewById(R.id.metadata);
+        mMetadataView.setModel(mPlaybackModel);
+        mBrowseControlsContainer = findViewById(R.id.browse_controls_container);
+        mBrowseControlsContainer.setOnClickListener(view -> switchToMode(Mode.PLAYBACK));
         TypedValue outValue = new TypedValue();
         getResources().getValue(R.dimen.playback_background_blur_radius, outValue, true);
         mBackgroundBlurRadius = outValue.getFloat();
@@ -174,6 +189,8 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     public void onDestroy() {
         super.onDestroy();
         mDrawerController.cleanup();
+        mPlaybackControls.setModel(null);
+        mMetadataView.setModel(null);
     }
 
     @Override
@@ -202,7 +219,7 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     @Override
     protected void onResumeFragments() {
         super.onResumeFragments();
-        updateBrowseSource();
+        handleIntent();
     }
 
     private void onBrowseConnected(boolean success) {
@@ -215,10 +232,10 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     }
 
     private void handleIntent() {
-        updateBrowseSource();
         switchToMode(getRequestedMediaPackageName() == null || !mContentForwardBrowseEnabled
                 ? Mode.PLAYBACK
                 : Mode.BROWSING);
+        updateBrowseSource();
     }
 
     /**
@@ -297,6 +314,8 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
                 && browsableTopLevel.size() <= mMaxBrowserTabs)) {
             mAppBarLayout.setVisibility(View.GONE);
             mTabLayout.setVisibility(View.VISIBLE);
+            // Temporarily removing the listener, to prevent initial tab selection event.
+            mTabLayout.removeOnTabSelectedListener(mTabSelectedListener);
             int count = 0;
             for (MediaItemMetadata item : browsableTopLevel) {
                 MediaItemTabView tab = new MediaItemTabView(this, item);
@@ -306,6 +325,7 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
                     break;
                 }
             }
+            mTabLayout.addOnTabSelectedListener(mTabSelectedListener);
             updateBrowseFragment(browsableTopLevel.get(0));
         } else {
             mAppBarLayout.setVisibility(View.VISIBLE);
@@ -315,17 +335,13 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     }
 
     private void switchToMode(Mode mode) {
+        Log.i(TAG, "Switch mode to " + mode + " (intent package: " +
+                getRequestedMediaPackageName() + ")");
         mMode = mode;
-        switch(mode) {
-            case PLAYBACK:
-                showFragment(mPlaybackFragment);
-                break;
-            case BROWSING:
-                // Browse fragment will be loaded once we have the top level items.
-                showFragment(null);
-                updateMetadata();
-                break;
-        }
+        updateMetadata();
+        showFragment(mode == Mode.PLAYBACK
+                ? mPlaybackFragment
+                : null); // Browse fragment will be loaded once we have the top level items.
     }
 
     private void updateBrowseFragment(MediaItemMetadata topItem) {
@@ -340,9 +356,12 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     private void updateMetadata() {
         if (isCurrentMediaSourcePlaying()) {
             mAlbumBackground.setVisibility(View.VISIBLE);
-            mBrowseScrim.setVisibility(mCurrentFragment == mPlaybackFragment
+            mBrowseScrim.setVisibility(mMode == Mode.PLAYBACK
                     ? View.GONE
-                    : View. VISIBLE);
+                    : View.VISIBLE);
+            mBrowseControlsContainer.setVisibility(mMode == Mode.PLAYBACK
+                    ? View.GONE
+                    : View.VISIBLE);
             MediaItemMetadata metadata = mPlaybackModel.getMetadata();
             if (Objects.equals(mCurrentMetadata, metadata)) {
                 return;
@@ -359,8 +378,9 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
                 mAlbumBackground.setImageBitmap(null, true);
             }
         } else {
-            mAlbumBackground.setVisibility(View.GONE);
+            mAlbumBackground.setVisibility(View.INVISIBLE);
             mBrowseScrim.setVisibility(View.GONE);
+            mBrowseControlsContainer.setVisibility(View.GONE);
         }
     }
 

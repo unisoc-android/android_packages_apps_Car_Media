@@ -149,7 +149,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
         mDrawerController.removeDrawerListener(mQueueDrawerListener);
         mRootAdapter.cleanup();
         mMediaPlaybackModel.removeListener(mModelListener);
-         mMediaPlaybackModel.stop();
+        mMediaPlaybackModel.stop();
     }
 
     /**
