@@ -52,7 +52,6 @@ public class MediaActivity extends CarDrawerActivity {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, mPlaybackFragment)
                 .commit();
-        handleIntent(getIntent());
     }
 
     @Override
@@ -84,6 +83,12 @@ public class MediaActivity extends CarDrawerActivity {
         super.onBackPressed();
     }
 
+    @Override
+    protected void onResumeFragments() {
+        super.onResumeFragments();
+        handleIntent(getIntent());
+    }
+
     private void handleIntent(Intent intent) {
         Bundle extras = null;
         if (intent != null) {
@@ -102,10 +107,12 @@ public class MediaActivity extends CarDrawerActivity {
 
             Log.i(TAG, "Browsing: " + component + " from " + packageName);
             MediaManager.getInstance(this).setMediaClientComponent(component);
+            mPlaybackFragment.updateBrowse();
         } else {
             // TODO (b/77334804): Implement the correct initialization logic when no component is
             // given. For example, it should either connect the user to the currently playing
             // session, bring the user to the app selector, or open the last known media source.
+            mPlaybackFragment.updateBrowse();
         }
 
         if (isSearchIntent(intent)) {
