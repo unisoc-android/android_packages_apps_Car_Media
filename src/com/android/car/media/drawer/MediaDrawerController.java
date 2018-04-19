@@ -149,7 +149,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
         mDrawerController.removeDrawerListener(mQueueDrawerListener);
         mRootAdapter.cleanup();
         mMediaPlaybackModel.removeListener(mModelListener);
-        mMediaPlaybackModel.stop();
+         mMediaPlaybackModel.stop();
     }
 
     /**
@@ -215,6 +215,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
                 @Nullable ComponentName newName) {
             // Only store MediaManager instance to a local variable when it is short lived.
             MediaManager mediaManager = MediaManager.getInstance(mContext);
+            mRootAdapter.cleanup();
             mRootAdapter.setTitle(mediaManager.getMediaClientName());
         }
 
