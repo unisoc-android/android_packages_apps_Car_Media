@@ -35,6 +35,8 @@
 
     <!-- Playback seekbar height -->
     <dimen name="playback_seekbar_height">8dp</dimen>
+    <!-- Size of the thumb in the playback seekbar -->
+    <dimen name="playback_seekbar_thumb_width">6dp</dimen>
     <!-- Height of the gradient scrim over the background image -->
     <dimen name="playback_scrim_transition_height">256dp</dimen>
     <!-- Image size used to generate the background -->
@@ -44,11 +46,13 @@
     <!-- Scale to apply to images before blurring them to create the playback background -->
     <item name="playback_background_blur_scale" format="float" type="dimen">1</item>
     <!-- Size of the album art thumbnail -->
-    <dimen name="playback_album_art_height">190dp</dimen>
-    <dimen name="playback_album_art_width">200dp</dimen>
+    <dimen name="playback_album_art_height">156dp</dimen>
+    <dimen name="playback_album_art_width">156dp</dimen>
 
     <!-- Tab height -->
-    <dimen name="browse_tab_height">100dp</dimen>
+    <dimen name="browse_tab_height">76dp</dimen>
     <!-- Tab max width -->
     <dimen name="browse_tab_width">92dp</dimen>
+    <!-- Browse playback controls size -->
+    <dimen name="browse_playback_controls_height">192dp</dimen>
 </resources>

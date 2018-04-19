@@ -21,19 +21,19 @@
         android:id="@+id/icon"
         android:layout_width="@dimen/car_primary_icon_size"
         android:layout_height="@dimen/car_primary_icon_size"
+        android:layout_marginBottom="@dimen/car_padding_0"
         android:scaleType="fitCenter"
         android:layout_gravity="center_horizontal"
-        android:tint="@color/car_tint_inverse"
-        android:layout_marginTop="@dimen/car_padding_2"/>
+        android:tint="@color/car_tint_inverse"/>
 
     <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="@dimen/car_padding_1"
         android:maxLines="1"
         android:ellipsize="end"
+        android:includeFontPadding="false"
         android:textAppearance="@style/TextAppearance.Car.Body5.Light"/>
 
 </merge>
