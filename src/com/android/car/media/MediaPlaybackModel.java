@@ -299,6 +299,11 @@ public class MediaPlaybackModel {
                     mController.unregisterCallback(mMediaControllerCallback);
                     mController = null;
                 }
+
+                final ComponentName currentName = mCurrentComponentName;
+                notifyListeners((listener) -> listener.onMediaAppChanged(currentName, name));
+                mCurrentComponentName = name;
+
                 mBrowser.connect();
 
                 // reset the colors and views if we switch to another app.
@@ -306,10 +311,6 @@ public class MediaPlaybackModel {
                 mPrimaryColor = manager.getMediaClientPrimaryColor();
                 mAccentColor = manager.getMediaClientAccentColor();
                 mPrimaryColorDark = manager.getMediaClientPrimaryColorDark();
-
-                final ComponentName currentName = mCurrentComponentName;
-                notifyListeners((listener) -> listener.onMediaAppChanged(currentName, name));
-                mCurrentComponentName = name;
             });
         }
 

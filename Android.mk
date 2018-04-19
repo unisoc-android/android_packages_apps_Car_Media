@@ -40,6 +40,7 @@ LOCAL_DEX_PREOPT := false
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     android-support-car \
     android-support-constraint-layout \
+    android-support-design-widget \
     car-apps-common \
     car-media-common
 
