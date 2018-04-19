@@ -25,16 +25,17 @@
         android:minSdkVersion="24"
         android:targetSdkVersion='24'/>
 
-    <application android:label="CarMediaApp"
+    <application
+        android:label="CarMediaApp"
         android:icon="@drawable/ic_music">
 
         <meta-data
             android:name="android.car.application"
             android:resource="@xml/automotive_app_desc" />
 
-        <activity android:name=".MediaActivity"
+        <activity
+            android:name=".MediaActivity"
             android:theme="@style/MediaActivityTheme"
-            android:label="CarMediaApp"
             android:resizeableActivity="true"
             android:launchMode="singleTop">
             <intent-filter>
