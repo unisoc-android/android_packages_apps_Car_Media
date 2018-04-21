@@ -18,14 +18,15 @@ package com.android.car.media.util.widgets;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.media.session.PlaybackState;
-import android.support.annotation.IntDef;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.ImageView;
-import com.android.car.media.R;
+
+import androidx.annotation.IntDef;
 
 import com.android.car.apps.common.ColorChecker;
 import com.android.car.apps.common.FabDrawable;
+import com.android.car.media.R;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
