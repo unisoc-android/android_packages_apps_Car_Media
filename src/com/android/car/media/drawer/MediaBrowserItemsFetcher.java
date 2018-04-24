@@ -69,7 +69,12 @@ class MediaBrowserItemsFetcher implements MediaItemsFetcher {
     public void start(ItemsUpdatedCallback callback) {
         mCallback = callback;
         updateQueueAvailability();
-        mMediaPlaybackModel.getMediaBrowser().subscribe(mMediaId, mSubscriptionCallback);
+        if (mMediaPlaybackModel.isConnected()) {
+            mMediaPlaybackModel.getMediaBrowser().subscribe(mMediaId, mSubscriptionCallback);
+        } else {
+            mItems.clear();
+            callback.onItemsUpdated();
+        }
         mMediaPlaybackModel.addListener(mModelListener);
     }
 
@@ -82,6 +87,12 @@ class MediaBrowserItemsFetcher implements MediaItemsFetcher {
         @Override
         public void onSessionDestroyed(CharSequence destroyedMediaClientName) {
             updateQueueAvailability();
+        }
+        @Override
+        public void onMediaConnectionSuspended() {
+            if (mCallback != null) {
+                mCallback.onItemsUpdated();
+            }
         }
     };
 
@@ -96,7 +107,6 @@ class MediaBrowserItemsFetcher implements MediaItemsFetcher {
 
             @Override
             public void onError(String parentId) {
-                Log.e(TAG, "Error loading children of: " + mMediaId);
                 mItems.clear();
                 mCallback.onItemsUpdated();
             }

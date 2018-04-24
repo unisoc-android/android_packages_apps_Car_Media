@@ -72,16 +72,15 @@ class MediaDrawerAdapter extends CarDrawerAdapter {
      */
     void setFetcherAndInvoke(MediaItemsFetcher fetcher) {
         setFetcher(fetcher);
-        mCurrentFetcher.start(() -> {
-            if (mFetchCallback != null) {
-                mFetchCallback.onFetchEnd();
-            }
-            notifyDataSetChanged();
-        });
 
         if (mFetchCallback != null) {
             mFetchCallback.onFetchStart();
         }
+
+        mCurrentFetcher.start(() -> {
+            closeFetch();
+            notifyDataSetChanged();
+        });
     }
 
     void setFetcher(MediaItemsFetcher fetcher) {
@@ -89,6 +88,7 @@ class MediaDrawerAdapter extends CarDrawerAdapter {
             mCurrentFetcher.cleanup();
         }
         mCurrentFetcher = fetcher;
+        notifyDataSetChanged();
     }
 
     @Override
@@ -124,8 +124,16 @@ class MediaDrawerAdapter extends CarDrawerAdapter {
         if (mCurrentFetcher != null) {
             mCurrentFetcher.cleanup();
             mCurrentFetcher = null;
+            notifyDataSetChanged();
         }
-        mFetchCallback = null;
+        closeFetch();
+    }
+
+    private void closeFetch() {
+        if (mFetchCallback != null) {
+            mFetchCallback.onFetchEnd();
+            mFetchCallback = null;
+        }
     }
 
     public void scrollToCurrent() {

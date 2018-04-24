@@ -33,6 +33,8 @@
     <dimen name="controls_spacing_inner">16dp</dimen>
     <dimen name="controls_spacing_outer">81dp</dimen>
 
+    <!-- Playback seekbar height -->
+    <dimen name="playback_seekbar_height">8dp</dimen>
     <!-- Height of the gradient scrim over the background image -->
     <dimen name="playback_scrim_transition_height">256dp</dimen>
     <!-- Image size used to generate the background -->
@@ -45,4 +47,8 @@
     <dimen name="playback_album_art_height">190dp</dimen>
     <dimen name="playback_album_art_width">200dp</dimen>
 
+    <!-- Tab height -->
+    <dimen name="browse_tab_height">100dp</dimen>
+    <!-- Tab max width -->
+    <dimen name="browse_tab_width">92dp</dimen>
 </resources>
