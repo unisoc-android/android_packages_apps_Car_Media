@@ -151,6 +151,12 @@ public class PlaybackFragment extends Fragment {
         mCurrentMetadata = null;
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mPlaybackControls.setModel(null);
+    }
+
     private void updateState() {
         mQueueAdapter.refresh();
     }

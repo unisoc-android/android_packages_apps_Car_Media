@@ -67,7 +67,7 @@
         app:layout_constraintTop_toBottomOf="@+id/metadata_container"
         app:layout_constraintBottom_toTopOf="@+id/playback_controls"/>
 
-    <com.android.car.media.common.PlaybackControls
+    <com.android.car.media.common.PlaybackControlsActionBar
         android:id="@+id/playback_controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
