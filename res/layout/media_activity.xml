@@ -46,6 +46,7 @@
         android:id="@+id/tabs"
         android:layout_width="match_parent"
         android:layout_height="@dimen/browse_tab_height"
+        android:layout_marginTop="@dimen/car_padding_4"
         app:tabIndicatorHeight="0dp"
         app:tabGravity="fill"
         app:tabMode="fixed"
@@ -57,7 +58,34 @@
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="@dimen/car_padding_4"
         app:layout_constraintTop_toBottomOf="@+id/tabs"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toTopOf="@+id/browse_controls_container"/>
 
+    <LinearLayout
+        android:id="@+id/browse_controls_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/car_padding_4"
+        android:background="@color/browse_playback_bg"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.android.car.media.common.PlaybackControls
+            android:id="@+id/controls"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:layout_marginRight="@dimen/car_padding_4"
+            app:columns="3"/>
+
+        <com.android.car.media.widgets.MetadataView
+            android:id="@+id/metadata"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            app:style="compact"/>
+
+    </LinearLayout>
 </android.support.constraint.ConstraintLayout>

@@ -22,31 +22,47 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.v4.widget.Space
-        android:id="@+id/app_bar_space"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/car_app_bar_height"
-        app:layout_constraintTop_toTopOf="parent"/>
-
-    <FrameLayout
+    <LinearLayout
         android:id="@+id/metadata_container"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fitsSystemWindows="true"
+        android:paddingTop="@dimen/car_padding_4"
+        android:paddingBottom="@dimen/car_padding_4"
         android:layout_marginLeft="@dimen/car_margin"
         android:layout_marginRight="@dimen/car_margin"
-        app:layout_constraintTop_toBottomOf="@+id/app_bar_space">
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <include layout="@layout/view_metadata"/>
+        <ImageView
+            android:id="@+id/album_art"
+            android:contentDescription="@string/album_art"
+            android:layout_marginStart="@dimen/car_keyline_1"
+            android:layout_marginEnd="@dimen/car_keyline_1"
+            android:layout_width="@dimen/playback_album_art_height"
+            android:layout_height="@dimen/playback_album_art_width"
+            android:scaleType="centerCrop"
+            android:transitionName="@string/album_art"/>
 
-    </FrameLayout>
+        <com.android.car.media.widgets.MetadataView
+            android:id="@+id/metadata"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/car_keyline_1"
+            android:layout_weight="1"
+            android:focusable="false"
+            app:style="normal"/>
+
+    </LinearLayout>
 
     <androidx.car.widget.PagedListView
         android:id="@+id/queue_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginBottom="@dimen/car_padding_4"
-        app:showPagedListViewDivider="false"
+        app:listDividerColor="@color/car_list_divider_inverse"
+        app:dividerStartMargin="@dimen/car_keyline_1"
+        app:dividerEndMargin="@dimen/car_keyline_1"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:layout_constraintTop_toBottomOf="@+id/metadata_container"
         app:layout_constraintBottom_toTopOf="@+id/playback_controls"/>

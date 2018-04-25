@@ -17,33 +17,22 @@
 package com.android.car.media;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.PorterDuff;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.SeekBar;
-import android.widget.TextView;
 
-import com.android.car.media.browse.BrowseAdapter;
-import com.android.car.media.browse.ContentForwardStrategy;
-import com.android.car.media.common.GridSpacingItemDecoration;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.MediaSource;
 import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.PlaybackModel;
+import com.android.car.media.widgets.MetadataView;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -66,10 +55,7 @@ public class PlaybackFragment extends Fragment {
     private PlaybackModel mModel;
     private PlaybackControls mPlaybackControls;
     private ImageView mAlbumArt;
-    private TextView mTitle;
-    private TextView mTime;
-    private TextView mSubtitle;
-    private SeekBar mSeekbar;
+    private MetadataView mMetadataView;
     private PagedListView mQueueList;
     private QueueItemsAdapter mQueueAdapter;
     private MediaItemMetadata mCurrentMetadata;
@@ -138,10 +124,7 @@ public class PlaybackFragment extends Fragment {
         ViewGroup playbackContainer = view.findViewById(R.id.playback_container);
         mPlaybackControls.setAnimationViewGroup(playbackContainer);
         mAlbumArt = view.findViewById(R.id.album_art);
-        mTitle = view.findViewById(R.id.title);
-        mSubtitle = view.findViewById(R.id.subtitle);
-        mSeekbar = view.findViewById(R.id.seek_bar);
-        mTime = view.findViewById(R.id.time);
+        mMetadataView = view.findViewById(R.id.metadata);
         mQueueList = view.findViewById(R.id.queue_list);
         RecyclerView recyclerView = mQueueList.getRecyclerView();
         recyclerView.setVerticalFadingEdgeEnabled(true);
@@ -157,24 +140,18 @@ public class PlaybackFragment extends Fragment {
     public void onStart() {
         super.onStart();
         mModel.registerObserver(mPlaybackObserver);
+        mMetadataView.setModel(mModel);
     }
 
     @Override
     public void onStop() {
         super.onStop();
         mModel.unregisterObserver(mPlaybackObserver);
+        mMetadataView.setModel(null);
         mCurrentMetadata = null;
     }
 
     private void updateState() {
-        updateProgress();
-
-        if (mModel.isPlaying()) {
-            mSeekbar.post(mSeekBarRunnable);
-        } else {
-            mSeekbar.removeCallbacks(mSeekBarRunnable);
-        }
-
         mQueueAdapter.refresh();
     }
 
@@ -184,8 +161,6 @@ public class PlaybackFragment extends Fragment {
             return;
         }
         mCurrentMetadata = metadata;
-        mTitle.setText(metadata != null ? metadata.getTitle() : null);
-        mSubtitle.setText(metadata != null ? metadata.getSubtitle() : null);
         MediaItemMetadata.updateImageView(getContext(), metadata, mAlbumArt, 0);
     }
 
@@ -193,34 +168,7 @@ public class PlaybackFragment extends Fragment {
         int defaultColor = getResources().getColor(android.R.color.background_dark, null);
         MediaSource mediaSource = mModel.getMediaSource();
         int color = mediaSource == null ? defaultColor : mediaSource.getAccentColor(defaultColor);
-        mSeekbar.getProgressDrawable().setColorFilter(color, PorterDuff.Mode.SRC_IN);
-    }
-
-    private static final long SEEK_BAR_UPDATE_TIME_INTERVAL_MS = 500;
-
-    private final Runnable mSeekBarRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (!mModel.isPlaying()) {
-                return;
-            }
-            updateProgress();
-            mSeekbar.postDelayed(this, SEEK_BAR_UPDATE_TIME_INTERVAL_MS);
-
-        }
-    };
-
-    private void updateProgress() {
-        long maxProgress = mModel.getMaxProgress();
-        int visibility = maxProgress > 0 ? View.VISIBLE : View.INVISIBLE;
-        String time = String.format("%s / %s",
-                TIME_FORMAT.format(new Date(mModel.getProgress())),
-                TIME_FORMAT.format(new Date(maxProgress)));
-        mTime.setVisibility(visibility);
-        mTime.setText(time);
-        mSeekbar.setVisibility(visibility);
-        mSeekbar.setMax((int) mModel.getMaxProgress());
-        mSeekbar.setProgress((int) mModel.getProgress());
+        // TODO: Update queue color
     }
 
     private void onQueueItemClicked(MediaItemMetadata item) {
