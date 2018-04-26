@@ -72,7 +72,7 @@
         android:gravity="center_vertical"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <com.android.car.media.common.PlaybackControls
+        <com.android.car.media.common.PlaybackControlsActionBar
             android:id="@+id/controls"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
