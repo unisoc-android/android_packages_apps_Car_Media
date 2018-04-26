@@ -14,19 +14,12 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<resources>
-    <declare-styleable name="MetadataView">
-        <!-- Style of media item metadata view -->
-        <attr name="style" format="enum">
-            <!-- Compact version (to be included in the bottom bar during browsing -->
-            <enum name="compact" value="0"/>
-            <!-- Normal version (to be included in the playback screen -->
-            <enum name="normal" value="1"/>
-        </attr>
-    </declare-styleable>
-
-    <declare-styleable name="AppBarView">
-        <!-- Maximum number of tabs to show on the app bar -->
-        <attr name="max_tabs" format="integer"/>
-    </declare-styleable>
-</resources>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="24dp"
+        android:height="24dp"
+        android:viewportWidth="24.0"
+        android:viewportHeight="24.0">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M7,10l5,5 5,-5z"/>
+</vector>

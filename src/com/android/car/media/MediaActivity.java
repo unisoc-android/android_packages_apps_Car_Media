@@ -19,7 +19,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.design.widget.TabLayout;
 import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -34,7 +33,7 @@ import com.android.car.media.common.MediaSource;
 import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.PlaybackModel;
 import com.android.car.media.drawer.MediaDrawerController;
-import com.android.car.media.widgets.MediaItemTabView;
+import com.android.car.media.widgets.AppBarView;
 import com.android.car.media.widgets.MetadataView;
 
 import java.util.ArrayList;
@@ -68,15 +67,14 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     private PlaybackModel mPlaybackModel;
 
     /** Layout views */
-    private TabLayout mTabLayout;
+    private AppBarView mAppBarView;
     private CrossfadeImageView mAlbumBackground;
     private PlaybackFragment mPlaybackFragment;
-    private AppBarLayout mAppBarLayout;
+    private AppBarLayout mDrawerBarLayout;
     private View mBrowseScrim;
     private PlaybackControls mPlaybackControls;
     private MetadataView mMetadataView;
     private ViewGroup mBrowseControlsContainer;
-
 
     /** Current state */
     private MediaItemMetadata mCurrentMetadata;
@@ -109,27 +107,30 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
                     updateMetadata();
                 }
             };
-    private TabLayout.OnTabSelectedListener mTabSelectedListener =
-            new TabLayout.OnTabSelectedListener() {
+    private AppBarView.AppBarListener mAppBarListener = new AppBarView.AppBarListener() {
         @Override
-        public void onTabSelected(TabLayout.Tab tab) {
-            Log.i(TAG, "onTabSelected: " + tab.getTag());
+        public void onTabSelected(MediaItemMetadata item) {
             mMode = Mode.BROWSING;
-            updateBrowseFragment((MediaItemMetadata) tab.getTag());
+            updateBrowseFragment(item);
             updateMetadata();
         }
 
         @Override
-        public void onTabUnselected(TabLayout.Tab tab) {
-            // Nothing to do
+        public void onBack() {
+            if (mCurrentFragment != null && mCurrentFragment instanceof BrowseFragment) {
+                BrowseFragment fragment = (BrowseFragment) mCurrentFragment;
+                fragment.navigateBack();
+            }
         }
 
         @Override
-        public void onTabReselected(TabLayout.Tab tab) {
-            Log.i(TAG, "onTabReselected: " + tab.getTag());
-            mMode = Mode.BROWSING;
-            updateBrowseFragment((MediaItemMetadata) tab.getTag());
-            updateMetadata();
+        public void onCollapse() {
+            switchToMode(Mode.BROWSING);
+        }
+
+        @Override
+        public void onAppSelection() {
+            // TODO(b/78602199): Implement app selection logic
         }
     };
 
@@ -152,12 +153,15 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
                 .getBoolean(R.bool.force_browse_tabs);
         mDrawerController = new MediaDrawerController(this, getDrawerController());
         getDrawerController().setRootAdapter(getRootAdapter());
-        mTabLayout = findViewById(R.id.tabs);
-        mTabLayout.addOnTabSelectedListener(mTabSelectedListener);
+        mAppBarView = findViewById(R.id.app_bar);
+        mAppBarView.setListener(mAppBarListener);
+        // TODO(b/78602199): Implement actual app selection logic
+        mAppBarView.setAppSelection(true);
         mPlaybackFragment = new PlaybackFragment();
         mPlaybackModel = new PlaybackModel(this);
         mMaxBrowserTabs = getResources().getInteger(R.integer.max_browse_tabs);
-        mAppBarLayout = findViewById(androidx.car.R.id.appbar);
+        mDrawerBarLayout = findViewById(androidx.car.R.id.appbar);
+        mDrawerBarLayout.setVisibility(View.GONE);
         mAlbumBackground = findViewById(R.id.media_background);
         mBrowseScrim = findViewById(R.id.browse_scrim);
         mPlaybackControls = findViewById(R.id.controls);
@@ -266,6 +270,12 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
                         mMediaSource.getPackageName());
                 mMediaSource.subscribe(mMediaSourceObserver);
             }
+            // TODO: Show rounded icon
+            mAppBarView.setAppIcon(null);
+            mAppBarView.setTitle(mMediaSource.getName());
+        } else {
+            mAppBarView.setAppIcon(null);
+            mAppBarView.setTitle(null);
         }
     }
 
@@ -303,33 +313,19 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
                 .filter(item -> item.isPlayable())
                 .collect(Collectors.toList());
 
-        Log.i(TAG, "Updating top level: " + browsableTopLevel.size() + " browsable items, "
-                + playableTopLevel.size() + " playable items");
-        mTabLayout.removeAllTabs();
         // Show tabs if:
         // - We have some browesable items and we are forced to show them as tabs,
         // - or we have only browsable items on the top level and they are not too many.
         if ((!browsableTopLevel.isEmpty() && mForceBrowseTabs)
                 || (playableTopLevel.isEmpty() && !browsableTopLevel.isEmpty()
                 && browsableTopLevel.size() <= mMaxBrowserTabs)) {
-            mAppBarLayout.setVisibility(View.GONE);
-            mTabLayout.setVisibility(View.VISIBLE);
-            // Temporarily removing the listener, to prevent initial tab selection event.
-            mTabLayout.removeOnTabSelectedListener(mTabSelectedListener);
-            int count = 0;
-            for (MediaItemMetadata item : browsableTopLevel) {
-                MediaItemTabView tab = new MediaItemTabView(this, item);
-                mTabLayout.addTab(mTabLayout.newTab().setCustomView(tab).setTag(item));
-                count++;
-                if (count >= mMaxBrowserTabs) {
-                    break;
-                }
-            }
-            mTabLayout.addOnTabSelectedListener(mTabSelectedListener);
+            mDrawerBarLayout.setVisibility(View.GONE);
+            mAppBarView.setVisibility(View.VISIBLE);
+            mAppBarView.setItems(browsableTopLevel);
             updateBrowseFragment(browsableTopLevel.get(0));
         } else {
-            mAppBarLayout.setVisibility(View.VISIBLE);
-            mTabLayout.setVisibility(View.INVISIBLE);
+            mDrawerBarLayout.setVisibility(View.VISIBLE);
+            mAppBarView.setVisibility(View.INVISIBLE);
             updateBrowseFragment(null);
         }
     }
