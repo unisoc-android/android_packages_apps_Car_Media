@@ -15,36 +15,41 @@
   limitations under the License.
 -->
 <merge
-    xmlns:android="http://schemas.android.com/apk/res/android" >
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/car_padding_1"
-        android:textAppearance="@style/TextAppearance.Car.Body1.Light"
-        android:maxLines="1"
         android:ellipsize="end"
-        android:includeFontPadding="false"/>
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textAppearance="@style/TextAppearance.Car.Body1.Light"
+        tools:text="Body 1 Header"/>
     <TextView
         android:id="@+id/subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/title"
         android:layout_marginBottom="@dimen/car_padding_1"
-        android:textAppearance="@style/TextAppearance.Car.Body2.Light"
-        android:maxLines="1"
         android:ellipsize="end"
-        android:includeFontPadding="false"/>
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textAppearance="@style/TextAppearance.Car.Body2.Light"
+        tools:text="Body 2"/>
     <SeekBar
         android:id="@+id/seek_bar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/playback_seekbar_height"
         android:layout_below="@+id/subtitle"
-        android:paddingStart="0dp"
         android:paddingEnd="0dp"
-        android:visibility="invisible"
+        android:paddingStart="0dp"
         android:progressDrawable="@drawable/seekbar_background"
-        android:thumb="@drawable/seekbar_thumb"/>
+        android:thumb="@drawable/seekbar_thumb"
+        android:visibility="invisible"
+        tools:visibility="visible"
+        tools:progress="70"/>
 
 </merge>
