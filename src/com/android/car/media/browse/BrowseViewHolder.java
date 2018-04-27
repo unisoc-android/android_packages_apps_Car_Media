@@ -59,6 +59,9 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
             mSubtitle.setText(data.mMediaItem != null
                     ? data.mMediaItem.getSubtitle()
                     : null);
+            mSubtitle.setVisibility(data.mMediaItem != null
+                    ? View.VISIBLE
+                    : View.GONE);
         }
         if (mAlbumArt != null) {
             MediaItemMetadata.updateImageView(context, data.mMediaItem, mAlbumArt, 0);
