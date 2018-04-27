@@ -26,27 +26,15 @@
         android:id="@+id/media_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/media_template_background"
+        android:background="@android:color/black"
         android:scaleType="centerCrop"/>
 
     <View
         android:id="@+id/media_scrim"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/media_scrim_background"
+        android:background="@drawable/browse_gradient_scrim"
         android:alpha="@dimen/media_scrim_darkened_alpha"/>
-
-    <View
-        android:id="@+id/browse_scrim"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/browse_gradient_scrim"/>
-
-    <com.android.car.media.widgets.AppBarView
-        android:id="@+id/app_bar"
-        android:layout_height="@dimen/appbar_height"
-        android:layout_width="match_parent"
-        app:layout_constraintTop_toTopOf="parent"/>
 
     <FrameLayout
         android:id="@+id/fragment_container"
@@ -81,4 +69,16 @@
             android:layout_weight="0.5"/>
 
     </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/app_selection_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.android.car.media.widgets.AppBarView
+        android:id="@+id/app_bar"
+        android:layout_height="@dimen/appbar_height"
+        android:layout_width="match_parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
 </android.support.constraint.ConstraintLayout>

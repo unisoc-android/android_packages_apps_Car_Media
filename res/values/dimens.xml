@@ -54,6 +54,10 @@
     <dimen name="browse_tab_width">134dp</dimen>
     <!-- Browse playback controls size -->
     <dimen name="browse_playback_controls_height">192dp</dimen>
+    <!-- Selected tab alpha -->
+    <item name="browse_tab_alpha_selected" format="float" type="dimen">1</item>
+    <!-- Unselected tab alpha -->
+    <item name="browse_tab_alpha_unselected" format="float" type="dimen">0.5</item>
 
     <!-- App bar -->
     <dimen name="appbar_height">112dp</dimen>

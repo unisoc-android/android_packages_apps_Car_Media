@@ -44,7 +44,9 @@ import com.android.car.media.common.MediaSource;
 import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.PlaybackModel;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A {@link Fragment} that implements both the playback and the content forward browsing experience.
@@ -62,6 +64,7 @@ public class PlaybackFragment extends Fragment {
     private ConstraintLayout mRootView;
 
     private boolean mQueueIsVisible;
+    private List<MediaItemMetadata> mQueueItems = new ArrayList<>();
     private PlaybackModel.PlaybackObserver mPlaybackObserver =
             new PlaybackModel.PlaybackObserver() {
                 @Override
@@ -82,30 +85,21 @@ public class PlaybackFragment extends Fragment {
     private ListItemProvider mQueueItemsProvider = new ListItemProvider() {
         @Override
         public ListItem get(int position) {
-            if (!mModel.hasQueue()) {
+            if (position < 0 || position >= mQueueItems.size()) {
                 return null;
             }
-            List<MediaItemMetadata> queue = mModel.getQueue();
-            if (position < 0 || position >= queue.size()) {
-                return null;
-            }
-            MediaItemMetadata item = queue.get(position);
+            MediaItemMetadata item = mQueueItems.get(position);
             TextListItem textListItem = new TextListItem(getContext());
-            textListItem.setTitle(item.getTitle().toString());
-            textListItem.setBody(item.getSubtitle().toString());
+            textListItem.setTitle(item.getTitle() != null ? item.getTitle().toString() : null);
+            textListItem.setBody(item.getSubtitle() != null ? item.getSubtitle().toString() : null);
             textListItem.setOnClickListener(v -> onQueueItemClicked(item));
             return textListItem;
         }
-
         @Override
         public int size() {
-            if (!mModel.hasQueue()) {
-                return 0;
-            }
-            return mModel.getQueue().size();
+            return mQueueItems.size();
         }
     };
-
     private static class QueueItemsAdapter extends ListItemAdapter {
         QueueItemsAdapter(Context context, ListItemProvider itemProvider) {
             super(context, itemProvider, BackgroundStyle.SOLID);
@@ -199,6 +193,9 @@ public class PlaybackFragment extends Fragment {
     }
 
     private void updateState() {
+        mQueueItems = mModel.getQueue().stream()
+                .filter(item -> item.getTitle() != null)
+                .collect(Collectors.toList());
         mQueueAdapter.refresh();
     }
 
