@@ -39,6 +39,9 @@ public class MetadataController {
     @Nullable
     private MediaItemMetadata mCurrentMetadata;
 
+    private boolean mUpdatesPaused;
+    private boolean mNeedsMetadataUpdate;
+
     private final PlaybackModel.PlaybackObserver mPlaybackObserver =
             new PlaybackModel.PlaybackObserver() {
                 @Override
@@ -95,14 +98,19 @@ public class MetadataController {
     private void updateState() {
         updateProgress();
 
+        mSeekBar.removeCallbacks(mSeekBarRunnable);
         if (mModel != null && mModel.isPlaying()) {
             mSeekBar.post(mSeekBarRunnable);
-        } else {
-            mSeekBar.removeCallbacks(mSeekBarRunnable);
         }
     }
 
     private void updateMetadata() {
+        if(mUpdatesPaused) {
+            mNeedsMetadataUpdate = true;
+            return;
+        }
+
+        mNeedsMetadataUpdate = false;
         MediaItemMetadata metadata = mModel != null ? mModel.getMetadata() : null;
         if (Objects.equals(mCurrentMetadata, metadata)) {
             return;
@@ -150,4 +158,14 @@ public class MetadataController {
     }
 
 
+    public void pauseUpdates() {
+        mUpdatesPaused = true;
+    }
+
+    public void resumeUpdates() {
+        mUpdatesPaused = false;
+        if (mNeedsMetadataUpdate) {
+            updateMetadata();
+        }
+    }
 }
