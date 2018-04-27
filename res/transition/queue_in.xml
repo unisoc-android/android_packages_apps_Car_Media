@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<transitionSet xmlns:android="http://schemas.android.com/apk/res/android"
+               android:transitionOrdering="sequential">
+    <arcMotion/>
+    <fade android:fadingMode="fade_out"/>
+    <transitionSet android:transitionOrdering="together">
+        <changeBounds>
+            <targets>
+                <target android:targetId="@+id/album_art"/>
+            </targets>
+        </changeBounds>
+        <changeBounds android:startDelay="50">
+            <targets>
+                <target android:excludeId="@+id/album_art"/>
+            </targets>
+        </changeBounds>
+    </transitionSet>
+    <fade android:fadingMode="fade_in"/>
+</transitionSet>

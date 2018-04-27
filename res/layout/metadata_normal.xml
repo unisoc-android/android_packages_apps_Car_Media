@@ -14,47 +14,67 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<merge
-    xmlns:android="http://schemas.android.com/apk/res/android" >
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/metadata_subcontainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:focusable="false">
 
     <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/car_padding_1"
-        android:textAppearance="@style/TextAppearance.Car.Body1.Light"
-        android:maxLines="@integer/playback_title_text_max_lines"
         android:ellipsize="end"
-        android:includeFontPadding="false"/>
+        android:includeFontPadding="false"
+        android:maxLines="@integer/playback_title_text_max_lines"
+        android:textAppearance="@style/TextAppearance.Car.Body1.Light"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Body 1 Header"/>
     <TextView
         android:id="@+id/subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/title"
-        android:layout_marginBottom="@dimen/car_padding_4"
-        android:textAppearance="@style/TextAppearance.Car.Body2.Light"
-        android:maxLines="@integer/playback_subtitle_text_max_lines"
+        android:layout_marginBottom="@dimen/car_padding_2"
+        android:layout_marginTop="@dimen/car_padding_1"
         android:ellipsize="end"
-        android:includeFontPadding="false"/>
+        android:includeFontPadding="false"
+        android:maxLines="@integer/playback_subtitle_text_max_lines"
+        android:textAppearance="@style/TextAppearance.Car.Body2.Light"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        tools:text="Body 2"/>
     <TextView
         android:id="@+id/time"
-        android:layout_width="wrap_content"
+        android:layout_width="160dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_below="@+id/title"
-        android:textAppearance="@style/TextAppearance.Car.Body2.Light"
-        android:maxLines="1"
+        android:layout_marginTop="@dimen/car_padding_1"
         android:ellipsize="end"
-        android:includeFontPadding="false"/>
+        android:includeFontPadding="false"
+        android:maxLines="@integer/playback_subtitle_text_max_lines"
+        android:gravity="end"
+        android:textAppearance="@style/TextAppearance.Car.Body2.Light"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        tools:text="3:27 / 4:03"/>
     <SeekBar
         android:id="@+id/seek_bar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/playback_seekbar_height"
-        android:layout_below="@+id/subtitle"
-        android:paddingStart="0dp"
+        android:layout_marginTop="@dimen/car_padding_2"
+        android:background="@color/car_grey_900"
         android:paddingEnd="0dp"
-        android:visibility="invisible"
+        android:paddingStart="0dp"
         android:progressDrawable="@drawable/seekbar_background"
-        android:thumb="@drawable/seekbar_thumb"/>
+        android:thumb="@drawable/seekbar_thumb"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/subtitle"
+        tools:progress="70"
+        tools:visibility="visible"/>
 
-</merge>
+</android.support.constraint.ConstraintLayout>
