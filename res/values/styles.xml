@@ -25,4 +25,14 @@
         <item name="android:textSize">@dimen/car_body2_size</item>
         <item name="android:textColor">@color/no_content_text_color</item>
     </style>
+
+    <style name="TextAppearance.Car.Body5">
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">@dimen/car_body5_size</item>
+        <item name="android:textColor">@color/car_body5</item>
+    </style>
+
+    <style name="TextAppearance.Car.Body5.Light">
+        <item name="android:textColor">@color/car_body5_light</item>
+    </style>
 </resources>

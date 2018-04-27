@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright 2016, The Android Open Source Project
+  Copyright 2018, The Android Open Source Project
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -14,13 +14,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <item android:id="@android:id/background"
-        android:drawable="@color/progress_bar_background" />
-
-    <item android:id="@android:id/progress">
-        <clip android:drawable="@color/progress_bar_highlight" />
-    </item>
-
-</layer-list>
+<resources>
+    <bool name="forward_content_browse_enabled">true</bool>
+    <bool name="force_browse_tabs">true</bool>
+</resources>

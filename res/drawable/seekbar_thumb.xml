@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- Transparent thumb, used to leave a gap between the two segments of the progress bar -->
+    <solid android:color="@android:color/transparent"/>
+    <size
+        android:width="@dimen/playback_seekbar_thumb_width"
+        android:height="@dimen/playback_seekbar_height"/>
+</shape>

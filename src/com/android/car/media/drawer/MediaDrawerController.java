@@ -215,6 +215,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
                 @Nullable ComponentName newName) {
             // Only store MediaManager instance to a local variable when it is short lived.
             MediaManager mediaManager = MediaManager.getInstance(mContext);
+            mRootAdapter.cleanup();
             mRootAdapter.setTitle(mediaManager.getMediaClientName());
         }
 
