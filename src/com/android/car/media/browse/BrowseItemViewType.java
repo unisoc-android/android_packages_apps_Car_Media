@@ -23,15 +23,15 @@ import android.support.annotation.LayoutRes;
  */
 public enum BrowseItemViewType {
     /** A section header */
-    HEADER(com.android.car.media.common.R.layout.media_browse_header_item),
+    HEADER(com.android.car.media.R.layout.media_browse_header_item),
     /** A grid item including an image and a title */
-    GRID_ITEM(com.android.car.media.common.R.layout.media_browse_grid_item, 1),
+    GRID_ITEM(com.android.car.media.R.layout.media_browse_grid_item, 1),
     /** A list item including title and subtitle */
-    LIST_ITEM(com.android.car.media.common.R.layout.media_browse_list_item),
+    LIST_ITEM(com.android.car.media.R.layout.media_browse_list_item),
     /** An item in a panel of items (menu) */
-    PANEL_ITEM(com.android.car.media.common.R.layout.media_browse_panel_item),
+    PANEL_ITEM(com.android.car.media.R.layout.media_browse_panel_item),
     /** A footer that can be used to navigate to an expanded version of a section */
-    MORE_FOOTER(com.android.car.media.common.R.layout.media_browse_more_footer),
+    MORE_FOOTER(com.android.car.media.R.layout.media_browse_more_footer),
     ;
     private final @LayoutRes int mLayoutId;
     private final int mSpanSize;
