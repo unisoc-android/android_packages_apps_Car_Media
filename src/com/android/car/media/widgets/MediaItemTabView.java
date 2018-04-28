@@ -16,7 +16,10 @@
 
 package com.android.car.media.widgets;
 
+import android.annotation.NonNull;
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -29,22 +32,39 @@ import com.android.car.media.common.MediaItemMetadata;
  * A view representing a media item to be included in the tab bar at the top of the UI.
  */
 public class MediaItemTabView extends LinearLayout {
-    private TextView mTitleView;
-    private ImageView mImageView;
+    private final TextView mTitleView;
+    private final ImageView mImageView;
+    private final MediaItemMetadata mItem;
 
     /**
      * Creates a new tab for the given media item.
      */
-    public MediaItemTabView(Context context, MediaItemMetadata item) {
+    public MediaItemTabView(@NonNull Context context, @NonNull MediaItemMetadata item) {
         super(context);
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         inflater.inflate(R.layout.tab_view, this, true);
         setOrientation(LinearLayout.VERTICAL);
+        setFocusable(true);
+        setGravity(Gravity.CENTER);
 
+        int[] attrs = new int[]{android.R.attr.selectableItemBackground};
+        TypedArray typedArray = context.obtainStyledAttributes(attrs);
+        int backgroundResource = typedArray.getResourceId(0, 0);
+        setBackgroundResource(backgroundResource);
+
+        mItem = item;
         mImageView = findViewById(R.id.icon);
         MediaItemMetadata.updateImageView(context, item, mImageView, 0);
         mTitleView = findViewById(R.id.title);
         mTitleView.setText(item.getTitle());
+    }
+
+    /**
+     * Returns the item represented by this view
+     */
+    @NonNull
+    public MediaItemMetadata getItem() {
+        return mItem;
     }
 }
