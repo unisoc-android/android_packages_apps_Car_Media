@@ -39,10 +39,10 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
      */
     BrowseViewHolder(View itemView) {
         super(itemView);
-        mTitle = itemView.findViewById(com.android.car.media.common.R.id.title);
-        mSubtitle = itemView.findViewById(com.android.car.media.common.R.id.subtitle);
-        mAlbumArt = itemView.findViewById(com.android.car.media.common.R.id.thumbnail);
-        mContainer = itemView.findViewById(com.android.car.media.common.R.id.container);
+        mTitle = itemView.findViewById(com.android.car.media.R.id.title);
+        mSubtitle = itemView.findViewById(com.android.car.media.R.id.subtitle);
+        mAlbumArt = itemView.findViewById(com.android.car.media.R.id.thumbnail);
+        mContainer = itemView.findViewById(com.android.car.media.R.id.container);
     }
 
     /**
