@@ -71,6 +71,7 @@ public class PlaybackFragment extends Fragment {
     private PagedListView mQueueList;
     private QueueItemsAdapter mQueueAdapter;
     private MediaItemMetadata mCurrentMetadata;
+    private boolean mQueueIsVisible;
     private PlaybackModel.PlaybackObserver mPlaybackObserver = new PlaybackModel.PlaybackObserver() {
         @Override
         public void onPlaybackStateChanged() {
@@ -125,6 +126,13 @@ public class PlaybackFragment extends Fragment {
             this.notifyDataSetChanged();
         }
     }
+    private PlaybackControls.Listener mPlaybackControlsListener = new PlaybackControls.Listener() {
+        @Override
+        public void onToggleQueue() {
+            mQueueIsVisible = !mQueueIsVisible;
+            mPlaybackControls.setQueueVisible(mQueueIsVisible);
+        }
+    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
@@ -133,6 +141,7 @@ public class PlaybackFragment extends Fragment {
         mModel = new PlaybackModel(getContext());
         mPlaybackControls = view.findViewById(R.id.playback_controls);
         mPlaybackControls.setModel(mModel);
+        mPlaybackControls.setListener(mPlaybackControlsListener);
         ViewGroup playbackContainer = view.findViewById(R.id.playback_container);
         mPlaybackControls.setAnimationViewGroup(playbackContainer);
         mAlbumArt = view.findViewById(R.id.album_art);
