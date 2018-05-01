@@ -16,16 +16,23 @@
 
 package com.android.car.media;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.android.car.media.browse.BrowseAdapter;
 import com.android.car.media.browse.ContentForwardStrategy;
@@ -49,11 +56,17 @@ public class BrowseFragment extends Fragment {
     private static final String BROWSE_STACK_KEY = "browse_stack";
 
     private PagedListView mBrowseList;
+    private ProgressBar mProgressBar;
+    private ImageView mErrorIcon;
+    private TextView mErrorMessage;
     private MediaSource mMediaSource;
     private BrowseAdapter mBrowseAdapter;
     private String mMediaSourcePackageName;
     private MediaItemMetadata mTopMediaItem;
     private Callbacks mCallbacks;
+    private int mFadeDuration;
+    private int mProgressBarDelay;
+    private Handler mHandler = new Handler();
     private Stack<MediaItemMetadata> mBrowseStack = new Stack<>();
     private MediaSource.Observer mBrowseObserver = new MediaSource.Observer() {
         @Override
@@ -69,12 +82,27 @@ public class BrowseFragment extends Fragment {
     private BrowseAdapter.Observer mBrowseAdapterObserver = new BrowseAdapter.Observer() {
         @Override
         protected void onDirty() {
-            mBrowseAdapter.update();
-            if (mBrowseAdapter.getItemCount() > 0) {
-                mBrowseList.setVisibility(View.VISIBLE);
-            } else {
-                mBrowseList.setVisibility(View.GONE);
-                // TODO(b/77647430) implement intermediate states.
+            switch (mBrowseAdapter.getState()) {
+                case LOADING:
+                case IDLE:
+                    // Still loading... nothing to do.
+                    break;
+                case LOADED:
+                    stopLoadingIndicator();
+                    mBrowseAdapter.update();
+                    if (mBrowseAdapter.getItemCount() > 0) {
+                        showViewAnimated(mBrowseList);
+                    } else {
+                        mErrorMessage.setText(R.string.nothing_to_play);
+                        showViewAnimated(mErrorMessage);
+                    }
+                    break;
+                case ERROR:
+                    stopLoadingIndicator();
+                    mErrorMessage.setText(R.string.unknown_error);
+                    showViewAnimated(mErrorMessage);
+                    showViewAnimated(mErrorIcon);
+                    break;
             }
         }
 
@@ -175,7 +203,14 @@ public class BrowseFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_browse, container, false);
+        mProgressBar = view.findViewById(R.id.loading_spinner);
+        mProgressBarDelay = getContext().getResources()
+                .getInteger(R.integer.progress_indicator_delay);
         mBrowseList = view.findViewById(R.id.browse_list);
+        mErrorIcon = view.findViewById(R.id.error_icon);
+        mErrorMessage = view.findViewById(R.id.error_message);
+        mFadeDuration = getContext().getResources().getInteger(
+                R.integer.new_album_art_fade_in_duration);
         int numColumns = getContext().getResources().getInteger(R.integer.num_browse_columns);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), numColumns);
         RecyclerView recyclerView = mBrowseList.getRecyclerView();
@@ -206,6 +241,7 @@ public class BrowseFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        startLoadingIndicator();
         mMediaSource = mCallbacks.getMediaSource(mMediaSourcePackageName);
         if (mMediaSource != null) {
             mMediaSource.subscribe(mBrowseObserver);
@@ -215,9 +251,28 @@ public class BrowseFragment extends Fragment {
         }
     }
 
+    private Runnable mProgressIndicatorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            showViewAnimated(mProgressBar);
+        }
+    };
+
+    private void startLoadingIndicator() {
+        // Display the indicator after a certain time, to avoid flashing the indicator constantly,
+        // even when performance is acceptable.
+        mHandler.postDelayed(mProgressIndicatorRunnable, mProgressBarDelay);
+    }
+
+    private void stopLoadingIndicator() {
+        mHandler.removeCallbacks(mProgressIndicatorRunnable);
+        hideViewAnimated(mProgressBar);
+    }
+
     @Override
     public void onStop() {
         super.onStop();
+        stopLoadingIndicator();
         if (mMediaSource != null) {
             mMediaSource.unsubscribe(mBrowseObserver);
         }
@@ -239,8 +294,11 @@ public class BrowseFragment extends Fragment {
             mBrowseAdapter = null;
         }
         if (!success) {
-            mBrowseList.setVisibility(View.GONE);
-            // TODO(b/77647430) implement intermediate states.
+            hideViewAnimated(mBrowseList);
+            stopLoadingIndicator();
+            mErrorMessage.setText(R.string.cannot_connect_to_app);
+            showViewAnimated(mErrorIcon);
+            showViewAnimated(mErrorMessage);
             return;
         }
         mBrowseAdapter = new BrowseAdapter(getContext(), mMediaSource.getMediaBrowser(),
@@ -272,5 +330,26 @@ public class BrowseFragment extends Fragment {
         } else {
             return mBrowseStack.lastElement();
         }
+    }
+
+    private void hideViewAnimated(View view) {
+        view.animate()
+                .alpha(0f)
+                .setDuration(mFadeDuration)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        view.setVisibility(View.GONE);
+                    }
+                });
+    }
+
+    private void showViewAnimated(View view) {
+        view.setAlpha(0f);
+        view.setVisibility(View.VISIBLE);
+        view.animate()
+                .alpha(1f)
+                .setDuration(mFadeDuration)
+                .setListener(null);
     }
 }

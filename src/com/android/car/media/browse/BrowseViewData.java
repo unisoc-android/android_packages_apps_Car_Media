@@ -33,25 +33,11 @@ class BrowseViewData {
     /** View type associated with this item */
     @NonNull public final BrowseItemViewType mViewType;
     /** Current state of this item */
-    public final State mState;
+    public final BrowseAdapter.State mState;
     /** Text associated with this item */
     public final CharSequence mText;
     /** Click listener to set for this item */
     public final View.OnClickListener mOnClickListener;
-
-    /**
-     * Possible states of a view
-     */
-    public enum State {
-        /** Loading of this item hasn't started yet */
-        IDLE,
-        /** There is pending information before this item can be displayed */
-        LOADING,
-        /** It was not possible to load metadata for this item */
-        ERROR,
-        /** Metadata for this items has been correctly loaded */
-        LOADED
-    }
 
     /**
      * Creates a {@link BrowseViewData} for a particular {@link MediaItemMetadata}.
@@ -62,7 +48,7 @@ class BrowseViewData {
      * @param onClickListener optional {@link android.view.View.OnClickListener}
      */
     BrowseViewData(MediaItemMetadata mediaItem, @NonNull BrowseItemViewType viewType,
-            @NonNull State state, View.OnClickListener onClickListener) {
+            @NonNull BrowseAdapter.State state, View.OnClickListener onClickListener) {
         mMediaItem = mediaItem;
         mViewType = viewType;
         mState = state;

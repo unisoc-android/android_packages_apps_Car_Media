@@ -47,6 +47,7 @@ public class MediaItemTabView extends LinearLayout {
         setOrientation(LinearLayout.VERTICAL);
         setFocusable(true);
         setGravity(Gravity.CENTER);
+        setBackground(context.getDrawable(R.drawable.app_item_background));
 
         int[] attrs = new int[]{android.R.attr.selectableItemBackground};
         TypedArray typedArray = context.obtainStyledAttributes(attrs);
