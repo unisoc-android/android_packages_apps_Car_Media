@@ -66,7 +66,6 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/playback_seekbar_height"
         android:layout_marginTop="@dimen/car_padding_2"
-        android:background="@color/car_grey_900"
         android:paddingEnd="0dp"
         android:paddingStart="0dp"
         android:progressDrawable="@drawable/seekbar_background"

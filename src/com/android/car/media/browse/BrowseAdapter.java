@@ -64,7 +64,7 @@ import java.util.stream.Collectors;
  * <p>Consumers of this adapter should use {@link #registerObserver(Observer)} to receive updates.
  */
 public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
-    private static final String TAG = "MediaBrowseAdapter";
+    private static final String TAG = "BrowseAdapter";
     @NonNull
     private final Context mContext;
     private final MediaBrowser mMediaBrowser;
@@ -77,7 +77,21 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
     private List<MediaItemMetadata> mQueue;
     private CharSequence mQueueTitle;
     private int mMaxSpanSize = 1;
-    private BrowseViewData.State mState = BrowseViewData.State.IDLE;
+    private State mState = State.IDLE;
+
+    /**
+     * Possible states of the adapter
+     */
+    public enum State {
+        /** Loading of this item hasn't started yet */
+        IDLE,
+        /** There is pending information before this item can be displayed */
+        LOADING,
+        /** It was not possible to load metadata for this item */
+        ERROR,
+        /** Metadata for this items has been correctly loaded */
+        LOADED
+    }
 
     /**
      * An {@link BrowseAdapter} observer.
@@ -150,7 +164,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
          */
         final MediaItemMetadata mItem;
         /** Current loading state for this item */
-        BrowseViewData.State mState = BrowseViewData.State.LOADING;
+        State mState = State.LOADING;
         /** Playable children of the given item */
         List<MediaItemMetadata> mPlayableChildren = new ArrayList<>();
         /** Browsable children of the given item */
@@ -266,9 +280,9 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
     /**
      * @return the global loading state. Consumers can use this state to determine if more
      * information is still pending to arrive or not. This method will report
-     * {@link BrowseViewData.State#ERROR} only if the list of immediate children fails to load.
+     * {@link State#ERROR} only if the list of immediate children fails to load.
      */
-    public BrowseViewData.State getState() {
+    public State getState() {
         return mState;
     }
 
@@ -318,6 +332,8 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
         if (!state.mIsSubscribed && state.mItem.isBrowsable()) {
             mMediaBrowser.subscribe(state.mItem.getId(), mSubscriptionCallback);
             state.mIsSubscribed = true;
+        } else {
+            state.mState = State.LOADED;
         }
     }
 
@@ -381,7 +397,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
                 return;
             }
             itemState.setChildren(children);
-            itemState.mState = BrowseViewData.State.LOADED;
+            itemState.mState = State.LOADED;
         }
         updateGlobalState();
         notify(Observer::onDirty);
@@ -396,7 +412,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
 
     private void onLoadingError(String parentId) {
         if (parentId.equals(mParentMediaItemId)) {
-            mState = BrowseViewData.State.ERROR;
+            mState = State.ERROR;
         } else {
             MediaItemState state = mItemStates.get(parentId);
             if (state == null) {
@@ -404,20 +420,20 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
                 return;
             }
             state.setChildren(new ArrayList<>());
-            state.mState = BrowseViewData.State.ERROR;
+            state.mState = State.ERROR;
+            updateGlobalState();
         }
-        updateGlobalState();
         notify(Observer::onDirty);
     }
 
     private void updateGlobalState() {
         for (MediaItemState state: mItemStates.values()) {
-            if (state.mState == BrowseViewData.State.LOADING) {
-                mState = BrowseViewData.State.LOADING;
+            if (state.mState == State.LOADING) {
+                mState = State.LOADING;
                 return;
             }
         }
-        mState = BrowseViewData.State.LOADED;
+        mState = State.LOADED;
     }
 
     private DiffUtil.Callback createDiffUtil(List<BrowseViewData> oldList,
@@ -464,7 +480,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
     private class ItemsBuilder {
         private List<BrowseViewData> result = new ArrayList<>();
 
-        void addItem(MediaItemMetadata item, BrowseViewData.State state,
+        void addItem(MediaItemMetadata item, State state,
                 BrowseItemViewType viewType, Consumer<Observer> notification) {
             View.OnClickListener listener = notification != null ?
                     view -> BrowseAdapter.this.notify(notification) :
@@ -495,7 +511,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> {
 
         }
 
-        void addBrowseBlock(MediaItemMetadata header, BrowseViewData.State state,
+        void addBrowseBlock(MediaItemMetadata header, State state,
                 List<MediaItemMetadata> items, BrowseItemViewType viewType, int maxChildren,
                 boolean showHeader, boolean showMoreFooter) {
             if (showHeader) {

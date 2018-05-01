@@ -89,7 +89,7 @@ public interface ContentForwardStrategy {
 
         @Override
         public boolean shouldBeExpanded(MediaItemMetadata mediaItem) {
-            return true;
+            return false;
         }
 
         @Override
