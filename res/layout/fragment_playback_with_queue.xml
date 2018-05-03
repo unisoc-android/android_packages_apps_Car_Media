@@ -16,12 +16,11 @@
 -->
 <android.support.constraint.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/playback_container"
+    xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/playback_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.constraint.Guideline
+    <android.support.constraint..Guideline
         android:id="@+id/margin_start"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -36,7 +35,7 @@
         app:layout_constraintGuide_end="@dimen/car_margin"/>
 
     <include
-        layout="@layout/fragment_metadata"/>
+        layout="@layout/fragment_metadata_with_queue"/>
 
     <include
         layout="@layout/playback_controls"/>
