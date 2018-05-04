@@ -79,7 +79,7 @@ public interface ContentForwardStrategy {
     ContentForwardStrategy DEFAULT_STRATEGY = new ContentForwardStrategy() {
         @Override
         public boolean includeHeader(MediaItemMetadata mediaItem) {
-            return false;
+            return true;
         }
 
         @Override
@@ -89,7 +89,7 @@ public interface ContentForwardStrategy {
 
         @Override
         public boolean shouldBeExpanded(MediaItemMetadata mediaItem) {
-            return false;
+            return true;
         }
 
         @Override
@@ -104,7 +104,7 @@ public interface ContentForwardStrategy {
 
         @Override
         public boolean showMoreButton(MediaItemMetadata mediaItem) {
-            return true;
+            return false;
         }
 
         @Override

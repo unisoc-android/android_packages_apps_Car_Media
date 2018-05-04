@@ -36,11 +36,10 @@ public class MetadataController {
 
     @Nullable
     private PlaybackModel mModel;
-    @Nullable
-    private MediaItemMetadata mCurrentMetadata;
 
     private boolean mUpdatesPaused;
     private boolean mNeedsMetadataUpdate;
+    private int mAlbumArtSize;
 
     private final PlaybackModel.PlaybackObserver mPlaybackObserver =
             new PlaybackModel.PlaybackObserver() {
@@ -75,7 +74,10 @@ public class MetadataController {
         mSubtitle = subtitle;
         mTime = time;
         mSeekBar = seekBar;
+        mSeekBar.setOnTouchListener((view, event) -> true);
         mAlbumArt = albumArt;
+        mAlbumArtSize = title.getContext().getResources()
+                .getDimensionPixelSize(R.dimen.playback_album_art_size_large);
     }
 
     /**
@@ -112,14 +114,11 @@ public class MetadataController {
 
         mNeedsMetadataUpdate = false;
         MediaItemMetadata metadata = mModel != null ? mModel.getMetadata() : null;
-        if (Objects.equals(mCurrentMetadata, metadata)) {
-            return;
-        }
-        mCurrentMetadata = metadata;
         mTitle.setText(metadata != null ? metadata.getTitle() : null);
         mSubtitle.setText(metadata != null ? metadata.getSubtitle() : null);
-        if (mAlbumArt != null) {
-            MediaItemMetadata.updateImageView(mAlbumArt.getContext(), metadata, mAlbumArt, 0);
+        if (mAlbumArt != null && metadata != null) {
+            metadata.getAlbumArt(mAlbumArt.getContext(), mAlbumArtSize, mAlbumArtSize, true)
+                    .thenAccept(mAlbumArt::setImageBitmap);
         }
     }
 

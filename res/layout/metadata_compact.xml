@@ -47,7 +47,10 @@
         android:paddingEnd="0dp"
         android:paddingStart="0dp"
         android:progressDrawable="@drawable/seekbar_background"
+        android:clickable="false"
+        android:focusable="false"
         android:thumb="@drawable/seekbar_thumb"
+        android:background="@null"
         android:visibility="invisible"
         tools:visibility="visible"
         tools:progress="70"/>

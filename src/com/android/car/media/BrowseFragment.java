@@ -16,14 +16,11 @@
 
 package com.android.car.media;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +37,7 @@ import com.android.car.media.browse.ContentForwardStrategy;
 import com.android.car.media.common.GridSpacingItemDecoration;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.MediaSource;
+import com.android.car.media.widgets.ViewUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,17 +90,17 @@ public class BrowseFragment extends Fragment {
                     stopLoadingIndicator();
                     mBrowseAdapter.update();
                     if (mBrowseAdapter.getItemCount() > 0) {
-                        showViewAnimated(mBrowseList);
+                        ViewUtils.showViewAnimated(mBrowseList, mFadeDuration);
                     } else {
                         mErrorMessage.setText(R.string.nothing_to_play);
-                        showViewAnimated(mErrorMessage);
+                        ViewUtils.showViewAnimated(mErrorMessage, mFadeDuration);
                     }
                     break;
                 case ERROR:
                     stopLoadingIndicator();
                     mErrorMessage.setText(R.string.unknown_error);
-                    showViewAnimated(mErrorMessage);
-                    showViewAnimated(mErrorIcon);
+                    ViewUtils.showViewAnimated(mErrorMessage, mFadeDuration);
+                    ViewUtils.showViewAnimated(mErrorIcon, mFadeDuration);
                     break;
             }
         }
@@ -217,7 +215,7 @@ public class BrowseFragment extends Fragment {
         RecyclerView recyclerView = mBrowseList.getRecyclerView();
         recyclerView.setVerticalFadingEdgeEnabled(true);
         recyclerView.setFadingEdgeLength(getResources()
-                .getDimensionPixelSize(R.dimen.car_padding_4));
+                .getDimensionPixelSize(R.dimen.car_padding_5));
         recyclerView.setLayoutManager(gridLayoutManager);
         recyclerView.addItemDecoration(new GridSpacingItemDecoration(
                 getResources().getDimensionPixelSize(R.dimen.car_padding_4),
@@ -255,7 +253,7 @@ public class BrowseFragment extends Fragment {
     private Runnable mProgressIndicatorRunnable = new Runnable() {
         @Override
         public void run() {
-            showViewAnimated(mProgressBar);
+            ViewUtils.showViewAnimated(mProgressBar, mFadeDuration);
         }
     };
 
@@ -267,7 +265,7 @@ public class BrowseFragment extends Fragment {
 
     private void stopLoadingIndicator() {
         mHandler.removeCallbacks(mProgressIndicatorRunnable);
-        hideViewAnimated(mProgressBar);
+        ViewUtils.hideViewAnimated(mProgressBar, mFadeDuration);
     }
 
     @Override
@@ -295,16 +293,17 @@ public class BrowseFragment extends Fragment {
             mBrowseAdapter = null;
         }
         if (!success) {
-            hideViewAnimated(mBrowseList);
+            ViewUtils.hideViewAnimated(mBrowseList, mFadeDuration);
             stopLoadingIndicator();
             mErrorMessage.setText(R.string.cannot_connect_to_app);
-            showViewAnimated(mErrorIcon);
-            showViewAnimated(mErrorMessage);
+            ViewUtils.showViewAnimated(mErrorIcon, mFadeDuration);
+            ViewUtils.showViewAnimated(mErrorMessage, mFadeDuration);
             return;
         }
         mBrowseAdapter = new BrowseAdapter(getContext(), mMediaSource.getMediaBrowser(),
                 getCurrentMediaItem(), ContentForwardStrategy.DEFAULT_STRATEGY);
         mBrowseList.setAdapter(mBrowseAdapter);
+        mBrowseList.setDividerVisibilityManager(mBrowseAdapter);
         mBrowseAdapter.registerObserver(mBrowseAdapterObserver);
         mBrowseAdapter.start();
     }
@@ -331,27 +330,6 @@ public class BrowseFragment extends Fragment {
         } else {
             return mBrowseStack.lastElement();
         }
-    }
-
-    private void hideViewAnimated(View view) {
-        view.animate()
-                .alpha(0f)
-                .setDuration(mFadeDuration)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        view.setVisibility(View.GONE);
-                    }
-                });
-    }
-
-    private void showViewAnimated(View view) {
-        view.setAlpha(0f);
-        view.setVisibility(View.VISIBLE);
-        view.animate()
-                .alpha(1f)
-                .setDuration(mFadeDuration)
-                .setListener(null);
     }
 }
 
