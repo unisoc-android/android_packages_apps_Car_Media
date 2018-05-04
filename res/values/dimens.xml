@@ -62,5 +62,5 @@
     <item name="browse_tab_alpha_unselected" format="float" type="dimen">0.5</item>
 
     <!-- App bar -->
-    <dimen name="appbar_height">112dp</dimen>
+    <dimen name="appbar_height">116dp</dimen>
 </resources>

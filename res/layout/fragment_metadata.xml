@@ -60,5 +60,5 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/margin_top"
-        app:listDividerColor="@color/car_list_divider_inverse"/>
+        app:listDividerColor="@color/car_list_divider_light"/>
 </merge>

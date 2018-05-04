@@ -1,5 +1,6 @@
 package com.android.car.media.widgets;
 
+import android.annotation.Nullable;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -21,9 +22,7 @@ import android.widget.TextView;
 
 import com.android.car.media.R;
 import com.android.car.media.common.MediaItemMetadata;
-import com.android.car.media.common.MediaSource;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,6 +39,7 @@ public class AppBarView extends RelativeLayout {
     private ImageView mAppIcon;
     private ImageView mAppSwitchIcon;
     private ImageView mNavIcon;
+    private ViewGroup mNavIconContainer;
     private TextView mTitle;
     private ViewGroup mAppSwitchContainer;
     private Context mContext;
@@ -48,7 +48,7 @@ public class AppBarView extends RelativeLayout {
     private Drawable mArrowDropUp;
     private Drawable mArrowBack;
     private Drawable mCollapse;
-    private State mState = State.IDLE;
+    private State mState = State.BROWSING;
     private AppBarListener mListener;
     private int mFadeDuration;
     private float mSelectedTabAlpha;
@@ -90,7 +90,7 @@ public class AppBarView extends RelativeLayout {
          * Normal application state. If we are able to obtain media items from the media
          * source application, we display them as tabs. Otherwise we show the application name.
          */
-        IDLE,
+        BROWSING,
         /**
          * Indicates that the user has navigated into an element. In this case we show
          * the name of the element and we disable the back button.
@@ -100,7 +100,7 @@ public class AppBarView extends RelativeLayout {
          * Indicates that we have expanded a view that can be collapsed. We show the
          * title of the application and a collapse icon
          */
-        EXPANDED,
+        PLAYING,
         /**
          * Used to indicate that the user is inside the app selector. In this case we disable
          * navigation, we show the title of the application and we show the app switch icon
@@ -139,7 +139,8 @@ public class AppBarView extends RelativeLayout {
         mContext = context;
         mTabsContainer = findViewById(R.id.tabs);
         mNavIcon = findViewById(R.id.nav_icon);
-        mNavIcon.setOnClickListener(view -> onNavIconClicked());
+        mNavIconContainer = findViewById(R.id.nav_icon_container);
+        mNavIconContainer.setOnClickListener(view -> onNavIconClicked());
         mAppIcon = findViewById(R.id.app_icon);
         mAppSwitchIcon = findViewById(R.id.app_switch_icon);
         mAppSwitchContainer = findViewById(R.id.app_switch_container);
@@ -158,7 +159,7 @@ public class AppBarView extends RelativeLayout {
         mMediaAppTitle = getResources().getString(R.string.media_app_title);
         mDefaultIcon = getResources().getDrawable(R.drawable.ic_music);
 
-        setState(State.IDLE);
+        setState(State.BROWSING);
     }
 
     private void onNavIconClicked() {
@@ -169,7 +170,7 @@ public class AppBarView extends RelativeLayout {
             case STACKED:
                 mListener.onBack();
                 break;
-            case EXPANDED:
+            case PLAYING:
                 mListener.onCollapse();
                 break;
         }
@@ -192,8 +193,10 @@ public class AppBarView extends RelativeLayout {
 
     /**
      * Updates the list of items to show in the application bar tabs.
+     *
+     * @param items list of tabs to show, or null if no tabs should be shown.
      */
-    public void setItems(List<MediaItemMetadata> items) {
+    public void setItems(@Nullable List<MediaItemMetadata> items) {
         mTabsContainer.removeAllViews();
 
         if (items != null) {
@@ -223,11 +226,8 @@ public class AppBarView extends RelativeLayout {
             }
         }
 
-        if (mState == State.IDLE) {
-            boolean hasItems = items != null && !items.isEmpty();
-            mTabsContainer.setVisibility(hasItems ? View.VISIBLE : View.GONE);
-            mTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
-        }
+        // Refresh the views visibility
+        setState(mState);
     }
 
     /**
@@ -260,7 +260,9 @@ public class AppBarView extends RelativeLayout {
      */
     public void setActiveItem(MediaItemMetadata item) {
         mSelectedItem = item;
-        updateTabs();
+        // TODO(b/79264184): Updating tabs alpha is causing them to disappear randomly. We are
+        // de-activating this feature for not.
+        // updateTabs();
     }
 
     private void updateTabs() {
@@ -274,7 +276,6 @@ public class AppBarView extends RelativeLayout {
                 tabView.setAlpha(match ? mSelectedTabAlpha : mUnselectedTabAlpha);
             }
         }
-        mTabsContainer.invalidate();
     }
 
     /**
@@ -286,29 +287,30 @@ public class AppBarView extends RelativeLayout {
 
         Transition transition = new Fade().setDuration(mFadeDuration);
         TransitionManager.beginDelayedTransition(this, transition);
+        Log.d(TAG, "Updating state: " + state + " (has items: " + hasItems + ")");
         switch (state) {
-            case IDLE:
-                mNavIcon.setVisibility(View.GONE);
+            case BROWSING:
+                mNavIconContainer.setVisibility(View.GONE);
                 mTabsContainer.setVisibility(hasItems ? View.VISIBLE : View.GONE);
                 mTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
                 break;
             case STACKED:
                 mNavIcon.setImageDrawable(mArrowBack);
-                mNavIcon.setVisibility(View.VISIBLE);
+                mNavIconContainer.setVisibility(View.VISIBLE);
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
                 break;
-            case EXPANDED:
+            case PLAYING:
                 mNavIcon.setImageDrawable(mCollapse);
-                mNavIcon.setVisibility(View.VISIBLE);
-                mTabsContainer.setVisibility(View.GONE);
-                mTitle.setVisibility(View.VISIBLE);
+                mNavIconContainer.setVisibility(hasItems ? View.GONE : View.VISIBLE);
+                mTabsContainer.setVisibility(hasItems ? View.VISIBLE : View.GONE);
+                mTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
                 break;
             case APP_SELECTION:
-                mNavIcon.setVisibility(View.GONE);
+                mNavIconContainer.setVisibility(View.GONE);
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropUp);
