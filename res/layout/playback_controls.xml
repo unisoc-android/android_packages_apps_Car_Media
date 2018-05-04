@@ -14,9 +14,13 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<resources>
-    <declare-styleable name="AppBarView">
-        <!-- Maximum number of tabs to show on the app bar -->
-        <attr name="max_tabs" format="integer"/>
-    </declare-styleable>
-</resources>
+<com.android.car.media.common.PlaybackControlsActionBar
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/playback_controls"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/car_margin"
+    android:layout_marginBottom="@dimen/car_padding_1"
+    app:columns="5"
+    app:layout_constraintBottom_toBottomOf="parent"/>
