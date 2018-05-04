@@ -36,7 +36,6 @@ public class AppBarView extends RelativeLayout {
     /** Default number of tabs to show on this app bar */
     private static int DEFAULT_MAX_TABS = 4;
 
-    private List<MediaSource> mMediaSources = new ArrayList<>();
     private LinearLayout mTabsContainer;
     private ImageView mAppIcon;
     private ImageView mAppSwitchIcon;
@@ -55,6 +54,8 @@ public class AppBarView extends RelativeLayout {
     private float mSelectedTabAlpha;
     private float mUnselectedTabAlpha;
     private MediaItemMetadata mSelectedItem;
+    private String mMediaAppTitle;
+    private Drawable mDefaultIcon;
 
     /**
      * Application bar listener
@@ -154,6 +155,8 @@ public class AppBarView extends RelativeLayout {
         mSelectedTabAlpha = outValue.getFloat();
         getResources().getValue(R.dimen.browse_tab_alpha_unselected, outValue, true);
         mUnselectedTabAlpha = outValue.getFloat();
+        mMediaAppTitle = getResources().getString(R.string.media_app_title);
+        mDefaultIcon = getResources().getDrawable(R.drawable.ic_music);
 
         setState(State.IDLE);
     }
@@ -231,15 +234,18 @@ public class AppBarView extends RelativeLayout {
      * Updates the title to display when the bar is not showing tabs.
      */
     public void setTitle(CharSequence title) {
-        mTitle.setText(title);
+        mTitle.setText(title != null ? title : mMediaAppTitle);
     }
 
     /**
      * Updates the application icon to show next to the application switcher.
      */
     public void setAppIcon(Bitmap icon) {
-        mAppIcon.setImageBitmap(icon);
-        mAppIcon.setVisibility(icon != null ? View.VISIBLE : View.GONE);
+        if (icon != null) {
+            mAppIcon.setImageBitmap(icon);
+        } else {
+            mAppIcon.setImageDrawable(mDefaultIcon);
+        }
     }
 
     /**
@@ -266,9 +272,9 @@ public class AppBarView extends RelativeLayout {
                         mSelectedItem.getId(),
                         ((MediaItemMetadata) tabView.getTag()).getId());
                 tabView.setAlpha(match ? mSelectedTabAlpha : mUnselectedTabAlpha);
-                tabView.invalidate();
             }
         }
+        mTabsContainer.invalidate();
     }
 
     /**

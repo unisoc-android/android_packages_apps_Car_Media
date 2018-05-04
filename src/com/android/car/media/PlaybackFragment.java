@@ -34,12 +34,6 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import androidx.car.widget.ListItem;
-import androidx.car.widget.ListItemAdapter;
-import androidx.car.widget.ListItemProvider;
-import androidx.car.widget.PagedListView;
-import androidx.car.widget.TextListItem;
-
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.MediaSource;
 import com.android.car.media.common.PlaybackControls;
@@ -48,6 +42,12 @@ import com.android.car.media.common.PlaybackModel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import androidx.car.widget.ListItem;
+import androidx.car.widget.ListItemAdapter;
+import androidx.car.widget.ListItemProvider;
+import androidx.car.widget.PagedListView;
+import androidx.car.widget.TextListItem;
 
 /**
  * A {@link Fragment} that implements both the playback and the content forward browsing experience.
@@ -60,6 +60,7 @@ public class PlaybackFragment extends Fragment {
     private PlaybackModel mModel;
     private PlaybackControls mPlaybackControls;
     private QueueItemsAdapter mQueueAdapter;
+    private PagedListView mQueue;
 
     private MetadataController mMetadataController;
     private ConstraintLayout mRootView;
@@ -96,6 +97,7 @@ public class PlaybackFragment extends Fragment {
             textListItem.setTitle(item.getTitle() != null ? item.getTitle().toString() : null);
             textListItem.setBody(item.getSubtitle() != null ? item.getSubtitle().toString() : null);
             textListItem.setOnClickListener(v -> onQueueItemClicked(item));
+
             return textListItem;
         }
         @Override
@@ -103,15 +105,21 @@ public class PlaybackFragment extends Fragment {
             return mQueueItems.size();
         }
     };
-    private static class QueueItemsAdapter extends ListItemAdapter {
+    private class QueueItemsAdapter extends ListItemAdapter {
         QueueItemsAdapter(Context context, ListItemProvider itemProvider) {
             super(context, itemProvider, BackgroundStyle.SOLID);
+            setHasStableIds(true);
         }
 
         void refresh() {
             // TODO: Perform a diff between current and new content and trigger the proper
             // RecyclerView updates.
             this.notifyDataSetChanged();
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return mQueueItems.get(position).getQueueId();
         }
     }
 
@@ -130,9 +138,10 @@ public class PlaybackFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_playback, container, false);
         mRootView = view.findViewById(R.id.playback_container);
         mModel = new PlaybackModel(getContext());
+        mQueue = view.findViewById(R.id.queue_list);
 
         initPlaybackControls(view.findViewById(R.id.playback_controls));
-        initQueue(view.findViewById(R.id.queue_list));
+        initQueue(mQueue);
         initMetadataController(view);
         return view;
     }
@@ -203,6 +212,7 @@ public class PlaybackFragment extends Fragment {
                     updateState();
                 }
                 mMetadataController.resumeUpdates();
+                mQueue.getRecyclerView().scrollToPosition(0);
             }
         });
         TransitionManager.beginDelayedTransition(mRootView, transition);
@@ -224,7 +234,6 @@ public class PlaybackFragment extends Fragment {
                 .collect(Collectors.toList());
         mQueueAdapter.refresh();
     }
-
 
     private void updateAccentColor() {
         int defaultColor = getResources().getColor(android.R.color.background_dark, null);
