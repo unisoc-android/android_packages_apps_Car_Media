@@ -59,7 +59,8 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
             mSubtitle.setText(data.mMediaItem != null
                     ? data.mMediaItem.getSubtitle()
                     : null);
-            mSubtitle.setVisibility(data.mMediaItem != null
+            mSubtitle.setVisibility(data.mMediaItem != null && data.mMediaItem.getSubtitle() != null
+                    && !data.mMediaItem.getSubtitle().toString().isEmpty()
                     ? View.VISIBLE
                     : View.GONE);
         }
