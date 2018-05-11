@@ -41,7 +41,9 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_centerInParent="true"
+        android:padding="@dimen/car_padding_1"
         android:orientation="horizontal"
+        android:background="@drawable/app_item_background"
         android:gravity="center">
 
         <ImageView
@@ -53,7 +55,7 @@
             android:id="@+id/app_switch_icon"
             android:layout_width="@dimen/car_primary_icon_size"
             android:layout_height="@dimen/car_primary_icon_size"
-            android:tint="@color/car_tint_inverse"/>
+            android:tint="@color/car_body1_light"/>
 
     </LinearLayout>
 

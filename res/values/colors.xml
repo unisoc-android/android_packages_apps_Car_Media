@@ -31,4 +31,9 @@
     <color name="progress_bar_background">@color/car_grey_900</color>
     <!-- Color used on the progress bar -->
     <color name="progress_bar_highlight">#fafafa</color>
+
+    <!-- App selection backgroun -->
+    <color name="alpha_fragment_background_color">#ea000000</color>
+    <!-- App selection items background -->
+    <color name="app_item_background_color">#66ffffff</color>
 </resources>

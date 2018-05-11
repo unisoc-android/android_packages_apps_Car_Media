@@ -23,6 +23,7 @@ import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
+import android.transition.TransitionListenerAdapter;
 import android.transition.TransitionManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -44,7 +45,9 @@ import com.android.car.media.common.MediaSource;
 import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.PlaybackModel;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A {@link Fragment} that implements both the playback and the content forward browsing experience.
@@ -61,7 +64,10 @@ public class PlaybackFragment extends Fragment {
     private MetadataController mMetadataController;
     private ConstraintLayout mRootView;
 
+    private boolean mNeedsStateUpdate;
+    private boolean mUpdatesPaused;
     private boolean mQueueIsVisible;
+    private List<MediaItemMetadata> mQueueItems = new ArrayList<>();
     private PlaybackModel.PlaybackObserver mPlaybackObserver =
             new PlaybackModel.PlaybackObserver() {
                 @Override
@@ -82,30 +88,21 @@ public class PlaybackFragment extends Fragment {
     private ListItemProvider mQueueItemsProvider = new ListItemProvider() {
         @Override
         public ListItem get(int position) {
-            if (!mModel.hasQueue()) {
+            if (position < 0 || position >= mQueueItems.size()) {
                 return null;
             }
-            List<MediaItemMetadata> queue = mModel.getQueue();
-            if (position < 0 || position >= queue.size()) {
-                return null;
-            }
-            MediaItemMetadata item = queue.get(position);
+            MediaItemMetadata item = mQueueItems.get(position);
             TextListItem textListItem = new TextListItem(getContext());
-            textListItem.setTitle(item.getTitle().toString());
-            textListItem.setBody(item.getSubtitle().toString());
+            textListItem.setTitle(item.getTitle() != null ? item.getTitle().toString() : null);
+            textListItem.setBody(item.getSubtitle() != null ? item.getSubtitle().toString() : null);
             textListItem.setOnClickListener(v -> onQueueItemClicked(item));
             return textListItem;
         }
-
         @Override
         public int size() {
-            if (!mModel.hasQueue()) {
-                return 0;
-            }
-            return mModel.getQueue().size();
+            return mQueueItems.size();
         }
     };
-
     private static class QueueItemsAdapter extends ListItemAdapter {
         QueueItemsAdapter(Context context, ListItemProvider itemProvider) {
             super(context, itemProvider, BackgroundStyle.SOLID);
@@ -190,6 +187,24 @@ public class PlaybackFragment extends Fragment {
     public void setQueueVisible(boolean visible) {
         Transition transition = TransitionInflater.from(getContext()).inflateTransition(
                 visible ? R.transition.queue_in : R.transition.queue_out);
+        transition.addListener(new TransitionListenerAdapter() {
+
+            @Override
+            public void onTransitionStart(Transition transition) {
+                super.onTransitionStart(transition);
+                mUpdatesPaused = true;
+                mMetadataController.pauseUpdates();
+            }
+
+            @Override
+            public void onTransitionEnd(Transition transition) {
+                mUpdatesPaused = false;
+                if (mNeedsStateUpdate) {
+                    updateState();
+                }
+                mMetadataController.resumeUpdates();
+            }
+        });
         TransitionManager.beginDelayedTransition(mRootView, transition);
         ConstraintSet constraintSet = new ConstraintSet();
         constraintSet.clone(mRootView.getContext(),
@@ -199,6 +214,14 @@ public class PlaybackFragment extends Fragment {
     }
 
     private void updateState() {
+        if (mUpdatesPaused) {
+            mNeedsStateUpdate = true;
+            return;
+        }
+        mNeedsStateUpdate = false;
+        mQueueItems = mModel.getQueue().stream()
+                .filter(item -> item.getTitle() != null)
+                .collect(Collectors.toList());
         mQueueAdapter.refresh();
     }
 

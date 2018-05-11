@@ -5,7 +5,12 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.support.design.widget.TabLayout;
+import android.transition.Fade;
+import android.transition.Transition;
+import android.transition.TransitionManager;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,12 +25,14 @@ import com.android.car.media.common.MediaSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Media template application bar. A detailed explanation of all possible states of this
  * application bar can be seen at {@link AppBarView.State}.
  */
 public class AppBarView extends RelativeLayout {
+    private static final String TAG = "AppBarView";
     /** Default number of tabs to show on this app bar */
     private static int DEFAULT_MAX_TABS = 4;
 
@@ -44,6 +51,10 @@ public class AppBarView extends RelativeLayout {
     private Drawable mCollapse;
     private State mState = State.IDLE;
     private AppBarListener mListener;
+    private int mFadeDuration;
+    private float mSelectedTabAlpha;
+    private float mUnselectedTabAlpha;
+    private MediaItemMetadata mSelectedItem;
 
     /**
      * Application bar listener
@@ -137,6 +148,12 @@ public class AppBarView extends RelativeLayout {
         mArrowDropUp = getResources().getDrawable(R.drawable.ic_arrow_drop_up, null);
         mArrowBack = getResources().getDrawable(R.drawable.ic_arrow_back, null);
         mCollapse = getResources().getDrawable(R.drawable.ic_expand_more, null);
+        mFadeDuration = getResources().getInteger(R.integer.app_selector_fade_duration);
+        TypedValue outValue = new TypedValue();
+        getResources().getValue(R.dimen.browse_tab_alpha_selected, outValue, true);
+        mSelectedTabAlpha = outValue.getFloat();
+        getResources().getValue(R.dimen.browse_tab_alpha_unselected, outValue, true);
+        mUnselectedTabAlpha = outValue.getFloat();
 
         setState(State.IDLE);
     }
@@ -194,6 +211,8 @@ public class AppBarView extends RelativeLayout {
                 });
                 tab.setPadding(padding, 0, padding, 0);
                 tab.requestLayout();
+                tab.setTag(item);
+
                 count++;
                 if (count >= mMaxTabs) {
                     break;
@@ -231,12 +250,36 @@ public class AppBarView extends RelativeLayout {
     }
 
     /**
+     * Updates the currently active item
+     */
+    public void setActiveItem(MediaItemMetadata item) {
+        mSelectedItem = item;
+        updateTabs();
+    }
+
+    private void updateTabs() {
+        for (int i = 0; i < mTabsContainer.getChildCount(); i++) {
+            View child = mTabsContainer.getChildAt(i);
+            if (child instanceof MediaItemTabView) {
+                MediaItemTabView tabView = (MediaItemTabView) child;
+                boolean match = mSelectedItem != null && Objects.equals(
+                        mSelectedItem.getId(),
+                        ((MediaItemMetadata) tabView.getTag()).getId());
+                tabView.setAlpha(match ? mSelectedTabAlpha : mUnselectedTabAlpha);
+                tabView.invalidate();
+            }
+        }
+    }
+
+    /**
      * Updates the state of the bar.
      */
     public void setState(State state) {
         boolean hasItems = mTabsContainer.getChildCount() > 0;
         mState = state;
 
+        Transition transition = new Fade().setDuration(mFadeDuration);
+        TransitionManager.beginDelayedTransition(this, transition);
         switch (state) {
             case IDLE:
                 mNavIcon.setVisibility(View.GONE);
