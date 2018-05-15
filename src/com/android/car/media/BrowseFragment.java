@@ -167,6 +167,7 @@ public class BrowseFragment extends Fragment {
     /**
      * Creates a new instance of this fragment.
      *
+     * @param mediaSource media source being displayed
      * @param item media tree node to display on this fragment.
      * @return a fully initialized {@link BrowseFragment}
      */
@@ -299,8 +300,8 @@ public class BrowseFragment extends Fragment {
             ViewUtils.showViewAnimated(mErrorMessage, mFadeDuration);
             return;
         }
-        mBrowseAdapter = new BrowseAdapter(getContext(), mMediaSource.getMediaBrowser(),
-                getCurrentMediaItem(), ContentForwardStrategy.DEFAULT_STRATEGY);
+        mBrowseAdapter = new BrowseAdapter(getContext(), mMediaSource, getCurrentMediaItem(),
+                ContentForwardStrategy.DEFAULT_STRATEGY);
         mBrowseList.setAdapter(mBrowseAdapter);
         mBrowseList.setDividerVisibilityManager(mBrowseAdapter);
         mBrowseAdapter.registerObserver(mBrowseAdapterObserver);

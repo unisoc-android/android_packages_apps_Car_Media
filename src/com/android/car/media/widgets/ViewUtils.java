@@ -19,6 +19,11 @@ public class ViewUtils {
         if (view.getVisibility() == View.GONE) {
             return;
         }
+        if (!view.isLaidOut()) {
+            // If the view hasn't been displayed yet, just adjust visibility without animation
+            view.setVisibility(View.GONE);
+            return;
+        }
         view.animate()
                 .alpha(0f)
                 .setDuration(duration)
@@ -40,11 +45,20 @@ public class ViewUtils {
         if (view.getVisibility() == View.VISIBLE) {
             return;
         }
-        view.setAlpha(0f);
-        view.setVisibility(View.VISIBLE);
+        if (!view.isLaidOut()) {
+            // If the view hasn't been displayed yet, just adjust visibility without animation
+            view.setVisibility(View.VISIBLE);
+            return;
+        }
         view.animate()
                 .alpha(1f)
                 .setDuration(duration)
-                .setListener(null);
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                        view.setAlpha(0f);
+                        view.setVisibility(View.VISIBLE);
+                    }
+                });
     }
 }

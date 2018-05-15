@@ -34,5 +34,5 @@
     <integer name="app_selector_fade_duration">500</integer>
 
     <!-- Time allowed for a process to complete before we show a progress indicator -->
-    <integer name="progress_indicator_delay">500</integer>
+    <integer name="progress_indicator_delay">1000</integer>
 </resources>
