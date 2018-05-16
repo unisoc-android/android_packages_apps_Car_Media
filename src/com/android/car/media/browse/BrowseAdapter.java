@@ -358,6 +358,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
         if (parentId.equals(mParentMediaItemId)) {
             // Direct children from the requested media item id. Update subscription list.
             LinkedHashMap<String, MediaItemState> newItemStates = new LinkedHashMap<>();
+            List<MediaItemState> itemsToSubscribe = new ArrayList<>();
             for (MediaItemMetadata item : children) {
                 MediaItemState itemState = mItemStates.get(item.getId());
                 if (itemState != null) {
@@ -368,7 +369,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
                     // New section, subscribe to it.
                     itemState = new MediaItemState(item);
                     newItemStates.put(item.getId(), itemState);
-                    subscribe(itemState);
+                    itemsToSubscribe.add(itemState);
                 }
             }
             // Remove unused sections
@@ -376,6 +377,11 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
                 unsubscribe(itemState);
             }
             mItemStates = newItemStates;
+            // Subscribe items once we have updated the map (updates might happen synchronously
+            // if data is already available).
+            for (MediaItemState itemState : itemsToSubscribe) {
+                subscribe(itemState);
+            }
         } else {
             MediaItemState itemState = mItemStates.get(parentId);
             if (itemState == null) {

@@ -56,6 +56,7 @@ public class AppBarView extends RelativeLayout {
     private MediaItemMetadata mSelectedItem;
     private String mMediaAppTitle;
     private Drawable mDefaultIcon;
+    private boolean mContentForwardEnabled;
 
     /**
      * Application bar listener
@@ -238,6 +239,13 @@ public class AppBarView extends RelativeLayout {
     }
 
     /**
+     * Whether content forward browsing is enabled or not
+     */
+    public void setContentForwardEnabled(boolean enabled) {
+        mContentForwardEnabled = enabled;
+    }
+
+    /**
      * Updates the application icon to show next to the application switcher.
      */
     public void setAppIcon(Bitmap icon) {
@@ -304,15 +312,18 @@ public class AppBarView extends RelativeLayout {
                 break;
             case PLAYING:
                 mNavIcon.setImageDrawable(mCollapse);
-                mNavIconContainer.setVisibility(hasItems ? View.GONE : View.VISIBLE);
-                mTabsContainer.setVisibility(hasItems ? View.VISIBLE : View.GONE);
-                mTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
+                mNavIconContainer.setVisibility(hasItems || !mContentForwardEnabled ? View.GONE
+                        : View.VISIBLE);
+                mTabsContainer.setVisibility(hasItems && mContentForwardEnabled ? View.VISIBLE
+                        : View.GONE);
+                mTitle.setVisibility(hasItems || !mContentForwardEnabled ? View.GONE
+                        : View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
                 break;
             case APP_SELECTION:
                 mNavIconContainer.setVisibility(View.GONE);
                 mTabsContainer.setVisibility(View.GONE);
-                mTitle.setVisibility(View.VISIBLE);
+                mTitle.setVisibility(mContentForwardEnabled ? View.VISIBLE : View.GONE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropUp);
                 break;
         }

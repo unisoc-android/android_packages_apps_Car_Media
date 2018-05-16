@@ -28,6 +28,7 @@
         android:layout_marginTop="@dimen/car_padding_4"
         android:layout_marginStart="@dimen/car_keyline_1"
         android:contentDescription="@string/album_art"
+        android:background="@color/car_body1_light"
         android:scaleType="centerCrop"
         android:transitionName="@string/album_art"
         app:layout_constraintTop_toTopOf="parent"

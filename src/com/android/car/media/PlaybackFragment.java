@@ -61,6 +61,7 @@ public class PlaybackFragment extends Fragment {
     private PlaybackControls mPlaybackControls;
     private QueueItemsAdapter mQueueAdapter;
     private PagedListView mQueue;
+    private Callbacks mCallbacks;
 
     private MetadataController mMetadataController;
     private ConstraintLayout mRootView;
@@ -123,12 +124,22 @@ public class PlaybackFragment extends Fragment {
         }
     }
 
+    /**
+     * Callbacks this fragment can trigger
+     */
+    public interface Callbacks {
+        /**
+         * Indicates that the "show queue" button has been clicked
+         */
+        void onQueueButtonClicked();
+    }
+
     private PlaybackControls.Listener mPlaybackControlsListener = new PlaybackControls.Listener() {
         @Override
         public void onToggleQueue() {
-            mQueueIsVisible = !mQueueIsVisible;
-            mPlaybackControls.setQueueVisible(mQueueIsVisible);
-            setQueueVisible(mQueueIsVisible);
+            if (mCallbacks != null) {
+                mCallbacks.onQueueButtonClicked();
+            }
         }
     };
 
@@ -144,6 +155,18 @@ public class PlaybackFragment extends Fragment {
         initQueue(mQueue);
         initMetadataController(view);
         return view;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
     }
 
     private void initPlaybackControls(PlaybackControls playbackControls) {
@@ -193,9 +216,15 @@ public class PlaybackFragment extends Fragment {
         mModel.unregisterObserver(mPlaybackObserver);
     }
 
-    public void setQueueVisible(boolean visible) {
+    /**
+     * Hides or shows the playback queue
+     */
+    public void toggleQueueVisibility() {
+        mQueueIsVisible = !mQueueIsVisible;
+        mPlaybackControls.setQueueVisible(mQueueIsVisible);
+
         Transition transition = TransitionInflater.from(getContext()).inflateTransition(
-                visible ? R.transition.queue_in : R.transition.queue_out);
+                mQueueIsVisible ? R.transition.queue_in : R.transition.queue_out);
         transition.addListener(new TransitionListenerAdapter() {
 
             @Override
@@ -218,9 +247,8 @@ public class PlaybackFragment extends Fragment {
         TransitionManager.beginDelayedTransition(mRootView, transition);
         ConstraintSet constraintSet = new ConstraintSet();
         constraintSet.clone(mRootView.getContext(),
-                visible ? R.layout.fragment_playback_with_queue : R.layout.fragment_playback);
+                mQueueIsVisible ? R.layout.fragment_playback_with_queue : R.layout.fragment_playback);
         constraintSet.applyTo(mRootView);
-
     }
 
     private void updateState() {
