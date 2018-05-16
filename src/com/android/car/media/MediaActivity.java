@@ -33,6 +33,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.car.drawer.CarDrawerActivity;
 import androidx.car.drawer.CarDrawerAdapter;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.android.car.media.common.CrossfadeImageView;
 import com.android.car.media.common.MediaItemMetadata;
@@ -58,7 +59,7 @@ import java.util.stream.Collectors;
  * by broadcast. Drawer menu is controlled by {@link MediaDrawerController}.
  */
 public class MediaActivity extends CarDrawerActivity implements BrowseFragment.Callbacks,
-        AppSelectionFragment.Callbacks {
+        AppSelectionFragment.Callbacks, PlaybackFragment.Callbacks {
     private static final String TAG = "MediaActivity";
 
     /** Intent extra specifying the package with the MediaBrowser */
@@ -86,7 +87,6 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     private CrossfadeImageView mAlbumBackground;
     private PlaybackFragment mPlaybackFragment;
     private AppSelectionFragment mAppSelectionFragment;
-    private AppBarLayout mDrawerBarLayout;
     private PlaybackControls mPlaybackControls;
     private MetadataView mMetadataView;
     private ViewGroup mBrowseControlsContainer;
@@ -159,6 +159,7 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
 
         @Override
         public void onAppSelection() {
+            Log.d(TAG, "onAppSelection clicked");
             if (mIsAppSelectorOpen) {
                 closeAppSelector();
             } else {
@@ -169,6 +170,24 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     private MediaSourcesManager.Observer mMediaSourcesManagerObserver = () -> {
         mAppBarView.setAppSelection(!mMediaSourcesManager.getMediaSources().isEmpty());
         mAppSelectionFragment.refresh();
+    };
+    private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {
+        @Override
+        public void onDrawerSlide(@androidx.annotation.NonNull View view, float v) {
+        }
+
+        @Override
+        public void onDrawerOpened(@androidx.annotation.NonNull View view) {
+            closeAppSelector();
+        }
+
+        @Override
+        public void onDrawerClosed(@androidx.annotation.NonNull View view) {
+        }
+
+        @Override
+        public void onDrawerStateChanged(int i) {
+        }
     };
 
     /**
@@ -200,17 +219,20 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
         super.onCreate(savedInstanceState);
 
         setMainContent(R.layout.media_activity);
-
         setToolbarElevation(0f);
+        setToolbarClickThrough(true);
 
         mContentForwardBrowseEnabled = getResources()
                 .getBoolean(R.bool.forward_content_browse_enabled);
         mDrawerController = new MediaDrawerController(this, getDrawerController());
         getDrawerController().setRootAdapter(getRootAdapter());
+        getDrawerController().addDrawerListener(mDrawerListener);
+        if (mContentForwardBrowseEnabled) {
+            getSupportActionBar().hide();
+        }
         mAppBarView = findViewById(R.id.app_bar);
         mAppBarView.setListener(mAppBarListener);
-        boolean forceBrowseTabs = getResources().getBoolean(R.bool.force_browse_tabs);
-        mAppBarView.setVisibility(forceBrowseTabs ? View.VISIBLE : View.GONE);
+        mAppBarView.setContentForwardEnabled(mContentForwardBrowseEnabled);
         mPlaybackFragment = new PlaybackFragment();
         mAppSelectionFragment = new AppSelectionFragment();
         int fadeDuration = getResources().getInteger(R.integer.app_selector_fade_duration);
@@ -218,8 +240,6 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
         mAppSelectionFragment.setExitTransition(new Fade().setDuration(fadeDuration));
         mPlaybackModel = new PlaybackModel(this);
         mMediaSourcesManager = new MediaSourcesManager(this);
-        mDrawerBarLayout = findViewById(androidx.car.R.id.appbar);
-        mDrawerBarLayout.setVisibility(forceBrowseTabs ? View.GONE : View.VISIBLE);
         mAlbumBackground = findViewById(R.id.media_background);
         mPlaybackControls = findViewById(R.id.browse_controls);
         mPlaybackControls.setModel(mPlaybackModel);
@@ -363,7 +383,6 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
         }
         mMediaSource = mediaSource;
         setLastMediaSource(mMediaSource);
-        mAppBarView.setState(AppBarView.State.BROWSING);
         if (mMediaSource != null) {
             if (Log.isLoggable(TAG, Log.INFO)) {
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
@@ -372,10 +391,10 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
             MediaManager.getInstance(this).setMediaClientComponent(component);
             // If content forward browsing is disabled, then no need to subscribe to this media
             // source.
-            updateBrowseFragment(BrowseState.LOADING, null);
             if (mContentForwardBrowseEnabled) {
                 Log.i(TAG, "Content forward is enabled: subscribing to " +
                         mMediaSource.getPackageName());
+                updateBrowseFragment(BrowseState.LOADING, null);
                 mMediaSource.subscribe(mMediaSourceObserver);
             }
             mAppBarView.setAppIcon(mMediaSource.getRoundPackageIcon());
@@ -437,9 +456,11 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     }
 
     private void switchToMode(Mode mode) {
-        mMode = mode;
+        // If content forward is not enable, then we always show the playback UI (browse will be
+        // done in the drawer)
+        mMode = mContentForwardBrowseEnabled ? mode : Mode.PLAYBACK;
         updateMetadata();
-        switch (mode) {
+        switch (mMode) {
             case PLAYBACK:
                 ViewUtils.showViewAnimated(mPlaybackContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mBrowseContainer, mFadeDuration);
@@ -625,5 +646,15 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
         mSharedPreferences.edit()
                 .putString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, mediaSource.getPackageName())
                 .apply();
+    }
+
+
+    @Override
+    public void onQueueButtonClicked() {
+        if (mContentForwardBrowseEnabled) {
+            mPlaybackFragment.toggleQueueVisibility();
+        } else {
+            mDrawerController.showPlayQueue();
+        }
     }
 }

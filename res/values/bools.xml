@@ -17,8 +17,4 @@
 <resources>
     <!-- Whether forward content browse is enabled -->
     <bool name="forward_content_browse_enabled">false</bool>
-
-    <!-- Force the presentation of tabs even if the number of browsable items exceeds the
-    maximum number of allowed tabs (this is mainly for demo purposes) -->
-    <bool name="force_browse_tabs">false</bool>
 </resources>

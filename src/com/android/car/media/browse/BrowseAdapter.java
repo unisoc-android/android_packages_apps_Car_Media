@@ -378,7 +378,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
                 unsubscribe(itemState);
             }
             mItemStates = newItemStates;
-            // Subscribe items once we have updated our map (updates might happen synchronously
+            // Subscribe items once we have updated the map (updates might happen synchronously
             // if data is already available).
             for (MediaItemState itemState : itemsToSubscribe) {
                 subscribe(itemState);
