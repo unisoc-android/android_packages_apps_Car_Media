@@ -30,6 +30,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.android.car.media.common.MediaItemMetadata;
+import com.android.car.media.common.MediaSource;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,7 +70,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
     private static final String TAG = "BrowseAdapter";
     @NonNull
     private final Context mContext;
-    private final MediaBrowser mMediaBrowser;
+    private final MediaSource mMediaSource;
     private final ContentForwardStrategy mCFBStrategy;
     private MediaItemMetadata mParentMediaItem;
     private LinkedHashMap<String, MediaItemState> mItemStates = new LinkedHashMap<>();
@@ -131,29 +132,14 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
         protected void onQueueItemClicked(MediaItemMetadata item) {};
     }
 
-    private MediaBrowser.SubscriptionCallback mSubscriptionCallback =
-        new MediaBrowser.SubscriptionCallback() {
-            @Override
-            public void onChildrenLoaded(String parentId, List<MediaBrowser.MediaItem> children) {
-                onItemsLoaded(parentId, children);
-            }
-
-            @Override
-            public void onChildrenLoaded(String parentId, List<MediaBrowser.MediaItem> children,
-                    Bundle options) {
-                onItemsLoaded(parentId, children);
-            }
-
-            @Override
-            public void onError(String parentId) {
-                onLoadingError(parentId);
-            }
-
-            @Override
-            public void onError(String parentId, Bundle options) {
-                onLoadingError(parentId);
-            }
-        };
+    private MediaSource.ItemsSubscription mSubscriptionCallback =
+            (mediaSource, parentId, items) -> {
+                if (items != null) {
+                    onItemsLoaded(parentId, items);
+                } else {
+                    onLoadingError(parentId);
+                }
+            };
 
 
     /**
@@ -174,19 +160,19 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
         /** Whether we are subscribed to updates for this item or not */
         boolean mIsSubscribed;
 
-        MediaItemState(MediaBrowser.MediaItem item) {
-            mItem = new MediaItemMetadata(item);
+        MediaItemState(MediaItemMetadata item) {
+            mItem = item;
         }
 
-        void setChildren(List<MediaBrowser.MediaItem> children) {
+        void setChildren(List<MediaItemMetadata> children) {
             mPlayableChildren.clear();
             mBrowsableChildren.clear();
-            for (MediaBrowser.MediaItem child : children) {
+            for (MediaItemMetadata child : children) {
                 if (child.isBrowsable()) {
                     // Browsable items could also be playable
-                    mBrowsableChildren.add(new MediaItemMetadata(child));
+                    mBrowsableChildren.add(child);
                 } else if (child.isPlayable()) {
-                    mPlayableChildren.add(new MediaItemMetadata(child));
+                    mPlayableChildren.add(child);
                 }
             }
         }
@@ -195,15 +181,15 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
     /**
      * Creates a {@link BrowseAdapter} that displays the children of the given media tree node.
      *
-     * @param mediaBrowser the {@link MediaBrowser} to get data from.
+     * @param mediaSource the {@link MediaSource} to get data from.
      * @param parentItem the node to display children of, or NULL if the
      * @param strategy a {@link ContentForwardStrategy} that would determine which items would be
      *                 expanded and how.
      */
-    public BrowseAdapter(Context context, @NonNull MediaBrowser mediaBrowser,
+    public BrowseAdapter(Context context, @NonNull MediaSource mediaSource,
             @Nullable MediaItemMetadata parentItem, @NonNull ContentForwardStrategy strategy) {
         mContext = context;
-        mMediaBrowser = mediaBrowser;
+        mMediaSource = mediaSource;
         mParentMediaItem = parentItem;
         mCFBStrategy = strategy;
     }
@@ -213,10 +199,9 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
      * {@link #registerObserver(Observer)} to receive updates on the progress.
      */
     public void start() {
-        mParentMediaItemId = mParentMediaItem != null
-                ? mParentMediaItem.getId()
-                : mMediaBrowser.getRoot();
-        mMediaBrowser.subscribe(mParentMediaItemId, mSubscriptionCallback);
+        mParentMediaItemId = mParentMediaItem != null ? mParentMediaItem.getId() :
+                mMediaSource.getRoot();
+        mMediaSource.subscribeChildren(mParentMediaItemId, mSubscriptionCallback);
         for (MediaItemState itemState : mItemStates.values()) {
             subscribe(itemState);
         }
@@ -230,7 +215,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
             // Not started
             return;
         }
-        mMediaBrowser.unsubscribe(mParentMediaItemId, mSubscriptionCallback);
+        mMediaSource.unsubscribeChildren(mParentMediaItemId, mSubscriptionCallback);
         for (MediaItemState itemState : mItemStates.values()) {
             unsubscribe(itemState);
         }
@@ -244,16 +229,15 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
      * @param parentItem new media item to expand.
      */
     public void setParentMediaItemId(@Nullable MediaItemMetadata parentItem) {
-        String newParentMediaItemId = parentItem != null
-                ? parentItem.getId()
-                : mMediaBrowser.getRoot();
+        String newParentMediaItemId = parentItem != null ? parentItem.getId() :
+                mMediaSource.getRoot();
         if (Objects.equals(newParentMediaItemId, mParentMediaItemId)) {
             return;
         }
         stop();
         mParentMediaItem = parentItem;
         mParentMediaItemId = newParentMediaItemId;
-        mMediaBrowser.subscribe(mParentMediaItemId, mSubscriptionCallback);
+        mMediaSource.subscribeChildren(mParentMediaItemId, mSubscriptionCallback);
     }
 
     /**
@@ -332,7 +316,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
 
     private void subscribe(MediaItemState state) {
         if (!state.mIsSubscribed && state.mItem.isBrowsable()) {
-            mMediaBrowser.subscribe(state.mItem.getId(), mSubscriptionCallback);
+            mMediaSource.subscribeChildren(state.mItem.getId(), mSubscriptionCallback);
             state.mIsSubscribed = true;
         } else {
             state.mState = State.LOADED;
@@ -341,7 +325,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
 
     private void unsubscribe(MediaItemState state) {
         if (state.mIsSubscribed) {
-            mMediaBrowser.unsubscribe(state.mItem.getId(), mSubscriptionCallback);
+            mMediaSource.unsubscribeChildren(state.mItem.getId(), mSubscriptionCallback);
             state.mIsSubscribed = false;
         }
     }
@@ -370,20 +354,20 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
         return mViewData.get(position).mViewType.ordinal();
     }
 
-    private void onItemsLoaded(String parentId, List<MediaBrowser.MediaItem> children) {
+    private void onItemsLoaded(String parentId, List<MediaItemMetadata> children) {
         if (parentId.equals(mParentMediaItemId)) {
             // Direct children from the requested media item id. Update subscription list.
             LinkedHashMap<String, MediaItemState> newItemStates = new LinkedHashMap<>();
-            for (MediaBrowser.MediaItem item : children) {
-                MediaItemState itemState = mItemStates.get(item.getMediaId());
+            for (MediaItemMetadata item : children) {
+                MediaItemState itemState = mItemStates.get(item.getId());
                 if (itemState != null) {
                     // Reuse existing section.
-                    newItemStates.put(item.getMediaId(), itemState);
-                    mItemStates.remove(item.getMediaId());
+                    newItemStates.put(item.getId(), itemState);
+                    mItemStates.remove(item.getId());
                 } else {
                     // New section, subscribe to it.
                     itemState = new MediaItemState(item);
-                    newItemStates.put(item.getMediaId(), itemState);
+                    newItemStates.put(item.getId(), itemState);
                     subscribe(itemState);
                 }
             }

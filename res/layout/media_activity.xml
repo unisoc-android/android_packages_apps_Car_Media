@@ -40,7 +40,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="@dimen/car_padding_4"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintTop_toBottomOf="@+id/app_bar"
         app:layout_constraintBottom_toTopOf="@+id/browse_controls_container"/>
 

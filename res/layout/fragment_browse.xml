@@ -21,33 +21,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ProgressBar
-        android:id="@+id/loading_spinner"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/car_double_line_list_item_height"
-        android:layout_centerInParent="true"
-        android:layout_alignWithParentIfMissing="true"
-        android:indeterminateDrawable="@drawable/music_buffering"
-        android:visibility="gone" />
-
-    <ImageView
-        android:id="@+id/error_icon"
-        android:layout_width="@dimen/missing_permission_icon_size"
-        android:layout_height="@dimen/missing_permission_icon_size"
-        android:layout_centerInParent="true"
-        android:src="@drawable/error_illustration"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/error_message"
-        style="@style/TextAppearance.NoContent"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/error_icon"
-        android:gravity="center"
-        android:maxLines="3"
-        android:text="@string/nothing_to_play"
-        android:visibility="gone" />
+    <include layout="@layout/browse_state"/>
 
     <androidx.car.widget.PagedListView
         android:id="@+id/browse_list"
