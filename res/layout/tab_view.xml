@@ -21,7 +21,7 @@
         android:id="@+id/icon"
         android:layout_width="@dimen/car_primary_icon_size"
         android:layout_height="@dimen/car_primary_icon_size"
-        android:layout_marginBottom="@dimen/car_padding_0"
+        android:layout_marginBottom="@dimen/car_padding_1"
         android:scaleType="fitCenter"
         android:layout_gravity="center_horizontal"
         android:tint="@color/car_body5_light"/>
