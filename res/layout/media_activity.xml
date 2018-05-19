@@ -39,7 +39,6 @@
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="@dimen/car_padding_4"
         android:visibility="visible"
         app:layout_constraintTop_toBottomOf="@+id/app_bar"
         app:layout_constraintBottom_toTopOf="@+id/browse_controls_container"/>
@@ -48,7 +47,6 @@
         android:id="@+id/playback_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="@dimen/car_padding_4"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/app_bar"
         app:layout_constraintBottom_toBottomOf="parent"/>
@@ -86,7 +84,7 @@
 
     <com.android.car.media.widgets.AppBarView
         android:id="@+id/app_bar"
-        android:layout_height="@dimen/appbar_height"
+        android:layout_height="@dimen/car_app_bar_height"
         android:layout_width="match_parent"
         app:layout_constraintTop_toTopOf="parent"/>
 

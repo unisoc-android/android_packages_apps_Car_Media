@@ -23,7 +23,6 @@
     <!-- Music now playing screen -->
     <dimen name="music_action_icon_inset">0dp</dimen>
     <dimen name="music_action_ripple_inset">32dp</dimen>
-    <dimen name="now_playing_metadata_top_margin">0dp</dimen>
 
     <dimen name="missing_permission_icon_size">128dp</dimen>
 

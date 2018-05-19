@@ -15,6 +15,6 @@
   limitations under the License.
 -->
 <resources>
+    <!-- On screens tall enough we enable content forward browsing -->
     <bool name="forward_content_browse_enabled">true</bool>
-    <bool name="force_browse_tabs">true</bool>
 </resources>

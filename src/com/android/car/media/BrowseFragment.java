@@ -90,14 +90,19 @@ public class BrowseFragment extends Fragment {
                     mBrowseAdapter.update();
                     if (mBrowseAdapter.getItemCount() > 0) {
                         ViewUtils.showViewAnimated(mBrowseList, mFadeDuration);
+                        ViewUtils.hideViewAnimated(mErrorIcon, mFadeDuration);
+                        ViewUtils.hideViewAnimated(mErrorMessage, mFadeDuration);
                     } else {
                         mErrorMessage.setText(R.string.nothing_to_play);
+                        ViewUtils.hideViewAnimated(mBrowseList, mFadeDuration);
+                        ViewUtils.hideViewAnimated(mErrorIcon, mFadeDuration);
                         ViewUtils.showViewAnimated(mErrorMessage, mFadeDuration);
                     }
                     break;
                 case ERROR:
                     stopLoadingIndicator();
                     mErrorMessage.setText(R.string.unknown_error);
+                    ViewUtils.hideViewAnimated(mBrowseList, mFadeDuration);
                     ViewUtils.showViewAnimated(mErrorMessage, mFadeDuration);
                     ViewUtils.showViewAnimated(mErrorIcon, mFadeDuration);
                     break;
@@ -245,9 +250,6 @@ public class BrowseFragment extends Fragment {
         if (mMediaSource != null) {
             mMediaSource.subscribe(mBrowseObserver);
         }
-        if (mBrowseAdapter != null) {
-            mBrowseAdapter.start();
-        }
     }
 
     private Runnable mProgressIndicatorRunnable = new Runnable() {
@@ -277,6 +279,7 @@ public class BrowseFragment extends Fragment {
         }
         if (mBrowseAdapter != null) {
             mBrowseAdapter.stop();
+            mBrowseAdapter = null;
         }
     }
 
