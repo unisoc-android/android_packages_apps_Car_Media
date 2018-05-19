@@ -14,7 +14,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Objects;
 
 /**
  * Common controller for displaying current track's metadata.
@@ -116,9 +115,13 @@ public class MetadataController {
         MediaItemMetadata metadata = mModel != null ? mModel.getMetadata() : null;
         mTitle.setText(metadata != null ? metadata.getTitle() : null);
         mSubtitle.setText(metadata != null ? metadata.getSubtitle() : null);
-        if (mAlbumArt != null && metadata != null) {
+        if (mAlbumArt != null && metadata != null && (metadata.getAlbumArtUri() != null
+                || metadata.getAlbumArtBitmap() != null)) {
+            mAlbumArt.setVisibility(View.VISIBLE);
             metadata.getAlbumArt(mAlbumArt.getContext(), mAlbumArtSize, mAlbumArtSize, true)
                     .thenAccept(mAlbumArt::setImageBitmap);
+        } else if (mAlbumArt != null) {
+            mAlbumArt.setVisibility(View.GONE);
         }
     }
 
