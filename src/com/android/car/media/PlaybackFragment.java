@@ -18,6 +18,7 @@ package com.android.car.media;
 
 import android.annotation.NonNull;
 import android.content.Context;
+import android.media.session.MediaController;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
@@ -129,6 +130,11 @@ public class PlaybackFragment extends Fragment {
      */
     public interface Callbacks {
         /**
+         * Returns the playback model to use.
+         */
+        PlaybackModel getPlaybackModel();
+
+        /**
          * Indicates that the "show queue" button has been clicked
          */
         void onQueueButtonClicked();
@@ -148,7 +154,6 @@ public class PlaybackFragment extends Fragment {
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_playback, container, false);
         mRootView = view.findViewById(R.id.playback_container);
-        mModel = new PlaybackModel(getContext());
         mQueue = view.findViewById(R.id.queue_list);
 
         initPlaybackControls(view.findViewById(R.id.playback_controls));
@@ -171,7 +176,6 @@ public class PlaybackFragment extends Fragment {
 
     private void initPlaybackControls(PlaybackControls playbackControls) {
         mPlaybackControls = playbackControls;
-        mPlaybackControls.setModel(mModel);
         mPlaybackControls.setListener(mPlaybackControlsListener);
         mPlaybackControls.setAnimationViewGroup(mRootView);
     }
@@ -192,21 +196,14 @@ public class PlaybackFragment extends Fragment {
         SeekBar seekbar = view.findViewById(R.id.seek_bar);
         TextView time = view.findViewById(R.id.time);
         mMetadataController = new MetadataController(title, subtitle, time, seekbar, albumArt);
-        mMetadataController.setModel(mModel);
-    }
-
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        mPlaybackControls.setModel(null);
-        mMetadataController.setModel(null);
-        mMetadataController = null;
     }
 
     @Override
     public void onStart() {
         super.onStart();
+        mModel = mCallbacks.getPlaybackModel();
+        mMetadataController.setModel(mModel);
+        mPlaybackControls.setModel(mModel);
         mModel.registerObserver(mPlaybackObserver);
     }
 
@@ -214,6 +211,9 @@ public class PlaybackFragment extends Fragment {
     public void onStop() {
         super.onStop();
         mModel.unregisterObserver(mPlaybackObserver);
+        mMetadataController.setModel(null);
+        mPlaybackControls.setModel(null);
+        mModel = null;
     }
 
     /**
