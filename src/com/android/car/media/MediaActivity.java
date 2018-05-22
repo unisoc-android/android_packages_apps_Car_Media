@@ -410,10 +410,13 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
             if (Log.isLoggable(TAG, Log.INFO)) {
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
             }
+            // Prepare the media source for playback
+            mPlaybackModel.onPrepare();
+            // Make the drawer display browse information of the selected source
             ComponentName component = mMediaSource.getBrowseServiceComponentName();
             MediaManager.getInstance(this).setMediaClientComponent(component);
             // If content forward browsing is disabled, then no need to subscribe to this media
-            // source.
+            // source, we will use the drawer instead.
             if (mContentForwardBrowseEnabled) {
                 Log.i(TAG, "Content forward is enabled: subscribing to " +
                         mMediaSource.getPackageName());
@@ -635,7 +638,7 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     public List<MediaSource> getMediaSources() {
         return mMediaSourcesManager.getMediaSources()
                 .stream()
-                .filter(source -> source.getMediaBrowser() != null && !source.isCustom())
+                .filter(source -> source.getMediaBrowser() != null || source.isCustom())
                 .collect(Collectors.toList());
     }
 
