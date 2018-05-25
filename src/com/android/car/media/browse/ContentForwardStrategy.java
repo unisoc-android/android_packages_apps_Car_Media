@@ -16,6 +16,8 @@
 
 package com.android.car.media.browse;
 
+import android.os.Bundle;
+import com.android.car.media.common.ContentStyleMediaConstants;
 import com.android.car.media.common.MediaItemMetadata;
 
 /**
@@ -94,12 +96,18 @@ public interface ContentForwardStrategy {
 
         @Override
         public BrowseItemViewType getBrowsableViewType(MediaItemMetadata mediaItem) {
-            return BrowseItemViewType.PANEL_ITEM;
+            return (mediaItem.getBrowsableContentStyleHint()
+                    == ContentStyleMediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
+                    ? BrowseItemViewType.LIST_ITEM
+                    : BrowseItemViewType.PANEL_ITEM;
         }
 
         @Override
         public BrowseItemViewType getPlayableViewType(MediaItemMetadata mediaItem) {
-            return BrowseItemViewType.GRID_ITEM;
+            return (mediaItem.getPlayableContentStyleHint()
+                    == ContentStyleMediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
+                    ? BrowseItemViewType.LIST_ITEM
+                    : BrowseItemViewType.GRID_ITEM;
         }
 
         @Override
