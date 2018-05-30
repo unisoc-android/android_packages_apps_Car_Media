@@ -30,7 +30,7 @@
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone"
-        app:dayNightStyle="force_night"
+        app:dayNightStyle="always_light"
         app:listDividerColor="@color/car_list_divider_light"/>
 
 </RelativeLayout>
