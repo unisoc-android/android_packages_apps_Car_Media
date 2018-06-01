@@ -31,7 +31,7 @@
         android:clickable="true"
         android:focusable="true"
         app:listContentTopOffset="@dimen/car_padding_5"
-        app:dayNightStyle="force_night"
+        app:dayNightStyle="always_light"
         app:showPagedListViewDivider="false" />
 
 </android.support.constraint.ConstraintLayout>
