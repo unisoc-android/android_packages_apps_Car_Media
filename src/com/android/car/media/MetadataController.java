@@ -2,27 +2,21 @@ package com.android.car.media;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
+import android.annotation.SuppressLint;
 import android.media.session.PlaybackState;
-import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.PlaybackModel;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Common controller for displaying current track's metadata.
  */
 public class MetadataController {
-
-    private static final DateFormat TIME_FORMAT = new SimpleDateFormat("m:ss", Locale.US);
 
     @NonNull
     private final TextView mTitle;
@@ -152,9 +146,10 @@ public class MetadataController {
         int visibility = maxProgress > 0 && progress != PlaybackState.PLAYBACK_POSITION_UNKNOWN
                 ? View.VISIBLE : View.INVISIBLE;
         if (mTime != null) {
+            boolean showHours = TimeUnit.MILLISECONDS.toHours(maxProgress) > 0;
             String time = String.format("%s / %s",
-                    TIME_FORMAT.format(new Date(progress)),
-                    TIME_FORMAT.format(new Date(maxProgress)));
+                    formatTime(mModel.getProgress(), showHours),
+                    formatTime(maxProgress, showHours));
             mTime.setVisibility(visibility);
             mTime.setText(time);
         }
@@ -172,6 +167,18 @@ public class MetadataController {
         mUpdatesPaused = false;
         if (mNeedsMetadataUpdate) {
             updateMetadata();
+        }
+    }
+
+    @SuppressLint("DefaultLocale")
+    private static String formatTime(long millis, boolean showHours) {
+        long hours = TimeUnit.MILLISECONDS.toHours(millis);
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis) % TimeUnit.HOURS.toMinutes(1);
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % TimeUnit.MINUTES.toSeconds(1);
+        if (showHours) {
+            return String.format("%d:%02d:%02d", hours, minutes, seconds);
+        } else {
+            return String.format("%d:%02d", minutes, seconds);
         }
     }
 }
