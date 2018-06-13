@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.car.widget.PagedListView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,8 +43,6 @@ import com.android.car.media.widgets.ViewUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
-
-import androidx.car.widget.PagedListView;
 
 /**
  * A {@link Fragment} that implements the content forward browsing experience.

@@ -20,8 +20,6 @@ import android.annotation.NonNull;
 import android.content.Context;
 import android.media.session.MediaController;
 import android.os.Bundle;
-import android.support.constraint.ConstraintLayout;
-import android.support.constraint.ConstraintSet;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
 import android.transition.TransitionListenerAdapter;
@@ -38,6 +36,8 @@ import androidx.car.widget.ListItemAdapter;
 import androidx.car.widget.ListItemProvider;
 import androidx.car.widget.PagedListView;
 import androidx.car.widget.TextListItem;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 

@@ -30,11 +30,11 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.car.drawer.CarDrawerActivity;
 import androidx.car.drawer.CarDrawerAdapter;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.android.car.media.common.ActiveMediaSourceManager;
 import com.android.car.media.common.CrossfadeImageView;
@@ -54,7 +54,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
 
 /**
  * This activity controls the UI of media. It also updates the connection status for the media app
