@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.support.design.widget.TabLayout;
 import android.transition.Fade;
 import android.transition.Transition;
 import android.transition.TransitionManager;
