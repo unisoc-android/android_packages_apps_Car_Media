@@ -535,22 +535,19 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     }
 
     private void updateMetadata() {
-        if (isCurrentMediaSourcePlaying()) {
-            if (mMode == Mode.PLAYBACK) {
-                ViewUtils.hideViewAnimated(mBrowseControlsContainer, mFadeDuration);
-            } else {
-                ViewUtils.showViewAnimated(mBrowseControlsContainer, mFadeDuration);
-            }
-            MediaItemMetadata metadata = mPlaybackModel.getMetadata();
-            if (Objects.equals(mCurrentMetadata, metadata)) {
-                return;
-            }
-            mCurrentMetadata = metadata;
-            mUpdateAlbumArtRunnable.run();
-        } else {
-            mAlbumBackground.setImageBitmap(null, true);
+        if (mMode == Mode.PLAYBACK) {
             ViewUtils.hideViewAnimated(mBrowseControlsContainer, mFadeDuration);
+            ViewUtils.showViewAnimated(mAlbumBackground, mFadeDuration);
+        } else {
+            ViewUtils.showViewAnimated(mBrowseControlsContainer, mFadeDuration);
+            ViewUtils.hideViewAnimated(mAlbumBackground, mFadeDuration);
         }
+        MediaItemMetadata metadata = mPlaybackModel.getMetadata();
+        if (Objects.equals(mCurrentMetadata, metadata)) {
+            return;
+        }
+        mCurrentMetadata = metadata;
+        mUpdateAlbumArtRunnable.run();
     }
 
     /**
