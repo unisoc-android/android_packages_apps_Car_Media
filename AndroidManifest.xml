@@ -28,7 +28,7 @@
         android:targetSdkVersion='24'/>
 
     <application
-        android:label="CarMediaApp"
+        android:label="Media Center"
         android:icon="@drawable/ic_music">
 
         <meta-data
