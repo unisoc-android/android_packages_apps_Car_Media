@@ -30,12 +30,12 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.car.drawer.CarDrawerActivity;
 import androidx.car.drawer.CarDrawerAdapter;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.android.car.apps.common.DrawerActivity;
 import com.android.car.media.common.ActiveMediaSourceManager;
 import com.android.car.media.common.CrossfadeImageView;
 import com.android.car.media.common.MediaItemMetadata;
@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
  * This activity controls the UI of media. It also updates the connection status for the media app
  * by broadcast. Drawer menu is controlled by {@link MediaDrawerController}.
  */
-public class MediaActivity extends CarDrawerActivity implements BrowseFragment.Callbacks,
+public class MediaActivity extends DrawerActivity implements BrowseFragment.Callbacks,
         AppSelectionFragment.Callbacks, PlaybackFragment.Callbacks {
     private static final String TAG = "MediaActivity";
 
@@ -229,16 +229,15 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setMainContent(R.layout.media_activity);
-        setToolbarElevation(0f);
+        setContentView(R.layout.media_activity);
 
         mContentForwardBrowseEnabled = getResources()
                 .getBoolean(R.bool.forward_content_browse_enabled);
         mDrawerController = new MediaDrawerController(this, getDrawerController());
-        getDrawerController().setRootAdapter(getRootAdapter());
+        getDrawerController().setRootAdapter(mDrawerController.getRootAdapter());
         getDrawerController().addDrawerListener(mDrawerListener);
         if (mContentForwardBrowseEnabled) {
-            getSupportActionBar().hide();
+            getActionBar().hide();
         }
         mAppBarView = findViewById(R.id.app_bar);
         mAppBarView.setListener(mAppBarListener);
@@ -297,11 +296,6 @@ public class MediaActivity extends CarDrawerActivity implements BrowseFragment.C
         mDrawerController.cleanup();
         mPlaybackControls.setModel(null);
         mMetadataView.setModel(null);
-    }
-
-    @Override
-    protected CarDrawerAdapter getRootAdapter() {
-        return mDrawerController == null ? null : mDrawerController.getRootAdapter();
     }
 
     @Override
