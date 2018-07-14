@@ -27,7 +27,7 @@
         android:layout_height="@dimen/playback_album_art_size_normal"
         android:layout_marginStart="@dimen/car_keyline_2"
         android:contentDescription="@string/album_art"
-        android:background="@color/car_body1_light"
+        android:background="@color/album_art_background"
         android:scaleType="centerCrop"
         android:transitionName="@string/album_art"
         app:layout_constraintTop_toTopOf="parent"

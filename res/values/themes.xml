@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <resources>
     <!-- The theme for the main MediaActivity. -->
-    <style name="MediaActivityTheme" parent="Theme.Car.Dark.NoActionBar.Drawer" >
+    <style name="MediaActivityTheme" parent="Theme.Car.NoActionBar.Drawer" >
         <item name="android:colorPrimary">@android:color/transparent</item>
         <item name="listItemBackgroundColor">@android:color/transparent</item>
         <item name="listItemTitleTextAppearance">@style/TextAppearance.Car.Body1.Light</item>
