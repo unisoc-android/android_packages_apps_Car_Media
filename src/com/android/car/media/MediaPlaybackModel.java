@@ -46,7 +46,8 @@ import java.util.function.Consumer;
  * this model will call back to the presenter. All call backs to the presenter will be done on the
  * main thread. Intended to provide a much more usable model interface to UI code.
  *
- * @deprecated This model is being replaced by {@link com.android.car.media.common.PlaybackModel}.
+ * @deprecated This model is being replaced by
+ * {@link com.android.car.media.common.playback.PlaybackViewModel}.
  */
 @Deprecated
 public class MediaPlaybackModel {

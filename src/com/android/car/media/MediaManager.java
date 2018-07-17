@@ -43,7 +43,8 @@ import java.util.List;
  * Manages which media app we should connect to. The manager also retrieves various attributes
  * from the media app and share among different components in GearHead media app.
  *
- * @deprecated This manager is being replaced by {@link com.android.car.media.common.PlaybackModel}.
+ * @deprecated This manager is being replaced by
+ * {@link com.android.car.media.common.playback.PlaybackViewModel}.
  */
 @Deprecated
 public class MediaManager {

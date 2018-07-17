@@ -38,26 +38,24 @@ import androidx.car.widget.TextListItem;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.media.common.MediaItemMetadata;
-import com.android.car.media.common.MediaSource;
 import com.android.car.media.common.PlaybackControls;
-import com.android.car.media.common.PlaybackModel;
+import com.android.car.media.common.playback.PlaybackViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * A {@link Fragment} that implements both the playback and the content forward browsing experience.
- * It observes a {@link PlaybackModel} and updates its information depending on the currently
+ * It observes a {@link PlaybackViewModel} and updates its information depending on the currently
  * playing media source through the {@link android.media.session.MediaSession} API.
  */
 public class PlaybackFragment extends Fragment {
     private static final String TAG = "PlaybackFragment";
 
-    private PlaybackModel mModel;
     private PlaybackControls mPlaybackControls;
     private QueueItemsAdapter mQueueAdapter;
     private PagedListView mQueue;
@@ -66,27 +64,12 @@ public class PlaybackFragment extends Fragment {
     private MetadataController mMetadataController;
     private ConstraintLayout mRootView;
 
-    private boolean mNeedsStateUpdate;
+    private PlaybackViewModel.PlaybackController mController;
+
+    private boolean mNeedsQueueUpdate;
     private boolean mUpdatesPaused;
     private boolean mQueueIsVisible;
     private List<MediaItemMetadata> mQueueItems = new ArrayList<>();
-    private PlaybackModel.PlaybackObserver mPlaybackObserver =
-            new PlaybackModel.PlaybackObserver() {
-                @Override
-                public void onPlaybackStateChanged() {
-                    updateState();
-                }
-
-                @Override
-                public void onSourceChanged() {
-                    updateAccentColor();
-                    updateState();
-                }
-
-                @Override
-                public void onMetadataChanged() {
-                }
-            };
     private ListItemProvider mQueueItemsProvider = new ListItemProvider() {
         @Override
         public ListItem get(int position) {
@@ -101,11 +84,13 @@ public class PlaybackFragment extends Fragment {
 
             return textListItem;
         }
+
         @Override
         public int size() {
             return mQueueItems.size();
         }
     };
+
     private class QueueItemsAdapter extends ListItemAdapter {
         QueueItemsAdapter(Context context, ListItemProvider itemProvider) {
             super(context, itemProvider, BackgroundStyle.SOLID);
@@ -129,11 +114,6 @@ public class PlaybackFragment extends Fragment {
      */
     public interface Callbacks {
         /**
-         * Returns the playback model to use.
-         */
-        PlaybackModel getPlaybackModel();
-
-        /**
          * Indicates that the "show queue" button has been clicked
          */
         void onQueueButtonClicked();
@@ -155,6 +135,8 @@ public class PlaybackFragment extends Fragment {
         mRootView = view.findViewById(R.id.playback_container);
         mQueue = view.findViewById(R.id.queue_list);
 
+        getPlaybackViewModel().getPlaybackController().observe(getViewLifecycleOwner(),
+                controller -> mController = controller);
         initPlaybackControls(view.findViewById(R.id.playback_controls));
         initQueue(mQueue);
         initMetadataController(view);
@@ -175,6 +157,7 @@ public class PlaybackFragment extends Fragment {
 
     private void initPlaybackControls(PlaybackControls playbackControls) {
         mPlaybackControls = playbackControls;
+        mPlaybackControls.setModel(getPlaybackViewModel(), getViewLifecycleOwner());
         mPlaybackControls.setListener(mPlaybackControlsListener);
         mPlaybackControls.setAnimationViewGroup(mRootView);
     }
@@ -186,6 +169,17 @@ public class PlaybackFragment extends Fragment {
                 .getDimensionPixelSize(R.dimen.car_padding_4));
         mQueueAdapter = new QueueItemsAdapter(getContext(), mQueueItemsProvider);
         queueList.setAdapter(mQueueAdapter);
+        getPlaybackViewModel().getQueue().observe(this, this::setQueue);
+    }
+
+    private void setQueue(List<MediaItemMetadata> queueItems) {
+        mQueueItems = queueItems;
+        if (mUpdatesPaused) {
+            mNeedsQueueUpdate = true;
+            return;
+        }
+        mNeedsQueueUpdate = false;
+        mQueueAdapter.refresh();
     }
 
     private void initMetadataController(View view) {
@@ -194,25 +188,9 @@ public class PlaybackFragment extends Fragment {
         TextView subtitle = view.findViewById(R.id.subtitle);
         SeekBar seekbar = view.findViewById(R.id.seek_bar);
         TextView time = view.findViewById(R.id.time);
-        mMetadataController = new MetadataController(title, subtitle, time, seekbar, albumArt);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        mModel = mCallbacks.getPlaybackModel();
-        mMetadataController.setModel(mModel);
-        mPlaybackControls.setModel(mModel);
-        mModel.registerObserver(mPlaybackObserver);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        mModel.unregisterObserver(mPlaybackObserver);
-        mMetadataController.setModel(null);
-        mPlaybackControls.setModel(null);
-        mModel = null;
+        mMetadataController = new MetadataController(getViewLifecycleOwner(),
+                getPlaybackViewModel(), title, subtitle,
+                time, seekbar, albumArt);
     }
 
     /**
@@ -236,8 +214,9 @@ public class PlaybackFragment extends Fragment {
             @Override
             public void onTransitionEnd(Transition transition) {
                 mUpdatesPaused = false;
-                if (mNeedsStateUpdate) {
-                    updateState();
+                if (mNeedsQueueUpdate) {
+                    mQueueAdapter.refresh();
+                    mNeedsQueueUpdate = false;
                 }
                 mMetadataController.resumeUpdates();
                 mQueue.getRecyclerView().scrollToPosition(0);
@@ -246,31 +225,15 @@ public class PlaybackFragment extends Fragment {
         TransitionManager.beginDelayedTransition(mRootView, transition);
         ConstraintSet constraintSet = new ConstraintSet();
         constraintSet.clone(mRootView.getContext(),
-                mQueueIsVisible ? R.layout.fragment_playback_with_queue : R.layout.fragment_playback);
+                mQueueIsVisible ? R.layout.fragment_playback_with_queue
+                        : R.layout.fragment_playback);
         constraintSet.applyTo(mRootView);
     }
 
-    private void updateState() {
-        if (mUpdatesPaused) {
-            mNeedsStateUpdate = true;
-            return;
-        }
-        mNeedsStateUpdate = false;
-        mQueueItems = mModel.getQueue().stream()
-                .filter(item -> item.getTitle() != null)
-                .collect(Collectors.toList());
-        mQueueAdapter.refresh();
-    }
-
-    private void updateAccentColor() {
-        int defaultColor = getResources().getColor(android.R.color.background_dark, null);
-        MediaSource mediaSource = mModel.getMediaSource();
-        int color = mediaSource == null ? defaultColor : mediaSource.getAccentColor(defaultColor);
-        // TODO: Update queue color
-    }
-
     private void onQueueItemClicked(MediaItemMetadata item) {
-        mModel.onSkipToQueueItem(item.getQueueId());
+        if (mController != null) {
+            mController.skipToQueueItem(item.getQueueId());
+        }
     }
 
     /**
@@ -278,5 +241,9 @@ public class PlaybackFragment extends Fragment {
      */
     public void closeOverflowMenu() {
         mPlaybackControls.close();
+    }
+
+    private PlaybackViewModel getPlaybackViewModel() {
+        return ViewModelProviders.of(getActivity()).get(PlaybackViewModel.class);
     }
 }
