@@ -16,7 +16,6 @@
 -->
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/browse_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -29,8 +28,6 @@
         android:layout_height="match_parent"
         android:clickable="true"
         android:focusable="true"
-        android:visibility="gone"
-        app:dayNightStyle="always_light"
-        app:listDividerColor="@color/car_list_divider_light"/>
+        android:visibility="gone" />
 
 </RelativeLayout>
