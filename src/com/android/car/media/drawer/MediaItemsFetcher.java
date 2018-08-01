@@ -108,16 +108,16 @@ interface MediaItemsFetcher {
      */
     static void populateViewHolderFrom(DrawerItemViewHolder holder, MediaDescription description) {
         Context context = holder.itemView.getContext();
-        holder.getTitle().setText(description.getTitle());
+        holder.getTitleView().setText(description.getTitle());
         // If normal layout, populate subtitle.
         if (!usesSmallLayout(description)) {
-            holder.getText().setText(description.getSubtitle());
+            holder.getBodyView().setText(description.getSubtitle());
         }
         Bitmap iconBitmap = description.getIconBitmap();
-        holder.getIcon().setImageBitmap(iconBitmap);    // Ok to set null here for clearing.
+        holder.getIconView().setImageBitmap(iconBitmap);    // Ok to set null here for clearing.
         if (iconBitmap == null) {
             if (description.getIconUri() != null) {
-                holder.getIcon().setVisibility(View.VISIBLE);
+                holder.getIconView().setVisibility(View.VISIBLE);
                 int bitmapSize =
                         context.getResources().getDimensionPixelSize(R.dimen.car_primary_icon_size);
                 // We don't want to cache android resources as they are needed to be refreshed after
@@ -132,9 +132,9 @@ interface MediaItemsFetcher {
                         .width(bitmapSize)
                         .cacheFlag(cacheFlag)
                         .build();
-                BitmapDownloader.getInstance(context).loadBitmap(options, holder.getIcon());
+                BitmapDownloader.getInstance(context).loadBitmap(options, holder.getIconView());
             } else {
-                holder.getIcon().setVisibility(View.GONE);
+                holder.getIconView().setVisibility(View.GONE);
             }
         }
     }
