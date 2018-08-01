@@ -138,13 +138,13 @@ class MediaBrowserItemsFetcher implements MediaItemsFetcher {
     @Override
     public void populateViewHolder(DrawerItemViewHolder holder, int position) {
         if (mQueueAvailable && position == mItems.size()) {
-            holder.getTitle().setText(mMediaPlaybackModel.getQueueTitle());
+            holder.getTitleView().setText(mMediaPlaybackModel.getQueueTitle());
             return;
         }
         MediaBrowser.MediaItem item = mItems.get(position);
         MediaItemsFetcher.populateViewHolderFrom(holder, item.getDescription());
 
-        if (holder.getEndIcon() == null) {
+        if (holder.getEndIconView() == null) {
             return;
         }
 
@@ -152,9 +152,9 @@ class MediaBrowserItemsFetcher implements MediaItemsFetcher {
             int iconColor = mContext.getColor(R.color.car_tint);
             Drawable drawable = mContext.getDrawable(R.drawable.ic_chevron_right);
             drawable.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN);
-            holder.getEndIcon().setImageDrawable(drawable);
+            holder.getEndIconView().setImageDrawable(drawable);
         } else {
-            holder.getEndIcon().setImageDrawable(null);
+            holder.getEndIconView().setImageDrawable(null);
         }
     }
 

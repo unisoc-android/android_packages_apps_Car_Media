@@ -78,7 +78,7 @@ class MediaQueueItemsFetcher implements MediaItemsFetcher {
         MediaSession.QueueItem item = mItems.get(position);
         MediaItemsFetcher.populateViewHolderFrom(holder, item.getDescription());
 
-        if (holder.getEndIcon() == null) {
+        if (holder.getEndIconView() == null) {
             return;
         }
 
@@ -87,9 +87,9 @@ class MediaQueueItemsFetcher implements MediaItemsFetcher {
             Drawable drawable =
                     mContext.getDrawable(R.drawable.ic_music_active);
             drawable.setColorFilter(primaryColor, PorterDuff.Mode.SRC_IN);
-            holder.getEndIcon().setImageDrawable(drawable);
+            holder.getEndIconView().setImageDrawable(drawable);
         } else {
-            holder.getEndIcon().setImageBitmap(null);
+            holder.getEndIconView().setImageBitmap(null);
         }
     }
 
