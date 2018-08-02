@@ -16,9 +16,10 @@
 
 package com.android.car.media;
 
-import android.annotation.NonNull;
+import static com.android.car.arch.common.LiveDataFunctions.dataOf;
+import static com.android.car.media.FreezableLiveData.freezable;
+
 import android.content.Context;
-import android.media.session.MediaController;
 import android.os.Bundle;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
@@ -31,6 +32,7 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.car.widget.ListItem;
 import androidx.car.widget.ListItemAdapter;
 import androidx.car.widget.ListItemProvider;
@@ -39,6 +41,7 @@ import androidx.car.widget.TextListItem;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -67,8 +70,8 @@ public class PlaybackFragment extends Fragment {
 
     private PlaybackViewModel.PlaybackController mController;
 
-    private boolean mNeedsQueueUpdate;
-    private boolean mUpdatesPaused;
+    private MutableLiveData<Boolean> mUpdatesPaused = dataOf(false);
+
     private boolean mQueueIsVisible;
     private List<MediaItemMetadata> mQueueItems = new ArrayList<>();
     private ListItemProvider mQueueItemsProvider = new ListItemProvider() {
@@ -170,16 +173,11 @@ public class PlaybackFragment extends Fragment {
                 .getDimensionPixelSize(R.dimen.car_padding_4));
         mQueueAdapter = new QueueItemsAdapter(getContext(), mQueueItemsProvider);
         queueList.setAdapter(mQueueAdapter);
-        getPlaybackViewModel().getQueue().observe(this, this::setQueue);
+        freezable(mUpdatesPaused, getPlaybackViewModel().getQueue()).observe(this, this::setQueue);
     }
 
     private void setQueue(List<MediaItemMetadata> queueItems) {
         mQueueItems = queueItems;
-        if (mUpdatesPaused) {
-            mNeedsQueueUpdate = true;
-            return;
-        }
-        mNeedsQueueUpdate = false;
         mQueueAdapter.refresh();
     }
 
@@ -190,8 +188,8 @@ public class PlaybackFragment extends Fragment {
         SeekBar seekbar = view.findViewById(R.id.seek_bar);
         TextView time = view.findViewById(R.id.time);
         mMetadataController = new MetadataController(getViewLifecycleOwner(),
-                getPlaybackViewModel(), title, subtitle,
-                time, seekbar, albumArt);
+                getPlaybackViewModel(), mUpdatesPaused,
+                title, subtitle, time, seekbar, albumArt);
     }
 
     /**
@@ -208,18 +206,12 @@ public class PlaybackFragment extends Fragment {
             @Override
             public void onTransitionStart(Transition transition) {
                 super.onTransitionStart(transition);
-                mUpdatesPaused = true;
-                mMetadataController.pauseUpdates();
+                mUpdatesPaused.setValue(true);
             }
 
             @Override
             public void onTransitionEnd(Transition transition) {
-                mUpdatesPaused = false;
-                if (mNeedsQueueUpdate) {
-                    mQueueAdapter.refresh();
-                    mNeedsQueueUpdate = false;
-                }
-                mMetadataController.resumeUpdates();
+                mUpdatesPaused.setValue(false);
                 mQueue.getRecyclerView().scrollToPosition(0);
             }
         });
