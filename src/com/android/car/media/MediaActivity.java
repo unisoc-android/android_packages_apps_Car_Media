@@ -15,7 +15,13 @@
  */
 package com.android.car.media;
 
+import static androidx.lifecycle.Transformations.switchMap;
+
+import static com.android.car.arch.common.LiveDataFunctions.distinct;
+import static com.android.car.arch.common.LiveDataFunctions.nullLiveData;
+
 import android.annotation.NonNull;
+import android.app.Application;
 import android.car.Car;
 import android.content.ComponentName;
 import android.content.Context;
@@ -26,6 +32,7 @@ import android.media.session.MediaController;
 import android.os.Bundle;
 import android.transition.Fade;
 import android.util.Log;
+import android.util.Size;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +41,8 @@ import androidx.car.drawer.CarDrawerAdapter;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProviders;
 
@@ -44,6 +53,7 @@ import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.MediaSource;
 import com.android.car.media.common.MediaSourcesManager;
 import com.android.car.media.common.PlaybackControls;
+import com.android.car.media.common.playback.AlbumArtLiveData;
 import com.android.car.media.common.playback.PlaybackViewModel;
 import com.android.car.media.drawer.MediaDrawerController;
 import com.android.car.media.widgets.AppBarView;
@@ -222,6 +232,8 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         PlaybackViewModel playbackViewModel = getPlaybackViewModel();
         playbackViewModel.setMediaController(mMediaController);
+        ViewModel localViewModel = ViewModelProviders.of(this).get(ViewModel.class);
+        localViewModel.init(playbackViewModel);
 
         mContentForwardBrowseEnabled = getResources()
                 .getBoolean(R.bool.forward_content_browse_enabled);
@@ -265,42 +277,12 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         playbackViewModel.getPlaybackController().observe(this,
                 playbackController -> mPlaybackController = playbackController);
-        playbackViewModel.getMetadata().observe(this, metadata -> {
-            if (isCurrentMediaSourcePlaying()) {
-                /*
-                 * We might receive new album art before we are ready to display it. If that
-                 * situation happens
-                 * we will retrieve and render the album art when the views are already laid out.
-                 */
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (metadata != null) {
-                            if (mAlbumBackground.getWidth() == 0
-                                    || mAlbumBackground.getHeight() == 0) {
-                                // We need to wait for the view to be measured before we can
-                                // render this
-                                // album art.
-                                mAlbumBackground.setImageBitmap(null, false);
-                                mAlbumBackground.post(this);
-                            } else {
-                                mAlbumBackground.removeCallbacks(this);
-                                metadata.getAlbumArt(MediaActivity.this,
-                                        mAlbumBackground.getWidth(),
-                                        mAlbumBackground.getHeight(),
-                                        false)
-                                        .thenAccept(bitmap -> setBackgroundImage(bitmap));
-                            }
-                        } else {
-                            mAlbumBackground.removeCallbacks(this);
-                            mAlbumBackground.setImageBitmap(null, true);
-                        }
-                    }
-                }.run();
-            } else {
-                mAlbumBackground.setImageBitmap(null, true);
-            }
-        });
+
+        mAlbumBackground.addOnLayoutChangeListener(
+                (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                        localViewModel.setAlbumArtSize(
+                                mAlbumBackground.getWidth(), mAlbumBackground.getHeight()));
+        localViewModel.getAlbumArt().observe(this, this::setBackgroundImage);
     }
 
     @Override
@@ -461,10 +443,9 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     /**
      * Updates the tabs displayed on the app bar, based on the top level items on the browse tree.
-     * If there is at least one browsable item, we show the browse content of that node.
-     * If there are only playable items, then we show those items.
-     * If there are not items at all, we show the empty message.
-     * If we receive null, we show the error message.
+     * If there is at least one browsable item, we show the browse content of that node. If there
+     * are only playable items, then we show those items. If there are not items at all, we show the
+     * empty message. If we receive null, we show the error message.
      *
      * @param items top level items, or null if there was an error trying load those items.
      */
@@ -525,8 +506,8 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     }
 
     /**
-     * Updates the browse area with either a loading state, the root node content, or the
-     * content of a particular media item.
+     * Updates the browse area with either a loading state, the root node content, or the content of
+     * a particular media item.
      *
      * @param state   state in the process of loading browse information.
      * @param topItem if state == IDLE, this will contain the item to display, or null to display
@@ -571,7 +552,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         // b/77551557
         // bitmap = ImageUtils.blur(getContext(), bitmap, mBackgroundBlurScale,
         //        mBackgroundBlurRadius);
-        mAlbumBackground.setImageBitmap(bitmap, true);
+        mAlbumBackground.setImageBitmap(bitmap, bitmap != null);
     }
 
     @Override
@@ -673,6 +654,44 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             mPlaybackFragment.toggleQueueVisibility();
         } else {
             mDrawerController.showPlayQueue();
+        }
+    }
+
+    public static class ViewModel extends AndroidViewModel {
+
+        public ViewModel(Application application) {
+            super(application);
+        }
+
+        private LiveData<Bitmap> mAlbumArt;
+
+        private MutableLiveData<Size> mAlbumArtSize = new MutableLiveData<>();
+
+        private PlaybackViewModel mPlaybackViewModel;
+
+        void init(@NonNull PlaybackViewModel playbackViewModel) {
+            if (mPlaybackViewModel == playbackViewModel) {
+                return;
+            }
+            mPlaybackViewModel = playbackViewModel;
+
+            mAlbumArt = switchMap(distinct(mAlbumArtSize), size -> {
+                if (size == null || size.getHeight() == 0 || size.getWidth() == 0) {
+                    return nullLiveData();
+                } else {
+                    return AlbumArtLiveData.getAlbumArt(getApplication(),
+                            size.getWidth(), size.getHeight(), false,
+                            playbackViewModel.getMetadata());
+                }
+            });
+        }
+
+        void setAlbumArtSize(int width, int height) {
+            mAlbumArtSize.setValue(new Size(width, height));
+        }
+
+        LiveData<Bitmap> getAlbumArt() {
+            return mAlbumArt;
         }
     }
 }
