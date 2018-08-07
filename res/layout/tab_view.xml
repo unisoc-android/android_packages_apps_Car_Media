@@ -24,7 +24,7 @@
         android:layout_marginBottom="@dimen/car_padding_1"
         android:scaleType="fitCenter"
         android:layout_gravity="center_horizontal"
-        android:tint="@color/car_body5_light"/>
+        android:tint="@color/car_tint_light"/>
 
     <TextView
         android:id="@+id/title"
@@ -35,6 +35,7 @@
         android:maxWidth="@dimen/browse_tab_width"
         android:ellipsize="end"
         android:includeFontPadding="false"
-        android:textAppearance="@style/TextAppearance.Car.Body5.Light"/>
+        android:textColor="@color/car_subtext2_light"
+        android:textAppearance="@style/TextAppearance.Car.SubText2"/>
 
 </merge>

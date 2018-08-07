@@ -19,10 +19,6 @@
 
     <color name="album_art_background">@color/car_grey_100</color>
 
-    <color name="car_body5_light">@android:color/white</color>
-    <color name="car_body5_dark">@android:color/black</color>
-    <color name="car_body5">@color/car_body5_dark</color>
-
     <!-- Color displayed behind the transport controls while browsing -->
     <color name="browse_playback_bg">@android:color/black</color>
     <!-- Default media background -->
