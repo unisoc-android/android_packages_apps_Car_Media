@@ -44,7 +44,6 @@ LOCAL_JAVA_LIBRARIES += android.car
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     androidx.car_car \
     androidx-constraintlayout_constraintlayout \
-    android-support-design-widget \
     car-apps-common \
     car-media-common
 
