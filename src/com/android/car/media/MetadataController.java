@@ -4,8 +4,8 @@ import static androidx.lifecycle.Transformations.switchMap;
 
 import static com.android.car.arch.common.LiveDataFunctions.combine;
 import static com.android.car.arch.common.LiveDataFunctions.falseLiveData;
+import static com.android.car.arch.common.LiveDataFunctions.freezable;
 import static com.android.car.arch.common.LiveDataFunctions.mapNonNull;
-import static com.android.car.media.FreezableLiveData.freezable;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
