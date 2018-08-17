@@ -109,10 +109,10 @@ class MediaDrawerAdapter extends CarDrawerAdapter {
 
         mCurrentFetcher.populateViewHolder(holder, position);
         scrollToCurrent();
+        holder.itemView.setOnClickListener(v -> onItemClick(holder.getAdapterPosition()));
     }
 
-    @Override
-    public void onItemClick(int position) {
+    private void onItemClick(int position) {
         if (mCurrentFetcher != null) {
             mCurrentFetcher.onItemClick(position);
         }
