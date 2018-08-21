@@ -17,7 +17,7 @@
 package com.android.car.media;
 
 import static com.android.car.arch.common.LiveDataFunctions.dataOf;
-import static com.android.car.media.FreezableLiveData.freezable;
+import static com.android.car.arch.common.LiveDataFunctions.freezable;
 
 import android.content.Context;
 import android.os.Bundle;
