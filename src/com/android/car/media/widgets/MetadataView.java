@@ -55,8 +55,8 @@ public class MetadataView extends RelativeLayout {
         TextView title = findViewById(R.id.title);
         TextView subtitle = findViewById(R.id.subtitle);
         SeekBar seekBar = findViewById(R.id.seek_bar);
-        mMetadataController = new MetadataController(owner, model, title, subtitle, null, seekBar,
-                null);
+        mMetadataController = new MetadataController(owner, model,null,
+                title, subtitle, null, seekBar, null);
     }
 
 }
