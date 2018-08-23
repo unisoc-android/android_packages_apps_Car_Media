@@ -126,13 +126,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     private ActiveMediaSourceManager.Observer mActiveSourceObserver = () -> {
         // If the active media source changes and it is the one currently being browsed, then
         // we should capture the controller.
-        MediaController controller = mActiveMediaSourceManager.getMediaController();
-        if (mMediaController.getValue() == null
-                && mMediaSource != null
-                && controller != null
-                && Objects.equals(controller.getPackageName(), mMediaSource.getPackageName())) {
-            mMediaController.setValue(controller);
-        }
+        updateController(mActiveMediaSourceManager.getMediaController());
     };
     private MediaSource.ItemsSubscription mItemsSubscription =
             new MediaSource.ItemsSubscription() {
@@ -332,9 +326,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             return;
         }
         mMediaSource.subscribeChildren(null, mItemsSubscription);
-        if (mMediaController.getValue() == null) {
-            mMediaController.setValue(mMediaSource.getMediaController());
-        }
+        updateController(mMediaSource.getMediaController());
     }
 
     private void handleIntent() {
@@ -350,7 +342,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             if (packageName != null) {
                 // We were told to navigate to a particular package: we open browse for it.
                 closeAppSelector();
-                changeMediaSource(new MediaSource(this, packageName), null);
+                changeMediaSource(new MediaSource(this, packageName));
                 switchToMode(Mode.BROWSING);
                 return;
             }
@@ -360,7 +352,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             MediaController controller = mActiveMediaSourceManager.getMediaController();
             if (controller != null) {
                 closeAppSelector();
-                changeMediaSource(new MediaSource(this, controller.getPackageName()), controller);
+                changeMediaSource(new MediaSource(this, controller.getPackageName()));
                 switchToMode(Mode.PLAYBACK);
                 return;
             }
@@ -377,7 +369,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         MediaSource lastMediaSource = getLastMediaSource();
         if (lastMediaSource != null) {
             closeAppSelector();
-            changeMediaSource(lastMediaSource, null);
+            changeMediaSource(lastMediaSource);
             switchToMode(Mode.BROWSING);
         } else {
             // If we don't have anything from before: open the app selector.
@@ -386,15 +378,27 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     }
 
     /**
+     * Updates the controller we should use for the currently selected media source.
+     *
+     * @param controller new controller to use.
+     */
+    private void updateController(MediaController controller) {
+        if (mMediaSource != null && controller != null
+                && Objects.equals(controller.getPackageName(), mMediaSource.getPackageName())
+                && mMediaController.getValue() != controller) {
+            mMediaController.setValue(controller);
+            controller.getTransportControls().prepare();
+        } else {
+            mMediaController.setValue(null);
+        }
+    }
+
+    /**
      * Sets the media source being browsed.
      *
      * @param mediaSource the media source we are going to try to browse
-     * @param controller  a controller we can use to control the playback state of the given source.
-     *                    If not provided, we will try to obtain it from the session manager.
-     *                    Otherwise, we will obtain a controller once the media browser is
-     *                    connected.
      */
-    private void changeMediaSource(MediaSource mediaSource, MediaController controller) {
+    private void changeMediaSource(MediaSource mediaSource) {
         if (Objects.equals(mediaSource, mMediaSource)) {
             // No change, nothing to do.
             return;
@@ -405,18 +409,14 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             updateTabs(new ArrayList<>());
         }
         mMediaSource = mediaSource;
-        mMediaController.setValue(controller != null ? controller
-                : mActiveMediaSourceManager.getControllerForPackage(mediaSource.getPackageName()));
         setLastMediaSource(mMediaSource);
         if (mMediaSource != null) {
             if (Log.isLoggable(TAG, Log.INFO)) {
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
             }
             // Prepare the media source for playback
-            MediaController mediaController = mMediaController.getValue();
-            if (mediaController != null) {
-                mediaController.getTransportControls().prepare();
-            }
+            updateController(mActiveMediaSourceManager.getControllerForPackage(
+                    mediaSource.getPackageName()));
             // Make the drawer display browse information of the selected source
             ComponentName component = mMediaSource.getBrowseServiceComponentName();
             MediaManager.getInstance(this).setMediaClientComponent(component);
@@ -433,6 +433,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         } else {
             mAppBarView.setAppIcon(null);
             mAppBarView.setTitle(null);
+            updateController(null);
         }
     }
 
@@ -578,7 +579,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             Log.w(TAG, "Trying to play an item from a different source "
                     + "(expected: " + controllerPackage + ", received"
                     + sourcePackage + ")");
-            changeMediaSource(mediaSource, mediaSource.getMediaController());
+            changeMediaSource(mediaSource);
         }
         mPlaybackController.playItem(item.getId());
         setIntent(null);
@@ -615,7 +616,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     public void onMediaSourceSelected(MediaSource mediaSource) {
         closeAppSelector();
         if (mediaSource.getMediaBrowser() != null && !mediaSource.isCustom()) {
-            changeMediaSource(mediaSource, null);
+            changeMediaSource(mediaSource);
             switchToMode(Mode.BROWSING);
         } else {
             String packageName = mediaSource.getPackageName();
