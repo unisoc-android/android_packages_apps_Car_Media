@@ -611,14 +611,9 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
 
     @Override
     public boolean getShowDivider(int position) {
-        return !shouldHideDivider(position);
-    }
-
-    @Override
-    public boolean shouldHideDivider(int position) {
-        return position >= mViewData.size() - 1
-                || position < 0
-                || mViewData.get(position).mViewType != BrowseItemViewType.PANEL_ITEM
-                || mViewData.get(position + 1).mViewType != BrowseItemViewType.PANEL_ITEM;
+        return (position >= mViewData.size() - 1
+                && position < 0
+                && mViewData.get(position).mViewType != BrowseItemViewType.PANEL_ITEM
+                && mViewData.get(position + 1).mViewType != BrowseItemViewType.PANEL_ITEM);
     }
 }
