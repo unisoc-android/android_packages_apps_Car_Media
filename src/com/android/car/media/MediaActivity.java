@@ -337,33 +337,24 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         getDrawerController().closeDrawer();
 
-        if (Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE.equals(action)) {
-            // The user either wants to browse a particular media source or switch to the
-            // playback UI.
-            String packageName = intent.getStringExtra(KEY_MEDIA_PACKAGE);
-            if (packageName != null) {
-                // We were told to navigate to a particular package: we open browse for it.
-                closeAppSelector();
-                changeMediaSource(new MediaSource(this, packageName));
-                switchToMode(Mode.BROWSING);
-                return;
-            }
-
-            // If we didn't receive a package name and we are playing something: show the playback
-            // UI for the playing media source.
-            MediaController controller = mActiveMediaSourceManager.getMediaController();
-            if (controller != null) {
-                closeAppSelector();
-                changeMediaSource(new MediaSource(this, controller.getPackageName()));
-                switchToMode(Mode.PLAYBACK);
-                return;
-            }
+        // The user either wants to browse a particular media source or switch to the
+        // playback UI.
+        String packageName = intent.getStringExtra(KEY_MEDIA_PACKAGE);
+        if (packageName != null) {
+            // We were told to navigate to a particular package: we open browse for it.
+            closeAppSelector();
+            changeMediaSource(new MediaSource(this, packageName));
+            switchToMode(Mode.BROWSING);
+            return;
         }
 
-        // In any other case, if we were already browsing something: just close drawers/overlays
-        // and display what we have.
-        if (mMediaSource != null) {
+        // If we didn't re  ceive a package name and we are playing something: show the playback
+        // UI for the playing media source.
+        MediaController controller = mActiveMediaSourceManager.getMediaController();
+        if (controller != null) {
             closeAppSelector();
+            changeMediaSource(new MediaSource(this, controller.getPackageName()));
+            switchToMode(Mode.PLAYBACK);
             return;
         }
 
