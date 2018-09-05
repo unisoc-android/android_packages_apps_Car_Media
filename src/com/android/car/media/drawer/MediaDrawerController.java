@@ -17,10 +17,10 @@ package com.android.car.media.drawer;
 
 import android.content.ComponentName;
 import android.content.Context;
-import android.media.browse.MediaBrowser;
-import android.media.session.MediaController;
-import android.media.session.MediaSession;
 import android.os.Bundle;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 import android.view.View;
 
@@ -74,8 +74,9 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
     }
 
     @Override
-    public void onQueueItemClicked(MediaSession.QueueItem queueItem) {
-        MediaController.TransportControls controls = mMediaPlaybackModel.getTransportControls();
+    public void onQueueItemClicked(MediaSessionCompat.QueueItem queueItem) {
+        MediaControllerCompat.TransportControls controls =
+                mMediaPlaybackModel.getTransportControls();
 
         if (controls != null) {
             controls.skipToQueueItem(queueItem.getQueueId());
@@ -85,7 +86,7 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
     }
 
     @Override
-    public void onMediaItemClicked(MediaBrowser.MediaItem item) {
+    public void onMediaItemClicked(MediaBrowserCompat.MediaItem item) {
         if (item.isBrowsable()) {
             MediaItemsFetcher fetcher;
             if (MediaBrowserItemsFetcher.PLAY_QUEUE_MEDIA_ID.equals(item.getMediaId())) {
@@ -96,7 +97,8 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
             }
             setupAdapterAndSwitch(fetcher, item.getDescription().getTitle());
         } else if (item.isPlayable()) {
-            MediaController.TransportControls controls = mMediaPlaybackModel.getTransportControls();
+            MediaControllerCompat.TransportControls controls =
+                    mMediaPlaybackModel.getTransportControls();
             if (controls != null) {
                 controls.playFromMediaId(item.getMediaId(), item.getDescription().getExtras());
             }
@@ -186,8 +188,8 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
     }
 
     /**
-     * A {@link androidx.drawerlayout.widget.DrawerLayout.DrawerListener} specifically to be used when
-     * the play queue has been shown in the drawer. When the drawer is closed following this
+     * A {@link androidx.drawerlayout.widget.DrawerLayout.DrawerListener} specifically to be used
+     * when the play queue has been shown in the drawer. When the drawer is closed following this
      * display, this listener will reset the drawer to display the root view.
      */
     private final DrawerLayout.DrawerListener mQueueDrawerListener =
