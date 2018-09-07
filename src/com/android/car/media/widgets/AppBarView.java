@@ -41,6 +41,7 @@ public class AppBarView extends RelativeLayout {
     private ViewGroup mNavIconContainer;
     private TextView mTitle;
     private ViewGroup mAppSwitchContainer;
+    private View mSettingsButton;
     private Context mContext;
     private int mMaxTabs;
     private Drawable mArrowDropDown;
@@ -80,6 +81,11 @@ public class AppBarView extends RelativeLayout {
          * Invoked when the user clicks on the app selection switch
          */
         void onAppSelection();
+
+        /**
+         * Invoked when the user clicks on the settings button.
+         */
+        void onSettingsSelection();
     }
 
     /**
@@ -145,6 +151,8 @@ public class AppBarView extends RelativeLayout {
         mAppSwitchIcon = findViewById(R.id.app_switch_icon);
         mAppSwitchContainer = findViewById(R.id.app_switch_container);
         mAppSwitchContainer.setOnClickListener(view -> onAppSwitchClicked());
+        mSettingsButton = findViewById(R.id.settings);
+        mSettingsButton.setOnClickListener(view -> onSettingsClicked());
         mTitle = findViewById(R.id.title);
         mArrowDropDown = getResources().getDrawable(R.drawable.ic_arrow_drop_down, null);
         mArrowDropUp = getResources().getDrawable(R.drawable.ic_arrow_drop_up, null);
@@ -181,6 +189,13 @@ public class AppBarView extends RelativeLayout {
             return;
         }
         mListener.onAppSelection();
+    }
+
+    private void onSettingsClicked() {
+        if (mListener == null) {
+            return;
+        }
+        mListener.onSettingsSelection();
     }
 
     /**
@@ -235,6 +250,11 @@ public class AppBarView extends RelativeLayout {
      */
     public void setTitle(CharSequence title) {
         mTitle.setText(title != null ? title : mMediaAppTitle);
+    }
+
+    /** Controls whether the settings button is visible. */
+    public void showSettings(boolean show) {
+        mSettingsButton.setVisibility(show ? VISIBLE : INVISIBLE);
     }
 
     /**
