@@ -22,11 +22,12 @@ import static com.android.car.arch.common.LiveDataFunctions.nullLiveData;
 
 import android.annotation.NonNull;
 import android.app.Application;
-import android.car.Car;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.media.session.MediaController;
 import android.os.Bundle;
@@ -37,7 +38,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.car.drawer.CarDrawerAdapter;
+import androidx.annotation.Nullable;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -111,6 +112,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     /** Current state */
     private Fragment mCurrentFragment;
+    private Intent mCurrentSourcePreferences;
     private Mode mMode = Mode.BROWSING;
     private boolean mIsAppSelectorOpen;
 
@@ -170,6 +172,22 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 closeAppSelector();
             } else {
                 openAppSelector();
+            }
+        }
+
+        @Override
+        public void onSettingsSelection() {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "onSettingsSelection");
+            }
+            try {
+                if (mCurrentSourcePreferences != null) {
+                    startActivity(mCurrentSourcePreferences);
+                }
+            } catch (ActivityNotFoundException e) {
+                if (Log.isLoggable(TAG, Log.ERROR)) {
+                    Log.e(TAG, "onSettingsSelection " + e);
+                }
             }
         }
     };
@@ -407,27 +425,42 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             if (Log.isLoggable(TAG, Log.INFO)) {
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
             }
+            String packageName = mediaSource.getPackageName();
             // Prepare the media source for playback
-            updateController(mActiveMediaSourceManager.getControllerForPackage(
-                    mediaSource.getPackageName()));
+            updateController(mActiveMediaSourceManager.getControllerForPackage(packageName));
             // Make the drawer display browse information of the selected source
             ComponentName component = mMediaSource.getBrowseServiceComponentName();
             MediaManager.getInstance(this).setMediaClientComponent(component);
             // If content forward browsing is disabled, then no need to subscribe to this media
             // source, we will use the drawer instead.
             if (mContentForwardBrowseEnabled) {
-                Log.i(TAG, "Content forward is enabled: subscribing to " +
-                        mMediaSource.getPackageName());
+                Log.i(TAG, "Content forward is enabled: subscribing to " + packageName);
                 updateBrowseFragment(BrowseState.LOADING, null);
                 mMediaSource.subscribe(mMediaSourceObserver);
             }
             mAppBarView.setAppIcon(mMediaSource.getRoundPackageIcon());
             mAppBarView.setTitle(mMediaSource.getName());
+            updateSourcePreferences(packageName);
         } else {
             mAppBarView.setAppIcon(null);
             mAppBarView.setTitle(null);
             updateController(null);
+            updateSourcePreferences(null);
         }
+    }
+
+    private void updateSourcePreferences(@Nullable String packageName) {
+        mCurrentSourcePreferences = null;
+        if (packageName != null) {
+            Intent prefsIntent = new Intent(Intent.ACTION_APPLICATION_PREFERENCES);
+            prefsIntent.setPackage(packageName);
+            ResolveInfo info = getPackageManager().resolveActivity(prefsIntent, 0);
+            if (info != null) {
+                mCurrentSourcePreferences = new Intent(prefsIntent.getAction())
+                        .setClassName(info.activityInfo.packageName, info.activityInfo.name);
+            }
+        }
+        mAppBarView.showSettings(mCurrentSourcePreferences != null);
     }
 
     private boolean isCurrentMediaSourcePlaying() {
