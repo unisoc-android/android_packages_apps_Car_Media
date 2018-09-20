@@ -16,5 +16,5 @@
 -->
 <resources>
     <!-- Whether forward content browse is enabled -->
-    <bool name="forward_content_browse_enabled">false</bool>
+    <bool name="forward_content_browse_enabled">true</bool>
 </resources>
