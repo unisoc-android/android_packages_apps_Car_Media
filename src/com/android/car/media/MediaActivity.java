@@ -85,8 +85,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         AppSelectionFragment.Callbacks, PlaybackFragment.Callbacks {
     private static final String TAG = "MediaActivity";
 
-    /** Intent extra specifying the package with the MediaBrowser */
-    public static final String KEY_MEDIA_PACKAGE = "media_package";
     /** Shared preferences files */
     public static final String SHARED_PREF = "com.android.car.media";
     /** Shared preference containing the last controlled source */
@@ -352,7 +350,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         if (Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE.equals(action)) {
             // The user either wants to browse a particular media source or switch to the
             // playback UI.
-            String packageName = intent.getStringExtra(KEY_MEDIA_PACKAGE);
+            String packageName = intent.getStringExtra(Car.CAR_EXTRA_MEDIA_PACKAGE);
             if (packageName != null) {
                 // We were told to navigate to a particular package: we open browse for it.
                 closeAppSelector();
