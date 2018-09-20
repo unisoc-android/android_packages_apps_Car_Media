@@ -17,11 +17,14 @@ package com.android.car.media;
 
 import static androidx.lifecycle.Transformations.switchMap;
 
+import static com.android.car.arch.common.LiveDataFunctions.combine;
 import static com.android.car.arch.common.LiveDataFunctions.distinct;
 import static com.android.car.arch.common.LiveDataFunctions.nullLiveData;
 
-import android.annotation.NonNull;
+import static java.util.Objects.requireNonNull;
+
 import android.app.Application;
+import android.car.Car;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -31,6 +34,8 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.media.session.MediaController;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.transition.Fade;
 import android.util.Log;
 import android.util.Size;
@@ -38,24 +43,29 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.car.drawer.CarDrawerController;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.android.car.apps.common.DrawerActivity;
-import com.android.car.media.common.ActiveMediaSourceManager;
+import com.android.car.arch.common.preference.StringPreferenceLiveData;
+import com.android.car.arch.common.switching.SwitchingLiveData;
 import com.android.car.media.common.CrossfadeImageView;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.MediaSource;
-import com.android.car.media.common.MediaSourcesManager;
 import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.playback.AlbumArtLiveData;
 import com.android.car.media.common.playback.PlaybackViewModel;
+import com.android.car.media.common.source.MediaSourceViewModel;
+import com.android.car.media.common.source.SimpleMediaSource;
 import com.android.car.media.drawer.MediaDrawerController;
 import com.android.car.media.widgets.AppBarView;
 import com.android.car.media.widgets.MetadataView;
@@ -66,6 +76,7 @@ import com.google.android.material.appbar.AppBarLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -85,17 +96,12 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     /** Configuration (controlled from resources) */
     private boolean mContentForwardBrowseEnabled;
-    private float mBackgroundBlurRadius;
-    private float mBackgroundBlurScale;
     private int mFadeDuration;
 
     /** Models */
     private MediaDrawerController mDrawerController;
-    private ActiveMediaSourceManager mActiveMediaSourceManager;
+    @Nullable
     private MediaSource mMediaSource;
-    private MediaSourcesManager mMediaSourcesManager;
-    private SharedPreferences mSharedPreferences;
-    private MutableLiveData<MediaController> mMediaController = new MutableLiveData<>();
     private PlaybackViewModel.PlaybackController mPlaybackController;
 
     /** Layout views */
@@ -103,8 +109,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     private CrossfadeImageView mAlbumBackground;
     private PlaybackFragment mPlaybackFragment;
     private AppSelectionFragment mAppSelectionFragment;
-    private PlaybackControls mPlaybackControls;
-    private MetadataView mMetadataView;
     private ViewGroup mBrowseControlsContainer;
     private EmptyFragment mEmptyFragment;
     private ViewGroup mBrowseContainer;
@@ -115,6 +119,8 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     private Intent mCurrentSourcePreferences;
     private Mode mMode = Mode.BROWSING;
     private boolean mIsAppSelectorOpen;
+
+    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     private MediaSource.Observer mMediaSourceObserver = new MediaSource.Observer() {
         @Override
@@ -127,18 +133,13 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             MediaActivity.this.onBrowseConnected(false);
         }
     };
-    private ActiveMediaSourceManager.Observer mActiveSourceObserver = () -> {
-        // If the active media source changes and it is the one currently being browsed, then
-        // we should capture the controller.
-        updateController(mActiveMediaSourceManager.getMediaController());
-    };
     private MediaSource.ItemsSubscription mItemsSubscription =
             new MediaSource.ItemsSubscription() {
                 @Override
                 public void onChildrenLoaded(MediaSource mediaSource, String parentId,
                         List<MediaItemMetadata> items) {
                     if (mediaSource == mMediaSource) {
-                        updateTabs(items);
+                        updateTabs(items, MediaActivity.this.mMediaSource);
                     } else {
                         Log.w(TAG, "Received items for a wrong source: " +
                                 mediaSource.getPackageName());
@@ -148,13 +149,13 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     private AppBarView.AppBarListener mAppBarListener = new AppBarView.AppBarListener() {
         @Override
         public void onTabSelected(MediaItemMetadata item) {
-            updateBrowseFragment(BrowseState.LOADED, item);
+            updateBrowseFragment(BrowseState.LOADED, item, mMediaSource);
             switchToMode(Mode.BROWSING);
         }
 
         @Override
         public void onBack() {
-            if (mCurrentFragment != null && mCurrentFragment instanceof BrowseFragment) {
+            if (mCurrentFragment instanceof BrowseFragment) {
                 BrowseFragment fragment = (BrowseFragment) mCurrentFragment;
                 fragment.navigateBack();
             }
@@ -190,10 +191,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 }
             }
         }
-    };
-    private MediaSourcesManager.Observer mMediaSourcesManagerObserver = () -> {
-        mAppBarView.setAppSelection(!mMediaSourcesManager.getMediaSources().isEmpty());
-        mAppSelectionFragment.refresh();
     };
     private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {
         @Override
@@ -244,42 +241,51 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         setContentView(R.layout.media_activity);
 
+        MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
         PlaybackViewModel playbackViewModel = getPlaybackViewModel();
-        playbackViewModel.setMediaController(mMediaController);
+        playbackViewModel.setMediaController(mediaSourceViewModel.getMediaController());
         ViewModel localViewModel = ViewModelProviders.of(this).get(ViewModel.class);
         localViewModel.init(playbackViewModel);
 
         mContentForwardBrowseEnabled = getResources()
                 .getBoolean(R.bool.forward_content_browse_enabled);
-        mDrawerController = new MediaDrawerController(this, getDrawerController());
-        getDrawerController().setRootAdapter(mDrawerController.getRootAdapter());
-        getDrawerController().addDrawerListener(mDrawerListener);
+        CarDrawerController drawerController = requireNonNull(getDrawerController());
+        mDrawerController = new MediaDrawerController(this, drawerController);
+        drawerController.setRootAdapter(mDrawerController.getRootAdapter());
+        drawerController.addDrawerListener(mDrawerListener);
         if (mContentForwardBrowseEnabled) {
-            getActionBar().hide();
+            requireNonNull(getActionBar()).hide();
         }
+
         mAppBarView = findViewById(R.id.app_bar);
         mAppBarView.setListener(mAppBarListener);
         mAppBarView.setContentForwardEnabled(mContentForwardBrowseEnabled);
+        mediaSourceViewModel.hasMediaSources().observe(this, mAppBarView::setAppSelection);
+        mediaSourceViewModel.getSelectedMediaSource().observe(this, source -> {
+            if (source == null) {
+                mAppBarView.setAppIcon(null);
+                mAppBarView.setTitle(null);
+            } else {
+                mAppBarView.setAppIcon(source.getRoundPackageIcon());
+                mAppBarView.setTitle(source.getName());
+            }
+        });
+
         mPlaybackFragment = new PlaybackFragment();
         mAppSelectionFragment = new AppSelectionFragment();
         int fadeDuration = getResources().getInteger(R.integer.app_selector_fade_duration);
         mAppSelectionFragment.setEnterTransition(new Fade().setDuration(fadeDuration));
         mAppSelectionFragment.setExitTransition(new Fade().setDuration(fadeDuration));
-        mActiveMediaSourceManager = new ActiveMediaSourceManager(this);
-        mMediaSourcesManager = new MediaSourcesManager(this);
         mAlbumBackground = findViewById(R.id.media_background);
-        mPlaybackControls = findViewById(R.id.browse_controls);
-        mPlaybackControls.setModel(playbackViewModel, this);
-        mMetadataView = findViewById(R.id.browse_metadata);
-        mMetadataView.setModel(playbackViewModel, this);
+        PlaybackControls playbackControls = findViewById(R.id.browse_controls);
+        playbackControls.setModel(playbackViewModel, this);
+        MetadataView metadataView = findViewById(R.id.browse_metadata);
+        metadataView.setModel(playbackViewModel, this);
         mBrowseControlsContainer = findViewById(R.id.browse_controls_container);
         mBrowseControlsContainer.setOnClickListener(view -> switchToMode(Mode.PLAYBACK));
         TypedValue outValue = new TypedValue();
         getResources().getValue(R.dimen.playback_background_blur_radius, outValue, true);
-        mBackgroundBlurRadius = outValue.getFloat();
         getResources().getValue(R.dimen.playback_background_blur_scale, outValue, true);
-        mBackgroundBlurScale = outValue.getFloat();
-        mSharedPreferences = getSharedPreferences(SHARED_PREF, Context.MODE_PRIVATE);
         mFadeDuration = getResources().getInteger(
                 R.integer.new_album_art_fade_in_duration);
         mEmptyFragment = new EmptyFragment();
@@ -289,29 +295,18 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 .replace(R.id.playback_container, mPlaybackFragment)
                 .commit();
 
+        handleIntent();
         playbackViewModel.getPlaybackController().observe(this,
-                playbackController -> mPlaybackController = playbackController);
+                playbackController -> {
+                    if (playbackController != null) playbackController.prepare();
+                    mPlaybackController = playbackController;
+                });
 
         mAlbumBackground.addOnLayoutChangeListener(
                 (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
                         localViewModel.setAlbumArtSize(
                                 mAlbumBackground.getWidth(), mAlbumBackground.getHeight()));
         localViewModel.getAlbumArt().observe(this, this::setBackgroundImage);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mActiveMediaSourceManager.registerObserver(mActiveSourceObserver);
-        mMediaSourcesManager.registerObserver(mMediaSourcesManagerObserver);
-        handleIntent();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        mActiveMediaSourceManager.unregisterObserver(mActiveSourceObserver);
-        mMediaSourcesManager.unregisterObserver(mMediaSourcesManagerObserver);
     }
 
     @Override
@@ -338,70 +333,61 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     }
 
     private void onBrowseConnected(boolean success) {
+        // mMediaSource shouldn't be null if we've just connected to its MediaBrowser
+        requireNonNull(mMediaSource);
         if (!success) {
-            updateTabs(null);
+            updateTabs(null, mMediaSource);
             mMediaSource.unsubscribeChildren(null, mItemsSubscription);
             mMediaSource.unsubscribe(mMediaSourceObserver);
-            updateBrowseFragment(BrowseState.ERROR, null);
+            updateBrowseFragment(BrowseState.ERROR, null, mMediaSource);
             return;
         }
         mMediaSource.subscribeChildren(null, mItemsSubscription);
-        updateController(mMediaSource.getMediaController());
     }
 
     private void handleIntent() {
         Intent intent = getIntent();
         String action = intent != null ? intent.getAction() : null;
 
-        getDrawerController().closeDrawer();
+        requireNonNull(getDrawerController()).closeDrawer();
 
-        // The user either wants to browse a particular media source or switch to the
-        // playback UI.
-        String packageName = intent.getStringExtra(KEY_MEDIA_PACKAGE);
-        if (packageName != null) {
-            // We were told to navigate to a particular package: we open browse for it.
-            closeAppSelector();
-            changeMediaSource(new MediaSource(this, packageName));
-            switchToMode(Mode.BROWSING);
-            return;
-        }
+        if (Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE.equals(action)) {
+            // The user either wants to browse a particular media source or switch to the
+            // playback UI.
+            String packageName = intent.getStringExtra(KEY_MEDIA_PACKAGE);
+            if (packageName != null) {
+                // We were told to navigate to a particular package: we open browse for it.
+                closeAppSelector();
+                changeMediaSource(new SimpleMediaSource(this, packageName));
+                switchToMode(Mode.BROWSING);
+                return;
+            }
 
-        // If we didn't re  ceive a package name and we are playing something: show the playback
-        // UI for the playing media source.
-        MediaController controller = mActiveMediaSourceManager.getMediaController();
-        if (controller != null) {
-            closeAppSelector();
-            changeMediaSource(new MediaSource(this, controller.getPackageName()));
-            switchToMode(Mode.PLAYBACK);
-            return;
+            // If we didn't receive a package name and we are playing something: show the playback
+            // UI for the playing media source.
+            LiveData<MediaController> topActiveMediaController =
+                    getMediaSourceViewModel().getTopActiveMediaController();
+            observeOnce(topActiveMediaController, controller -> {
+                if (controller != null) {
+                    closeAppSelector();
+                    changeMediaSource(new SimpleMediaSource(MediaActivity.this,
+                            controller.getPackageName()));
+                    switchToMode(Mode.PLAYBACK);
+                }
+            });
         }
 
         // If we don't have a current media source, we try with the last one we remember.
-        MediaSource lastMediaSource = getLastMediaSource();
-        if (lastMediaSource != null) {
-            closeAppSelector();
-            changeMediaSource(lastMediaSource);
-            switchToMode(Mode.BROWSING);
-        } else {
-            // If we don't have anything from before: open the app selector.
-            openAppSelector();
-        }
-    }
-
-    /**
-     * Updates the controller we should use for the currently selected media source.
-     *
-     * @param controller new controller to use.
-     */
-    private void updateController(MediaController controller) {
-        if (mMediaSource != null && controller != null
-                && Objects.equals(controller.getPackageName(), mMediaSource.getPackageName())
-                && mMediaController.getValue() != controller) {
-            mMediaController.setValue(controller);
-            controller.getTransportControls().prepare();
-        } else {
-            mMediaController.setValue(null);
-        }
+        observeOnce(getInnerViewModel().getLastMediaSource(), lastMediaSource -> {
+            if (lastMediaSource != null) {
+                closeAppSelector();
+                changeMediaSource(lastMediaSource);
+                switchToMode(Mode.BROWSING);
+            } else {
+                // If we don't have anything from before: open the app selector.
+                openAppSelector();
+            }
+        });
     }
 
     /**
@@ -409,42 +395,37 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
      *
      * @param mediaSource the media source we are going to try to browse
      */
-    private void changeMediaSource(MediaSource mediaSource) {
-        if (Objects.equals(mediaSource, mMediaSource)) {
+    private void changeMediaSource(@Nullable SimpleMediaSource mediaSource) {
+        MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
+        if (Objects.equals(mediaSource, mediaSourceViewModel.getSelectedMediaSource().getValue())) {
             // No change, nothing to do.
             return;
         }
+        mediaSourceViewModel.setSelectedMediaSource(mediaSource);
         if (mMediaSource != null) {
             mMediaSource.unsubscribeChildren(null, mItemsSubscription);
             mMediaSource.unsubscribe(mMediaSourceObserver);
-            updateTabs(new ArrayList<>());
+            updateTabs(new ArrayList<>(), mMediaSource);
         }
-        mMediaSource = mediaSource;
-        setLastMediaSource(mMediaSource);
+        mMediaSource = mediaSource == null ? null : mediaSource.toMediaSource();
+        getInnerViewModel().setLastMediaSource(mediaSource);
         if (mMediaSource != null) {
             if (Log.isLoggable(TAG, Log.INFO)) {
-                Log.i(TAG, "Browsing: " + mediaSource.getName());
+                Log.i(TAG, "Browsing: " + mMediaSource.getName());
             }
-            String packageName = mediaSource.getPackageName();
-            // Prepare the media source for playback
-            updateController(mActiveMediaSourceManager.getControllerForPackage(packageName));
             // Make the drawer display browse information of the selected source
             ComponentName component = mMediaSource.getBrowseServiceComponentName();
+            String packageName = mMediaSource.getPackageName();
             MediaManager.getInstance(this).setMediaClientComponent(component);
             // If content forward browsing is disabled, then no need to subscribe to this media
             // source, we will use the drawer instead.
             if (mContentForwardBrowseEnabled) {
                 Log.i(TAG, "Content forward is enabled: subscribing to " + packageName);
-                updateBrowseFragment(BrowseState.LOADING, null);
+                updateBrowseFragment(BrowseState.LOADING, null, mMediaSource);
                 mMediaSource.subscribe(mMediaSourceObserver);
             }
-            mAppBarView.setAppIcon(mMediaSource.getRoundPackageIcon());
-            mAppBarView.setTitle(mMediaSource.getName());
             updateSourcePreferences(packageName);
         } else {
-            mAppBarView.setAppIcon(null);
-            mAppBarView.setTitle(null);
-            updateController(null);
             updateSourcePreferences(null);
         }
     }
@@ -463,11 +444,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         mAppBarView.showSettings(mCurrentSourcePreferences != null);
     }
 
-    private boolean isCurrentMediaSourcePlaying() {
-        return mMediaSource != null
-                && mActiveMediaSourceManager.isPlaying(mMediaSource.getPackageName());
-    }
-
     /**
      * Updates the tabs displayed on the app bar, based on the top level items on the browse tree.
      * If there is at least one browsable item, we show the browse content of that node. If there
@@ -476,26 +452,27 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
      *
      * @param items top level items, or null if there was an error trying load those items.
      */
-    private void updateTabs(List<MediaItemMetadata> items) {
+    private void updateTabs(List<MediaItemMetadata> items, @NonNull MediaSource mediaSource) {
         if (items == null || items.isEmpty()) {
             mAppBarView.setItems(null);
-            updateBrowseFragment(items == null ? BrowseState.ERROR : BrowseState.EMPTY, null);
+            updateBrowseFragment(items == null ? BrowseState.ERROR : BrowseState.EMPTY, null,
+                    mediaSource);
             return;
         }
 
-        items = customizeTabs(mMediaSource, items);
+        items = customizeTabs(mediaSource, items);
         List<MediaItemMetadata> browsableTopLevel = items.stream()
-                .filter(item -> item.isBrowsable())
+                .filter(MediaItemMetadata::isBrowsable)
                 .collect(Collectors.toList());
 
         if (!browsableTopLevel.isEmpty()) {
             // If we have at least a few browsable items, we show the tabs
             mAppBarView.setItems(browsableTopLevel);
-            updateBrowseFragment(BrowseState.LOADED, browsableTopLevel.get(0));
+            updateBrowseFragment(BrowseState.LOADED, browsableTopLevel.get(0), mediaSource);
         } else {
             // Otherwise, we show the top of the tree with no fabs
             mAppBarView.setItems(null);
-            updateBrowseFragment(BrowseState.LOADED, null);
+            updateBrowseFragment(BrowseState.LOADED, null, mediaSource);
         }
     }
 
@@ -540,14 +517,15 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
      * @param topItem if state == IDLE, this will contain the item to display, or null to display
      *                the root node.
      */
-    private void updateBrowseFragment(BrowseState state, MediaItemMetadata topItem) {
+    private void updateBrowseFragment(BrowseState state, MediaItemMetadata topItem,
+            @NonNull MediaSource mediaSource) {
         switch (state) {
             case LOADED:
                 if (topItem != null) {
-                    mCurrentFragment = BrowseFragment.newInstance(mMediaSource, topItem);
+                    mCurrentFragment = BrowseFragment.newInstance(mediaSource, topItem);
                     mAppBarView.setActiveItem(topItem);
                 } else {
-                    mCurrentFragment = BrowseFragment.newInstance(mMediaSource, null);
+                    mCurrentFragment = BrowseFragment.newInstance(mediaSource, null);
                     mAppBarView.setActiveItem(null);
                 }
                 break;
@@ -555,7 +533,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             case LOADING:
             case ERROR:
                 mCurrentFragment = mEmptyFragment;
-                mEmptyFragment.setState(state, mMediaSource);
+                mEmptyFragment.setState(state, mediaSource);
                 mAppBarView.setActiveItem(null);
                 break;
         }
@@ -599,13 +577,15 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     public void onPlayableItemClicked(MediaSource mediaSource, MediaItemMetadata item) {
         mPlaybackController.stop();
         String sourcePackage = mediaSource.getPackageName();
-        String controllerPackage = mMediaController.getValue().getPackageName();
+        MediaController mediaController = getMediaSourceViewModel().getMediaController().getValue();
+        String controllerPackage =
+                mediaController == null ? null : mediaController.getPackageName();
         if (!Objects.equals(sourcePackage,
                 controllerPackage)) {
             Log.w(TAG, "Trying to play an item from a different source "
                     + "(expected: " + controllerPackage + ", received"
                     + sourcePackage + ")");
-            changeMediaSource(mediaSource);
+            changeMediaSource(new SimpleMediaSource(this, sourcePackage));
         }
         mPlaybackController.playItem(item.getId());
         setIntent(null);
@@ -630,18 +610,26 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 .commit();
     }
 
-    @Override
-    public List<MediaSource> getMediaSources() {
-        return mMediaSourcesManager.getMediaSources()
-                .stream()
-                .filter(source -> source.getMediaBrowser() != null || source.isCustom())
-                .collect(Collectors.toList());
+    private <T> void observeOnce(@NonNull LiveData<T> data, Consumer<T> consumer) {
+        data.observe(this, new Observer<T>() {
+
+            private boolean hasObserved = false;
+
+            @Override
+            public void onChanged(T value) {
+                if (!hasObserved) {
+                    consumer.accept(value);
+                }
+                hasObserved = true;
+                mHandler.post(() -> data.removeObserver(this));
+            }
+        });
     }
 
     @Override
-    public void onMediaSourceSelected(MediaSource mediaSource) {
+    public void onMediaSourceSelected(@NonNull SimpleMediaSource mediaSource) {
         closeAppSelector();
-        if (mediaSource.getMediaBrowser() != null && !mediaSource.isCustom()) {
+        if (mediaSource.isBrowsable() && !mediaSource.isCustom()) {
             changeMediaSource(mediaSource);
             switchToMode(Mode.BROWSING);
         } else {
@@ -651,28 +639,18 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         }
     }
 
-    private MediaSource getLastMediaSource() {
-        String packageName = mSharedPreferences.getString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
-        if (packageName == null) {
-            return null;
-        }
-        // Verify that the stored package name corresponds to a currently installed media source.
-        for (MediaSource mediaSource : mMediaSourcesManager.getMediaSources()) {
-            if (mediaSource.getPackageName().equals(packageName)) {
-                return mediaSource;
-            }
-        }
-        return null;
-    }
-
-    private void setLastMediaSource(@NonNull MediaSource mediaSource) {
-        mSharedPreferences.edit()
-                .putString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, mediaSource.getPackageName())
-                .apply();
-    }
-
     public PlaybackViewModel getPlaybackViewModel() {
         return ViewModelProviders.of(this).get(PlaybackViewModel.class);
+    }
+
+    public MediaSourceViewModel getMediaSourceViewModel() {
+        return ViewModelProviders.of(this).get(MediaSourceViewModel.class);
+    }
+
+    public ViewModel getInnerViewModel() {
+        ViewModel viewModel = ViewModelProviders.of(this).get(ViewModel.class);
+        viewModel.setMediaSources(getMediaSourceViewModel().getMediaSources());
+        return viewModel;
     }
 
     @Override
@@ -686,15 +664,38 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     public static class ViewModel extends AndroidViewModel {
 
-        public ViewModel(Application application) {
-            super(application);
-        }
+        private SharedPreferences mSharedPreferences;
+
+        private final SwitchingLiveData<List<SimpleMediaSource>> mMediaSources =
+                SwitchingLiveData.newInstance();
+        private final LiveData<String> mLastMediaSourcePackageName;
+        private final LiveData<SimpleMediaSource> mLastMediaSource;
 
         private LiveData<Bitmap> mAlbumArt;
-
         private MutableLiveData<Size> mAlbumArtSize = new MutableLiveData<>();
-
         private PlaybackViewModel mPlaybackViewModel;
+
+        public ViewModel(@NonNull Application application) {
+            super(application);
+            mSharedPreferences = application.getSharedPreferences(SHARED_PREF,
+                    Context.MODE_PRIVATE);
+            mLastMediaSourcePackageName = new StringPreferenceLiveData(mSharedPreferences,
+                    LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
+            mLastMediaSource = combine(mMediaSources.asLiveData(), mLastMediaSourcePackageName,
+                    (sources, packageName) -> {
+                        if (packageName == null) {
+                            return null;
+                        }
+                        // Verify that the stored package name corresponds to a currently
+                        // installed media source.
+                        for (SimpleMediaSource mediaSource : sources) {
+                            if (mediaSource.getPackageName().equals(packageName)) {
+                                return mediaSource;
+                            }
+                        }
+                        return null;
+                    });
+        }
 
         void init(@NonNull PlaybackViewModel playbackViewModel) {
             if (mPlaybackViewModel == playbackViewModel) {
@@ -719,6 +720,20 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         LiveData<Bitmap> getAlbumArt() {
             return mAlbumArt;
+        }
+
+        void setMediaSources(LiveData<List<SimpleMediaSource>> mediaSources) {
+            mMediaSources.setSource(mediaSources);
+        }
+
+        LiveData<SimpleMediaSource> getLastMediaSource() {
+            return mLastMediaSource;
+        }
+
+        void setLastMediaSource(SimpleMediaSource mediaSource) {
+            mSharedPreferences.edit()
+                    .putString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, mediaSource.getPackageName())
+                    .apply();
         }
     }
 }
