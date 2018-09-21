@@ -520,10 +520,10 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         switch (state) {
             case LOADED:
                 if (topItem != null) {
-                    mCurrentFragment = BrowseFragment.newInstance(mediaSource, topItem);
+                    mCurrentFragment = BrowseFragment.newInstance(topItem);
                     mAppBarView.setActiveItem(topItem);
                 } else {
-                    mCurrentFragment = BrowseFragment.newInstance(mediaSource, null);
+                    mCurrentFragment = BrowseFragment.newInstance(null);
                     mAppBarView.setActiveItem(null);
                 }
                 break;
@@ -559,33 +559,13 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     }
 
     @Override
-    public MediaSource getMediaSource(String packageName) {
-        if (mMediaSource != null && mMediaSource.getPackageName().equals(packageName)) {
-            return mMediaSource;
-        }
-        return new MediaSource(this, packageName);
-    }
-
-    @Override
     public void onBackStackChanged() {
         // TODO: Update ActionBar
     }
 
     @Override
-    public void onPlayableItemClicked(MediaSource mediaSource, MediaItemMetadata item) {
+    public void onPlayableItemClicked(MediaItemMetadata item) {
         mPlaybackController.stop();
-        String sourcePackage = mediaSource.getPackageName();
-        MediaControllerCompat mediaController =
-                getMediaSourceViewModel().getMediaController().getValue();
-        String controllerPackage =
-                mediaController == null ? null : mediaController.getPackageName();
-        if (!Objects.equals(sourcePackage,
-                controllerPackage)) {
-            Log.w(TAG, "Trying to play an item from a different source "
-                    + "(expected: " + controllerPackage + ", received"
-                    + sourcePackage + ")");
-            changeMediaSource(new SimpleMediaSource(this, sourcePackage));
-        }
         mPlaybackController.playItem(item.getId());
         setIntent(null);
     }

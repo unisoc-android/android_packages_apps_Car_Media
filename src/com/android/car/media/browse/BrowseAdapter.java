@@ -16,8 +16,9 @@
 
 package com.android.car.media.browse;
 
+import static java.util.stream.Collectors.toList;
+
 import android.content.Context;
-import android.media.browse.MediaBrowser;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,23 +29,22 @@ import androidx.annotation.Nullable;
 import androidx.car.widget.PagedListView;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.media.common.MediaItemMetadata;
-import com.android.car.media.common.MediaSource;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
- * A {@link RecyclerView.Adapter} that can be used to display a single level of a
- * {@link android.service.media.MediaBrowserService} media tree into a
- * {@link androidx.car.widget.PagedListView} or any other {@link RecyclerView}.
+ * A {@link RecyclerView.Adapter} that can be used to display a single level of a {@link
+ * android.service.media.MediaBrowserService} media tree into a {@link
+ * androidx.car.widget.PagedListView} or any other {@link RecyclerView}.
  *
  * <p>This adapter assumes that the attached {@link RecyclerView} uses a {@link GridLayoutManager},
  * as it can use both grid and list elements to produce the desired representation.
@@ -52,34 +52,38 @@ import java.util.stream.Collectors;
  * <p> The actual strategy to group and expand media items has to be supplied by providing an
  * instance of {@link ContentForwardStrategy}.
  *
- * <p> The adapter will only start updating once {@link #start()} is invoked. At this point, the
- * provided {@link MediaBrowser} must be already in connected state.
- *
- * <p>Resources and asynchronous data loading must be released by callign {@link #stop()}.
- *
- * <p>No views will be actually updated until {@link #update()} is invoked (normally as a result of
- * the {@link Observer#onDirty()} event. This way, the consumer of this adapter has the opportunity
- * to decide whether updates should be displayd immediately, or if they should be delayed to
- * prevent flickering.
- *
  * <p>Consumers of this adapter should use {@link #registerObserver(Observer)} to receive updates.
  */
-public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implements
+public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder> implements
         PagedListView.DividerVisibilityManager {
     private static final String TAG = "BrowseAdapter";
     @NonNull
     private final Context mContext;
-    private final MediaSource mMediaSource;
+    @NonNull
     private final ContentForwardStrategy mCFBStrategy;
-    private MediaItemMetadata mParentMediaItem;
-    private LinkedHashMap<String, MediaItemState> mItemStates = new LinkedHashMap<>();
-    private List<BrowseViewData> mViewData = new ArrayList<>();
-    private String mParentMediaItemId;
+    @NonNull
     private List<Observer> mObservers = new ArrayList<>();
-    private List<MediaItemMetadata> mQueue;
-    private CharSequence mQueueTitle;
+    @Nullable
+    private CharSequence mTitle;
+    @Nullable
+    private MediaItemMetadata mParentMediaItem;
     private int mMaxSpanSize = 1;
-    private State mState = State.IDLE;
+
+    private static final DiffUtil.ItemCallback<BrowseViewData> DIFF_CALLBACK =
+            new DiffUtil.ItemCallback<BrowseViewData>() {
+                @Override
+                public boolean areItemsTheSame(@NonNull BrowseViewData oldItem,
+                        @NonNull BrowseViewData newItem) {
+                    return Objects.equals(oldItem.mMediaItem, newItem.mMediaItem)
+                            && Objects.equals(oldItem.mText, newItem.mText);
+                }
+
+                @Override
+                public boolean areContentsTheSame(@NonNull BrowseViewData oldItem,
+                        @NonNull BrowseViewData newItem) {
+                    return oldItem.equals(newItem);
+                }
+            };
 
     /**
      * Possible states of the adapter
@@ -99,65 +103,46 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
      * An {@link BrowseAdapter} observer.
      */
     public static abstract class Observer {
-        /**
-         * Callback invoked anytime there is more information to be displayed, or if there is a
-         * change in the overall state of the adapter.
-         */
-        protected void onDirty() {};
 
         /**
          * Callback invoked when a user clicks on a playable item.
          */
-        protected void onPlayableItemClicked(MediaItemMetadata item) {};
+        protected void onPlayableItemClicked(MediaItemMetadata item) {
+        }
 
         /**
          * Callback invoked when a user clicks on a browsable item.
          */
-        protected void onBrowseableItemClicked(MediaItemMetadata item) {};
+        protected void onBrowseableItemClicked(MediaItemMetadata item) {
+        }
 
         /**
          * Callback invoked when a user clicks on a the "more items" button on a section.
          */
-        protected void onMoreButtonClicked(MediaItemMetadata item) {};
+        protected void onMoreButtonClicked(MediaItemMetadata item) {
+        }
 
         /**
          * Callback invoked when the user clicks on the title of the queue.
          */
-        protected void onQueueTitleClicked() {};
+        protected void onTitleClicked() {
+        }
 
-        /**
-         * Callback invoked when the user clicks on a queue item.
-         */
-        protected void onQueueItemClicked(MediaItemMetadata item) {};
     }
 
-    private MediaSource.ItemsSubscription mSubscriptionCallback =
-            (mediaSource, parentId, items) -> {
-                if (items != null) {
-                    onItemsLoaded(parentId, items);
-                } else {
-                    onLoadingError(parentId);
-                }
-            };
-
-
     /**
-     * Represents the loading state of children of a single {@link MediaItemMetadata} in the
-     * {@link BrowseAdapter}
+     * Represents the loading state of children of a single {@link MediaItemMetadata} in the {@link
+     * BrowseAdapter}
      */
     private class MediaItemState {
         /**
          * {@link com.android.car.media.common.MediaItemMetadata} whose children are being loaded
          */
         final MediaItemMetadata mItem;
-        /** Current loading state for this item */
-        State mState = State.LOADING;
         /** Playable children of the given item */
         List<MediaItemMetadata> mPlayableChildren = new ArrayList<>();
         /** Browsable children of the given item */
         List<MediaItemMetadata> mBrowsableChildren = new ArrayList<>();
-        /** Whether we are subscribed to updates for this item or not */
-        boolean mIsSubscribed;
 
         MediaItemState(MediaItemMetadata item) {
             mItem = item;
@@ -180,72 +165,20 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
     /**
      * Creates a {@link BrowseAdapter} that displays the children of the given media tree node.
      *
-     * @param mediaSource the {@link MediaSource} to get data from.
-     * @param parentItem the node to display children of, or NULL if the
      * @param strategy a {@link ContentForwardStrategy} that would determine which items would be
      *                 expanded and how.
      */
-    public BrowseAdapter(Context context, @NonNull MediaSource mediaSource,
-            @Nullable MediaItemMetadata parentItem, @NonNull ContentForwardStrategy strategy) {
+    public BrowseAdapter(@NonNull Context context, @NonNull ContentForwardStrategy strategy) {
+        super(DIFF_CALLBACK);
         mContext = context;
-        mMediaSource = mediaSource;
-        mParentMediaItem = parentItem;
         mCFBStrategy = strategy;
     }
 
     /**
-     * Initiates or resumes the data loading process and subscribes to updates. The client can use
-     * {@link #registerObserver(Observer)} to receive updates on the progress.
+     * Sets title to be displayed.
      */
-    public void start() {
-        mParentMediaItemId = mParentMediaItem != null ? mParentMediaItem.getId() :
-                mMediaSource.getRoot();
-        mMediaSource.subscribeChildren(mParentMediaItemId, mSubscriptionCallback);
-        for (MediaItemState itemState : mItemStates.values()) {
-            subscribe(itemState);
-        }
-    }
-
-    /**
-     * Stops the data loading and releases any subscriptions.
-     */
-    public void stop() {
-        if (mParentMediaItemId == null) {
-            // Not started
-            return;
-        }
-        mMediaSource.unsubscribeChildren(mParentMediaItemId, mSubscriptionCallback);
-        for (MediaItemState itemState : mItemStates.values()) {
-            unsubscribe(itemState);
-        }
-        mParentMediaItemId = null;
-    }
-
-    /**
-     * Replaces the media item whose children are being displayed in this adapter. The content of
-     * the adapter will be replaced once the children of the new item are loaded.
-     *
-     * @param parentItem new media item to expand.
-     */
-    public void setParentMediaItemId(@Nullable MediaItemMetadata parentItem) {
-        String newParentMediaItemId = parentItem != null ? parentItem.getId() :
-                mMediaSource.getRoot();
-        if (Objects.equals(newParentMediaItemId, mParentMediaItemId)) {
-            return;
-        }
-        stop();
-        mParentMediaItem = parentItem;
-        mParentMediaItemId = newParentMediaItemId;
-        mMediaSource.subscribeChildren(mParentMediaItemId, mSubscriptionCallback);
-    }
-
-    /**
-     * Sets media queue items into this adapter.
-     */
-    public void setQueue(List<MediaItemMetadata> items, CharSequence queueTitle) {
-        mQueue = items;
-        mQueueTitle = queueTitle;
-        notify(Observer::onDirty);
+    public void setTitle(CharSequence title) {
+        mTitle = title;
     }
 
     /**
@@ -263,15 +196,6 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
     }
 
     /**
-     * @return the global loading state. Consumers can use this state to determine if more
-     * information is still pending to arrive or not. This method will report
-     * {@link State#ERROR} only if the list of immediate children fails to load.
-     */
-    public State getState() {
-        return mState;
-    }
-
-    /**
      * Sets the number of columns that items can take. This method only needs to be used if the
      * attached {@link RecyclerView} is NOT using a {@link GridLayoutManager}. This class will
      * automatically determine this value on {@link #onAttachedToRecyclerView(RecyclerView)}
@@ -284,49 +208,17 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
     /**
      * @return a {@link GridLayoutManager.SpanSizeLookup} that can be used to obtain the span size
      * of each item in this adapter. This method is only needed if the {@link RecyclerView} is NOT
-     * using a {@link GridLayoutManager}. This class will automatically use it on\
-     * {@link #onAttachedToRecyclerView(RecyclerView)} otherwise.
+     * using a {@link GridLayoutManager}. This class will automatically use it on\ {@link
+     * #onAttachedToRecyclerView(RecyclerView)} otherwise.
      */
-    public GridLayoutManager.SpanSizeLookup getSpanSizeLookup() {
+    private GridLayoutManager.SpanSizeLookup getSpanSizeLookup() {
         return new GridLayoutManager.SpanSizeLookup() {
             @Override
             public int getSpanSize(int position) {
-                BrowseItemViewType viewType = mViewData.get(position).mViewType;
+                BrowseItemViewType viewType = getItem(position).mViewType;
                 return viewType.getSpanSize(mMaxSpanSize);
             }
         };
-    }
-
-    /**
-     * Updates the {@link RecyclerView} with newly loaded information. This normally should be
-     * invoked as a result of a {@link Observer#onDirty()} callback.
-     *
-     * This method is idempotent and can be used at any time (even delayed if needed). Additions,
-     * removals and insertions would be notified to the {@link RecyclerView} so it can be
-     * animated appropriately.
-     */
-    public void update() {
-        List<BrowseViewData> newItems = generateViewData(mItemStates.values());
-        List<BrowseViewData> oldItems = mViewData;
-        mViewData = newItems;
-        DiffUtil.DiffResult result = DiffUtil.calculateDiff(createDiffUtil(oldItems, newItems));
-        result.dispatchUpdatesTo(this);
-    }
-
-    private void subscribe(MediaItemState state) {
-        if (!state.mIsSubscribed && state.mItem.isBrowsable()) {
-            mMediaSource.subscribeChildren(state.mItem.getId(), mSubscriptionCallback);
-            state.mIsSubscribed = true;
-        } else {
-            state.mState = State.LOADED;
-        }
-    }
-
-    private void unsubscribe(MediaItemState state) {
-        if (state.mIsSubscribed) {
-            mMediaSource.unsubscribeChildren(state.mItem.getId(), mSubscriptionCallback);
-            state.mIsSubscribed = false;
-        }
     }
 
     @NonNull
@@ -339,59 +231,24 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
 
     @Override
     public void onBindViewHolder(@NonNull BrowseViewHolder holder, int position) {
-        BrowseViewData viewData = mViewData.get(position);
+        BrowseViewData viewData = getItem(position);
         holder.bind(mContext, viewData);
     }
 
     @Override
-    public int getItemCount() {
-        return mViewData.size();
-    }
-
-    @Override
     public int getItemViewType(int position) {
-        return mViewData.get(position).mViewType.ordinal();
+        return getItem(position).mViewType.ordinal();
     }
 
-    private void onItemsLoaded(String parentId, List<MediaItemMetadata> children) {
-        if (parentId.equals(mParentMediaItemId)) {
-            // Direct children from the requested media item id. Update subscription list.
-            LinkedHashMap<String, MediaItemState> newItemStates = new LinkedHashMap<>();
-            List<MediaItemState> itemsToSubscribe = new ArrayList<>();
-            for (MediaItemMetadata item : children) {
-                MediaItemState itemState = mItemStates.get(item.getId());
-                if (itemState != null) {
-                    // Reuse existing section.
-                    newItemStates.put(item.getId(), itemState);
-                    mItemStates.remove(item.getId());
-                } else {
-                    // New section, subscribe to it.
-                    itemState = new MediaItemState(item);
-                    newItemStates.put(item.getId(), itemState);
-                    itemsToSubscribe.add(itemState);
-                }
-            }
-            // Remove unused sections
-            for (MediaItemState itemState : mItemStates.values()) {
-                unsubscribe(itemState);
-            }
-            mItemStates = newItemStates;
-            // Subscribe items once we have updated the map (updates might happen synchronously
-            // if data is already available).
-            for (MediaItemState itemState : itemsToSubscribe) {
-                subscribe(itemState);
-            }
-        } else {
-            MediaItemState itemState = mItemStates.get(parentId);
-            if (itemState == null) {
-                Log.w(TAG, "Loaded children for a section we don't have: " + parentId);
-                return;
-            }
-            itemState.setChildren(children);
-            itemState.mState = State.LOADED;
-        }
-        updateGlobalState();
-        notify(Observer::onDirty);
+    public void submitItems(@Nullable MediaItemMetadata parentItem,
+            @Nullable List<MediaItemMetadata> children) {
+        mParentMediaItem = parentItem;
+        List<MediaItemState> mediaItemStates =
+                children == null ? Collections.emptyList()
+                        : children.stream()
+                                .map(MediaItemState::new)
+                                .collect(toList());
+        submitList(generateViewData(mediaItemStates));
     }
 
     private void notify(Consumer<Observer> notification) {
@@ -400,66 +257,8 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
         }
     }
 
-    private void onLoadingError(String parentId) {
-        if (parentId.equals(mParentMediaItemId)) {
-            mState = State.ERROR;
-        } else {
-            MediaItemState state = mItemStates.get(parentId);
-            if (state == null) {
-                Log.w(TAG, "Error loading children for a section we don't have: " + parentId);
-                return;
-            }
-            state.setChildren(new ArrayList<>());
-            state.mState = State.ERROR;
-            updateGlobalState();
-        }
-        notify(Observer::onDirty);
-    }
-
-    private void updateGlobalState() {
-        for (MediaItemState state: mItemStates.values()) {
-            if (state.mState == State.LOADING) {
-                mState = State.LOADING;
-                return;
-            }
-        }
-        mState = State.LOADED;
-    }
-
-    private DiffUtil.Callback createDiffUtil(List<BrowseViewData> oldList,
-            List<BrowseViewData> newList) {
-        return new DiffUtil.Callback() {
-            @Override
-            public int getOldListSize() {
-                return oldList.size();
-            }
-
-            @Override
-            public int getNewListSize() {
-                return newList.size();
-            }
-
-            @Override
-            public boolean areItemsTheSame(int oldPos, int newPos) {
-                BrowseViewData oldItem = oldList.get(oldPos);
-                BrowseViewData newItem = newList.get(newPos);
-
-                return Objects.equals(oldItem.mMediaItem, newItem.mMediaItem)
-                        && Objects.equals(oldItem.mText, newItem.mText);
-            }
-
-            @Override
-            public boolean areContentsTheSame(int oldPos, int newPos) {
-                BrowseViewData oldItem = oldList.get(oldPos);
-                BrowseViewData newItem = newList.get(newPos);
-
-                return oldItem.equals(newItem);
-            }
-        };
-    }
-
     @Override
-    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
         if (recyclerView.getLayoutManager() instanceof GridLayoutManager) {
             GridLayoutManager manager = (GridLayoutManager) recyclerView.getLayoutManager();
             mMaxSpanSize = manager.getSpanCount();
@@ -470,12 +269,12 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
     private class ItemsBuilder {
         private List<BrowseViewData> result = new ArrayList<>();
 
-        void addItem(MediaItemMetadata item, State state,
+        void addItem(MediaItemMetadata item,
                 BrowseItemViewType viewType, Consumer<Observer> notification) {
             View.OnClickListener listener = notification != null ?
                     view -> BrowseAdapter.this.notify(notification) :
                     null;
-            result.add(new BrowseViewData(item, viewType, state, listener));
+            result.add(new BrowseViewData(item, viewType, listener));
         }
 
         void addItems(List<MediaItemMetadata> items, BrowseItemViewType viewType, int maxRows) {
@@ -484,15 +283,14 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
             result.addAll(items.stream()
                     .limit(maxChildren)
                     .map(item -> {
-                        Consumer<Observer> notification = item.getQueueId() != null
-                                ? observer -> observer.onQueueItemClicked(item)
-                                : item.isBrowsable()
+                        Consumer<Observer> notification =
+                                item.isBrowsable()
                                         ? observer -> observer.onBrowseableItemClicked(item)
                                         : observer -> observer.onPlayableItemClicked(item);
-                        return new BrowseViewData(item, viewType, null, view ->
+                        return new BrowseViewData(item, viewType, view ->
                                 BrowseAdapter.this.notify(notification));
                     })
-                    .collect(Collectors.toList()));
+                    .collect(toList()));
         }
 
         void addTitle(CharSequence title, Consumer<Observer> notification) {
@@ -501,15 +299,15 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
 
         }
 
-        void addBrowseBlock(MediaItemMetadata header, State state,
+        void addBrowseBlock(MediaItemMetadata header,
                 List<MediaItemMetadata> items, BrowseItemViewType viewType, int maxChildren,
                 boolean showHeader, boolean showMoreFooter) {
             if (showHeader) {
-                addItem(header, state, BrowseItemViewType.HEADER, null);
+                addItem(header, BrowseItemViewType.HEADER, null);
             }
             addItems(items, viewType, maxChildren);
             if (showMoreFooter) {
-                addItem(header, null, BrowseItemViewType.MORE_FOOTER,
+                addItem(header, BrowseItemViewType.MORE_FOOTER,
                         observer -> observer.onMoreButtonClicked(header));
             }
         }
@@ -548,13 +346,8 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
             }
         }
 
-        if (mQueue != null && !mQueue.isEmpty() && mCFBStrategy.getMaxQueueRows() > 0
-                && mCFBStrategy.getQueueViewType() != null) {
-            if (mQueueTitle != null) {
-                itemsBuilder.addTitle(mQueueTitle, Observer::onQueueTitleClicked);
-            }
-            itemsBuilder.addItems(mQueue, mCFBStrategy.getQueueViewType(),
-                    mCFBStrategy.getMaxQueueRows());
+        if (mTitle != null) {
+            itemsBuilder.addTitle(mTitle, Observer::onTitleClicked);
         }
 
         boolean containsBrowsableItems = false;
@@ -568,7 +361,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
             MediaItemMetadata item = itemState.mItem;
             if (containsPlayableItems && containsBrowsableItems) {
                 // If we have a mix of browsable and playable items: show them all in a list
-                itemsBuilder.addItem(item, itemState.mState,
+                itemsBuilder.addItem(item,
                         BrowseItemViewType.PANEL_ITEM,
                         item.isBrowsable()
                                 ? observer -> observer.onBrowseableItemClicked(item)
@@ -578,11 +371,10 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
                 if (!itemState.mBrowsableChildren.isEmpty()
                         && !itemState.mPlayableChildren.isEmpty()
                         || !mCFBStrategy.shouldBeExpanded(item)) {
-                    itemsBuilder.addItem(item, itemState.mState,
+                    itemsBuilder.addItem(item,
                             mCFBStrategy.getBrowsableViewType(mParentMediaItem), null);
                 } else if (!itemState.mPlayableChildren.isEmpty()) {
                     itemsBuilder.addBrowseBlock(item,
-                            itemState.mState,
                             itemState.mPlayableChildren,
                             mCFBStrategy.getPlayableViewType(item),
                             mCFBStrategy.getMaxRows(item, mCFBStrategy.getPlayableViewType(item)),
@@ -590,7 +382,6 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
                             mCFBStrategy.showMoreButton(item));
                 } else if (!itemState.mBrowsableChildren.isEmpty()) {
                     itemsBuilder.addBrowseBlock(item,
-                            itemState.mState,
                             itemState.mBrowsableChildren,
                             mCFBStrategy.getBrowsableViewType(item),
                             mCFBStrategy.getMaxRows(item, mCFBStrategy.getBrowsableViewType(item)),
@@ -599,7 +390,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
                 }
             } else if (item.isPlayable()) {
                 // If we only have playable items: show them as so.
-                itemsBuilder.addItem(item, itemState.mState,
+                itemsBuilder.addItem(item,
                         mCFBStrategy.getPlayableViewType(mParentMediaItem),
                         observer -> observer.onPlayableItemClicked(item));
             }
@@ -610,9 +401,9 @@ public class BrowseAdapter extends RecyclerView.Adapter<BrowseViewHolder> implem
 
     @Override
     public boolean getShowDivider(int position) {
-        return (position >= mViewData.size() - 1
+        return (position >= getItemCount() - 1
                 && position < 0
-                && mViewData.get(position).mViewType != BrowseItemViewType.PANEL_ITEM
-                && mViewData.get(position + 1).mViewType != BrowseItemViewType.PANEL_ITEM);
+                && getItem(position).mViewType != BrowseItemViewType.PANEL_ITEM
+                && getItem(position + 1).mViewType != BrowseItemViewType.PANEL_ITEM);
     }
 }
