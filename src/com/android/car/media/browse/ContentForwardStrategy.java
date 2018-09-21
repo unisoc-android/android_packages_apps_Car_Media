@@ -16,7 +16,9 @@
 
 package com.android.car.media.browse;
 
-import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.car.media.common.ContentStyleMediaConstants;
 import com.android.car.media.common.MediaItemMetadata;
 
@@ -28,41 +30,41 @@ public interface ContentForwardStrategy {
      * @return true if a header should be included when expanding the given media item into a
      * section. Only used if {@link #shouldBeExpanded(MediaItemMetadata)} returns true.
      */
-    boolean includeHeader(MediaItemMetadata mediaItem);
+    boolean includeHeader(@NonNull MediaItemMetadata mediaItem);
 
     /**
      * @return maximum number of rows to use when when expanding the given media item into a
-     * section. The number can be different depending on the {@link BrowseItemViewType} that
-     * will be used to represent media item children (i.e.: we might allow more rows for lists
-     * than for grids). Only used if {@link #shouldBeExpanded(MediaItemMetadata)} returns true.
+     * section. The number can be different depending on the {@link BrowseItemViewType} that will be
+     * used to represent media item children (i.e.: we might allow more rows for lists than for
+     * grids). Only used if {@link #shouldBeExpanded(MediaItemMetadata)} returns true.
      */
-    int getMaxRows(MediaItemMetadata mediaItem, BrowseItemViewType viewType);
+    int getMaxRows(@NonNull MediaItemMetadata mediaItem, @NonNull BrowseItemViewType viewType);
 
     /**
      * @return whether the given media item should be expanded or not. If not expanded, the item
      * will be displayed according to its parent preferred view type.
      */
-    boolean shouldBeExpanded(MediaItemMetadata mediaItem);
+    boolean shouldBeExpanded(@NonNull MediaItemMetadata mediaItem);
 
     /**
      * @return view type to use to render browsable children of the given media item. Only used if
      * {@link #shouldBeExpanded(MediaItemMetadata)} returns true.
      */
-    BrowseItemViewType getBrowsableViewType(MediaItemMetadata mediaItem);
+    BrowseItemViewType getBrowsableViewType(@Nullable MediaItemMetadata mediaItem);
 
     /**
      * @return view type to use to render playable children fo the given media item. Only used if
      * {@link #shouldBeExpanded(MediaItemMetadata)} returns true.
      */
-    BrowseItemViewType getPlayableViewType(MediaItemMetadata mediaItem);
+    BrowseItemViewType getPlayableViewType(@Nullable MediaItemMetadata mediaItem);
 
     /**
      * @return true if a "more" button should be displayed as a footer for a section displaying the
      * given media item, in case that there item has more children than the ones that can be
-     * displayed according to {@link #getMaxQueueRows()}. Only used if
-     * {@link #shouldBeExpanded(MediaItemMetadata)} returns true.
+     * displayed according to {@link #getMaxQueueRows()}. Only used if {@link
+     * #shouldBeExpanded(MediaItemMetadata)} returns true.
      */
-    boolean showMoreButton(MediaItemMetadata mediaItem);
+    boolean showMoreButton(@NonNull MediaItemMetadata mediaItem);
 
     /**
      * @return maximum number of items to show for the media queue, if one is provided.
@@ -75,27 +77,31 @@ public interface ContentForwardStrategy {
     BrowseItemViewType getQueueViewType();
 
     /**
-     * Default strategy
-     * TODO(b/77646944): Expand this implementation to honor the media source expectations.
+     * Default strategy TODO(b/77646944): Expand this implementation to honor the media source
+     * expectations.
      */
     ContentForwardStrategy DEFAULT_STRATEGY = new ContentForwardStrategy() {
         @Override
-        public boolean includeHeader(MediaItemMetadata mediaItem) {
+        public boolean includeHeader(@NonNull MediaItemMetadata mediaItem) {
             return true;
         }
 
         @Override
-        public int getMaxRows(MediaItemMetadata mediaItem, BrowseItemViewType viewType) {
+        public int getMaxRows(@NonNull MediaItemMetadata mediaItem,
+                @NonNull BrowseItemViewType viewType) {
             return viewType == BrowseItemViewType.GRID_ITEM ? 2 : 8;
         }
 
         @Override
-        public boolean shouldBeExpanded(MediaItemMetadata mediaItem) {
+        public boolean shouldBeExpanded(@NonNull MediaItemMetadata mediaItem) {
             return true;
         }
 
         @Override
-        public BrowseItemViewType getBrowsableViewType(MediaItemMetadata mediaItem) {
+        public BrowseItemViewType getBrowsableViewType(@Nullable MediaItemMetadata mediaItem) {
+            if (mediaItem == null) {
+                return BrowseItemViewType.PANEL_ITEM;
+            }
             return (mediaItem.getBrowsableContentStyleHint()
                     == ContentStyleMediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
                     ? BrowseItemViewType.LIST_ITEM
@@ -103,7 +109,10 @@ public interface ContentForwardStrategy {
         }
 
         @Override
-        public BrowseItemViewType getPlayableViewType(MediaItemMetadata mediaItem) {
+        public BrowseItemViewType getPlayableViewType(@Nullable MediaItemMetadata mediaItem) {
+            if (mediaItem == null) {
+                return BrowseItemViewType.GRID_ITEM;
+            }
             return (mediaItem.getPlayableContentStyleHint()
                     == ContentStyleMediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
                     ? BrowseItemViewType.LIST_ITEM
@@ -111,7 +120,7 @@ public interface ContentForwardStrategy {
         }
 
         @Override
-        public boolean showMoreButton(MediaItemMetadata mediaItem) {
+        public boolean showMoreButton(@NonNull MediaItemMetadata mediaItem) {
             return false;
         }
 
