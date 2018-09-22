@@ -18,11 +18,10 @@ package com.android.car.media.drawer;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
-import android.media.session.MediaController;
-import android.media.session.MediaSession;
-import android.media.session.PlaybackState;
 import android.os.Handler;
-
+import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.annotation.Nullable;
 import androidx.car.drawer.DrawerItemViewHolder;
 
@@ -34,8 +33,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * {@link MediaItemsFetcher} implementation that fetches items from the {@link MediaController}'s
- * currently playing queue.
+ * {@link MediaItemsFetcher} implementation that fetches items from the
+ * {@link MediaControllerCompat}'s currently playing queue.
  */
 class MediaQueueItemsFetcher implements MediaItemsFetcher {
     private final Handler mHandler = new Handler();
@@ -43,7 +42,7 @@ class MediaQueueItemsFetcher implements MediaItemsFetcher {
     private final MediaItemOnClickListener mClickListener;
     private MediaPlaybackModel mMediaPlaybackModel;
     private ItemsUpdatedCallback mCallback;
-    private List<MediaSession.QueueItem> mItems = new ArrayList<>();
+    private List<MediaSessionCompat.QueueItem> mItems = new ArrayList<>();
 
     MediaQueueItemsFetcher(Context context, MediaPlaybackModel model,
             MediaItemOnClickListener listener) {
@@ -75,7 +74,7 @@ class MediaQueueItemsFetcher implements MediaItemsFetcher {
 
     @Override
     public void populateViewHolder(DrawerItemViewHolder holder, int position) {
-        MediaSession.QueueItem item = mItems.get(position);
+        MediaSessionCompat.QueueItem item = mItems.get(position);
         MediaItemsFetcher.populateViewHolderFrom(holder, item.getDescription());
 
         if (holder.getEndIconView() == null) {
@@ -112,7 +111,7 @@ class MediaQueueItemsFetcher implements MediaItemsFetcher {
         // the queue isn't going to be very long anyway so we can just do the trivial thing. If
         // it starts becoming a problem, we can build an index over the ids.
         for (int position = 0; position < mItems.size(); position++) {
-            MediaSession.QueueItem item = mItems.get(position);
+            MediaSessionCompat.QueueItem item = mItems.get(position);
             if (item.getQueueId() == activeId) {
                 return position;
             }
@@ -120,31 +119,31 @@ class MediaQueueItemsFetcher implements MediaItemsFetcher {
         return MediaItemsFetcher.DONT_SCROLL;
     }
 
-    private void updateItemsFrom(List<MediaSession.QueueItem> queue) {
+    private void updateItemsFrom(List<MediaSessionCompat.QueueItem> queue) {
         mItems.clear();
         mItems.addAll(queue);
     }
 
     private long getActiveQueueItemId() {
         if (mMediaPlaybackModel != null) {
-            PlaybackState playbackState = mMediaPlaybackModel.getPlaybackState();
+            PlaybackStateCompat playbackState = mMediaPlaybackModel.getPlaybackState();
             if (playbackState != null) {
                 return playbackState.getActiveQueueItemId();
             }
         }
-        return MediaSession.QueueItem.UNKNOWN_ID;
+        return MediaSessionCompat.QueueItem.UNKNOWN_ID;
     }
 
     private final MediaPlaybackModel.Listener mListener =
             new MediaPlaybackModel.AbstractListener() {
         @Override
-        public void onQueueChanged(List<MediaSession.QueueItem> queue) {
+        public void onQueueChanged(List<MediaSessionCompat.QueueItem> queue) {
             updateItemsFrom(queue);
             mCallback.onItemsUpdated();
         }
 
         @Override
-        public void onPlaybackStateChanged(@Nullable PlaybackState state) {
+        public void onPlaybackStateChanged(@Nullable PlaybackStateCompat state) {
             // Since active playing item may have changed, force re-draw of queue items.
             mCallback.onItemsUpdated();
         }

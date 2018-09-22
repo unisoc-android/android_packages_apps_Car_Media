@@ -32,10 +32,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
-import android.media.session.MediaController;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.v4.media.session.MediaControllerCompat;
 import android.transition.Fade;
 import android.util.Log;
 import android.util.Size;
@@ -363,7 +363,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
             // If we didn't receive a package name and we are playing something: show the playback
             // UI for the playing media source.
-            LiveData<MediaController> topActiveMediaController =
+            LiveData<MediaControllerCompat> topActiveMediaController =
                     getMediaSourceViewModel().getTopActiveMediaController();
             observeOnce(topActiveMediaController, controller -> {
                 if (controller != null) {
@@ -575,7 +575,8 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     public void onPlayableItemClicked(MediaSource mediaSource, MediaItemMetadata item) {
         mPlaybackController.stop();
         String sourcePackage = mediaSource.getPackageName();
-        MediaController mediaController = getMediaSourceViewModel().getMediaController().getValue();
+        MediaControllerCompat mediaController =
+                getMediaSourceViewModel().getMediaController().getValue();
         String controllerPackage =
                 mediaController == null ? null : mediaController.getPackageName();
         if (!Objects.equals(sourcePackage,
