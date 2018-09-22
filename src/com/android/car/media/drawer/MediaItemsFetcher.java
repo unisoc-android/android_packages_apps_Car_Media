@@ -17,7 +17,7 @@ package com.android.car.media.drawer;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.media.MediaDescription;
+import android.support.v4.media.MediaDescriptionCompat;
 import android.text.TextUtils;
 import android.view.View;
 
@@ -97,7 +97,7 @@ interface MediaItemsFetcher {
     /**
      * Utility method to determine if description can be displayed in a small layout.
      */
-    static boolean usesSmallLayout(MediaDescription description) {
+    static boolean usesSmallLayout(MediaDescriptionCompat description) {
         // Small layout is sufficient if there's no sub-title to display for the item.
         return TextUtils.isEmpty(description.getSubtitle());
     }
@@ -106,7 +106,8 @@ interface MediaItemsFetcher {
      * Utility method to populate {@code holder} with details from {@code description}. It populates
      * title, text and icon at most.
      */
-    static void populateViewHolderFrom(DrawerItemViewHolder holder, MediaDescription description) {
+    static void populateViewHolderFrom(DrawerItemViewHolder holder,
+            MediaDescriptionCompat description) {
         Context context = holder.itemView.getContext();
         holder.getTitleView().setText(description.getTitle());
         // If normal layout, populate subtitle.

@@ -19,14 +19,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.media.MediaMetadata;
-import android.media.browse.MediaBrowser;
-import android.media.session.MediaController;
-import android.media.session.MediaSession;
-import android.media.session.PlaybackState;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.RemoteException;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
 import androidx.annotation.MainThread;
@@ -58,8 +59,8 @@ public class MediaPlaybackModel {
     private final List<MediaPlaybackModel.Listener> mListeners = new LinkedList<>();
 
     private Handler mHandler;
-    private MediaController mController;
-    private MediaBrowser mBrowser;
+    private MediaControllerCompat mController;
+    private MediaBrowserCompat mBrowser;
     private int mPrimaryColor;
     private int mPrimaryColorDark;
     private int mAccentColor;
@@ -91,9 +92,9 @@ public class MediaPlaybackModel {
          * now been released.
          */
         void onMediaConnectionFailed(CharSequence failedMediaClientName);
-        void onPlaybackStateChanged(@Nullable PlaybackState state);
-        void onMetadataChanged(@Nullable MediaMetadata metadata);
-        void onQueueChanged(List<MediaSession.QueueItem> queue);
+        void onPlaybackStateChanged(@Nullable PlaybackStateCompat state);
+        void onMetadataChanged(@Nullable MediaMetadataCompat metadata);
+        void onQueueChanged(List<MediaSessionCompat.QueueItem> queue);
         /**
          * Indicates that the MediaSession was destroyed. The mediaController has been released.
          */
@@ -114,11 +115,11 @@ public class MediaPlaybackModel {
         @Override
         public void onMediaConnectionFailed(CharSequence failedMediaClientName) {}
         @Override
-        public void onPlaybackStateChanged(@Nullable PlaybackState state) {}
+        public void onPlaybackStateChanged(@Nullable PlaybackStateCompat state) {}
         @Override
-        public void onMetadataChanged(@Nullable MediaMetadata metadata) {}
+        public void onMetadataChanged(@Nullable MediaMetadataCompat metadata) {}
         @Override
-        public void onQueueChanged(List<MediaSession.QueueItem> queue) {}
+        public void onQueueChanged(List<MediaSessionCompat.QueueItem> queue) {}
         @Override
         public void onSessionDestroyed(CharSequence destroyedMediaClientName) {}
     }
@@ -201,7 +202,7 @@ public class MediaPlaybackModel {
     }
 
     @MainThread
-    public MediaMetadata getMetadata() {
+    public MediaMetadataCompat getMetadata() {
         Assert.isMainThread();
         if (mController == null) {
             return null;
@@ -210,12 +211,12 @@ public class MediaPlaybackModel {
     }
 
     @MainThread
-    public @NonNull List<MediaSession.QueueItem> getQueue() {
+    public @NonNull List<MediaSessionCompat.QueueItem> getQueue() {
         Assert.isMainThread();
         if (mController == null) {
             return new ArrayList<>();
         }
-        List<MediaSession.QueueItem> currentQueue = mController.getQueue();
+        List<MediaSessionCompat.QueueItem> currentQueue = mController.getQueue();
         if (currentQueue == null) {
             currentQueue = new ArrayList<>();
         }
@@ -223,7 +224,7 @@ public class MediaPlaybackModel {
     }
 
     @MainThread
-    public PlaybackState getPlaybackState() {
+    public PlaybackStateCompat getPlaybackState() {
         Assert.isMainThread();
         if (mController == null) {
             return null;
@@ -259,13 +260,13 @@ public class MediaPlaybackModel {
     }
 
     @MainThread
-    public MediaBrowser getMediaBrowser() {
+    public MediaBrowserCompat getMediaBrowser() {
         Assert.isMainThread();
         return mBrowser;
     }
 
     @MainThread
-    public MediaController.TransportControls getTransportControls() {
+    public MediaControllerCompat.TransportControls getTransportControls() {
         Assert.isMainThread();
         if (mController == null) {
             return null;
@@ -289,7 +290,8 @@ public class MediaPlaybackModel {
                 if (mBrowser != null) {
                     mBrowser.disconnect();
                 }
-                mBrowser = new MediaBrowser(mContext, name, mConnectionCallback, mBrowserExtras);
+                mBrowser =
+                        new MediaBrowserCompat(mContext, name, mConnectionCallback, mBrowserExtras);
                 try {
                     mPackageResources = mContext.getPackageManager().getResourcesForApplication(
                             name.getPackageName());
@@ -324,18 +326,22 @@ public class MediaPlaybackModel {
         }
     };
 
-    private final MediaBrowser.ConnectionCallback mConnectionCallback =
-            new MediaBrowser.ConnectionCallback() {
+    private final MediaBrowserCompat.ConnectionCallback mConnectionCallback =
+            new MediaBrowserCompat.ConnectionCallback() {
                 @Override
                 public void onConnected() {
                     // Existing mController has already been disconnected before we call
                     // MediaBrowser.connect()
                     // getSessionToken returns a non null token
-                    MediaSession.Token token = mBrowser.getSessionToken();
+                    MediaSessionCompat.Token token = mBrowser.getSessionToken();
                     if (mController != null) {
                         mController.unregisterCallback(mMediaControllerCallback);
                     }
-                    mController = new MediaController(mContext, token);
+                    try {
+                        mController = new MediaControllerCompat(mContext, token);
+                    } catch (RemoteException e) {
+                        Log.e(TAG, "Couldn't get MediaController", e);
+                    }
                     mController.registerCallback(mMediaControllerCallback);
                     notifyListeners(Listener::onMediaConnected);
                 }
@@ -363,26 +369,26 @@ public class MediaPlaybackModel {
                 }
             };
 
-    private final MediaController.Callback mMediaControllerCallback =
-            new MediaController.Callback() {
+    private final MediaControllerCompat.Callback mMediaControllerCallback =
+            new MediaControllerCompat.Callback() {
                 @Override
-                public void onPlaybackStateChanged(final PlaybackState state) {
+                public void onPlaybackStateChanged(final PlaybackStateCompat state) {
                     mHandler.post(() -> {
                         notifyListeners((listener) -> listener.onPlaybackStateChanged(state));
                     });
                 }
 
                 @Override
-                public void onMetadataChanged(final MediaMetadata metadata) {
+                public void onMetadataChanged(final MediaMetadataCompat metadata) {
                     mHandler.post(() -> {
                         notifyListeners((listener) -> listener.onMetadataChanged(metadata));
                     });
                 }
 
                 @Override
-                public void onQueueChanged(final List<MediaSession.QueueItem> queue) {
+                public void onQueueChanged(final List<MediaSessionCompat.QueueItem> queue) {
                     mHandler.post(() -> {
-                        final List<MediaSession.QueueItem> currentQueue =
+                        final List<MediaSessionCompat.QueueItem> currentQueue =
                                 queue != null ? queue : new ArrayList<>();
                         notifyListeners((listener) -> listener.onQueueChanged(currentQueue));
                     });
