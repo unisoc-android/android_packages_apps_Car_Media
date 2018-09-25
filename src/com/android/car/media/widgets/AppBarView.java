@@ -214,7 +214,7 @@ public class AppBarView extends RelativeLayout {
     public void setItems(@Nullable List<MediaItemMetadata> items) {
         mTabsContainer.removeAllViews();
 
-        if (items != null) {
+        if (items != null && !items.isEmpty()) {
             int count = 0;
             int padding = mContext.getResources().getDimensionPixelSize(R.dimen.car_padding_4);
             int tabWidth = mContext.getResources().getDimensionPixelSize(R.dimen.browse_tab_width) +

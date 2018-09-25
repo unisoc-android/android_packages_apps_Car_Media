@@ -1,7 +1,11 @@
 package com.android.car.media;
 
+import static com.android.car.arch.common.LiveDataFunctions.pair;
+import static com.android.car.arch.common.LiveDataFunctions.split;
+
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,15 +13,23 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModelProviders;
 
-import com.android.car.media.common.MediaSource;
+import com.android.car.media.common.browse.MediaBrowserViewModel;
+import com.android.car.media.common.source.MediaSource;
+import com.android.car.media.common.source.MediaSourceViewModel;
 import com.android.car.media.widgets.ViewUtils;
 
 /**
  * Empty fragment to show while we are loading content
  */
 public class EmptyFragment extends Fragment {
+    private static final String TAG = "EmptyFragment";
+
     private ProgressBar mProgressBar;
     private ImageView mErrorIcon;
     private TextView mErrorMessage;
@@ -25,26 +37,35 @@ public class EmptyFragment extends Fragment {
     private int mProgressBarDelay;
     private Handler mHandler = new Handler();
     private int mFadeDuration;
-    private MediaActivity.BrowseState mState = MediaActivity.BrowseState.EMPTY;
-    private MediaSource mMediaSource;
     private Runnable mProgressIndicatorRunnable = new Runnable() {
         @Override
         public void run() {
             ViewUtils.showViewAnimated(mProgressBar, mFadeDuration);
         }
     };
+
     @Override
-    public View onCreateView(LayoutInflater inflater, final ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container,
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_empty, container, false);
         mProgressBar = view.findViewById(R.id.loading_spinner);
-        mProgressBarDelay = getContext().getResources()
+        mProgressBarDelay = requireContext().getResources()
                 .getInteger(R.integer.progress_indicator_delay);
-        mFadeDuration = getContext().getResources().getInteger(
+        mFadeDuration = requireContext().getResources().getInteger(
                 R.integer.new_album_art_fade_in_duration);
         mErrorIcon = view.findViewById(R.id.error_icon);
         mErrorMessage = view.findViewById(R.id.error_message);
-        update();
+
+        MediaSourceViewModel mediaSourceViewModel =
+                ViewModelProviders.of(requireActivity()).get(MediaSourceViewModel.class);
+        MediaBrowserViewModel mediaBrowserViewModel =
+                ViewModelProviders.of(requireActivity()).get(MediaBrowserViewModel.class);
+        LiveData<MediaBrowserViewModel.BrowseState> browseState =
+                mediaBrowserViewModel.getBrowseState();
+        LiveData<MediaSource> selectedMediaSource =
+                mediaSourceViewModel.getSelectedMediaSource();
+        pair(browseState, selectedMediaSource)
+                .observe(getViewLifecycleOwner(), split(this::setState));
         return view;
     }
 
@@ -57,20 +78,20 @@ public class EmptyFragment extends Fragment {
     /**
      * Updates the state of this fragment
      *
-     * @param state browsing state to display
+     * @param state       browsing state to display
      * @param mediaSource media source currently being browsed
      */
-    public void setState(MediaActivity.BrowseState state, MediaSource mediaSource) {
+    private void setState(@NonNull MediaBrowserViewModel.BrowseState state,
+            @Nullable MediaSource mediaSource) {
         mHandler.removeCallbacks(mProgressIndicatorRunnable);
-        mMediaSource = mediaSource;
-        mState = state;
         if (this.getView() != null) {
-            update();
+            update(state, mediaSource);
         }
     }
 
-    private void update() {
-        switch (mState) {
+    private void update(@NonNull MediaBrowserViewModel.BrowseState state,
+            @Nullable MediaSource mediaSource) {
+        switch (state) {
             case LOADING:
                 // Display the indicator after a certain time, to avoid flashing the indicator
                 // constantly, even when performance is acceptable.
@@ -82,21 +103,26 @@ public class EmptyFragment extends Fragment {
                 mProgressBar.setVisibility(View.GONE);
                 mErrorIcon.setVisibility(View.VISIBLE);
                 mErrorMessage.setVisibility(View.VISIBLE);
-                mErrorMessage.setText(getContext().getString(
+                mErrorMessage.setText(requireContext().getString(
                         R.string.cannot_connect_to_app,
-                        mMediaSource != null
-                                ? mMediaSource.getName()
-                                : getContext().getString(R.string.unknown_media_provider_name)));
+                        mediaSource != null
+                                ? mediaSource.getName()
+                                : requireContext().getString(
+                                        R.string.unknown_media_provider_name)));
                 break;
             case EMPTY:
                 mProgressBar.setVisibility(View.GONE);
                 mErrorIcon.setVisibility(View.GONE);
                 mErrorMessage.setVisibility(View.VISIBLE);
-                mErrorMessage.setText(getContext().getString(R.string.nothing_to_play));
+                mErrorMessage.setText(requireContext().getString(R.string.nothing_to_play));
+                break;
+            case LOADED:
+                Log.d(TAG, "Updated with LOADED state, ignoring.");
+                // Do nothing, this fragment is about to be removed
                 break;
             default:
                 // Fail fast on any other state.
-                throw new IllegalStateException("Invalid state for this fragment: " + mState);
+                throw new IllegalStateException("Invalid state for this fragment: " + state);
         }
     }
 }
