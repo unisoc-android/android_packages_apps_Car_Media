@@ -16,145 +16,109 @@
 package com.android.car.media.drawer;
 
 import android.content.Context;
+import android.text.TextUtils;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.car.drawer.CarDrawerAdapter;
 import androidx.car.drawer.CarDrawerController;
 import androidx.car.drawer.DrawerItemViewHolder;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.lifecycle.LifecycleOwner;
+
+import com.android.car.media.common.MediaItemMetadata;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Subclass of CarDrawerAdapter used by the Media app.
- * <p>
- * This adapter delegates actual fetching of items (and other operations) to a
- * {@link MediaItemsFetcher}. The current fetcher being used can be updated at runtime.
+ * Base CarDrawerAdapter used by the Media app.
  */
-class MediaDrawerAdapter extends CarDrawerAdapter {
+abstract class MediaDrawerAdapter extends LifecycleDrawerAdapter {
+    public static final int DONT_SCROLL = -1;
     private final CarDrawerController mDrawerController;
-    private MediaItemsFetcher mCurrentFetcher;
-    private MediaFetchCallback mFetchCallback;
+    final MediaItemOnClickListener mClickListener;
+    @NonNull
+    private List<MediaItemMetadata> mMediaItems = Collections.emptyList();
     private int mCurrentScrollPosition;
 
-    /**
-     * Interface for a callback object that will be notified of changes to the fetch status of
-     * items in a media drawer.
-     */
-    interface MediaFetchCallback {
-        /**
-         * Called when a fetch for items starts.
-         */
-        void onFetchStart();
-
-        /**
-         * Called when a fetch for items ends.
-         */
-        void onFetchEnd();
-    }
-
-    MediaDrawerAdapter(Context context, CarDrawerController drawerController) {
-        super(context, true /* showDisabledListOnEmpty */);
+    MediaDrawerAdapter(Context context,
+            LifecycleOwner parentLifecycle,
+            CarDrawerController drawerController,
+            @Nullable MediaItemOnClickListener clickListener) {
+        super(context, parentLifecycle.getLifecycle(), true);
         mDrawerController = drawerController;
+        mClickListener = clickListener;
     }
 
-    /**
-     * Sets the object to be notified of changes to the fetching of items in the media drawer.
-     */
-    void setFetchCallback(@Nullable MediaFetchCallback callback) {
-        mFetchCallback = callback;
-    }
-
-    /**
-     * Switch the {@link MediaItemsFetcher} being used to fetch items. The new fetcher is kicked-off
-     * and the drawer's content's will be updated to show newly loaded items. Any old fetcher is
-     * cleaned up and released.
-     *
-     * @param fetcher New {@link MediaItemsFetcher} to use for display Drawer items.
-     */
-    void setFetcherAndInvoke(MediaItemsFetcher fetcher) {
-        setFetcher(fetcher);
-
-        if (mFetchCallback != null) {
-            mFetchCallback.onFetchStart();
-        }
-
-        mCurrentFetcher.start(() -> {
-            closeFetch();
-            notifyDataSetChanged();
-        });
-    }
-
-    void setFetcher(MediaItemsFetcher fetcher) {
-        if (mCurrentFetcher != null) {
-            mCurrentFetcher.cleanup();
-        }
-        mCurrentFetcher = fetcher;
+    final void setMediaItems(@NonNull List<MediaItemMetadata> mediaItems) {
+        mMediaItems = mediaItems;
         notifyDataSetChanged();
     }
 
     @Override
     protected int getActualItemCount() {
-        return mCurrentFetcher != null ? mCurrentFetcher.getItemCount() : 0;
+        return mMediaItems.size();
+    }
+
+    protected MediaItemMetadata getItem(int position) {
+        return mMediaItems.get(position);
     }
 
     @Override
     protected boolean usesSmallLayout(int position) {
-        return mCurrentFetcher.usesSmallLayout(position);
+        // Small layout is sufficient if there's no sub-title to display for the item.
+        return TextUtils.isEmpty(getItem(position).getSubtitle());
     }
 
     @Override
-    protected void populateViewHolder(DrawerItemViewHolder holder, int position) {
-        if (mCurrentFetcher == null) {
-            return;
+    protected final void populateViewHolder(DrawerItemViewHolder holder, int position) {
+        populateMainView(holder, position);
+        if (holder.getEndIconView() != null) {
+            populateEndIconView(holder.getEndIconView(), position);
         }
-
-        mCurrentFetcher.populateViewHolder(holder, position);
         scrollToCurrent();
         holder.itemView.setOnClickListener(v -> onItemClick(holder.getAdapterPosition()));
     }
 
-    private void onItemClick(int position) {
-        if (mCurrentFetcher != null) {
-            mCurrentFetcher.onItemClick(position);
+    protected void populateMainView(DrawerItemViewHolder holder, int position) {
+        MediaItemMetadata item = getItem(position);
+        Context context = holder.itemView.getContext();
+        holder.getTitleView().setText(item.getTitle());
+
+        // If normal layout, populate subtitle.
+        TextView bodyView = holder.getBodyView();
+        if (bodyView != null) {
+            bodyView.setText(item.getSubtitle());
+        }
+
+        ImageView iconView = holder.getIconView();
+        MediaItemMetadata.updateImageView(context, item, iconView, 0);
+        // TODO (robertoalexis): change updateImageView() to return boolean based on whether it
+        // has something to display and use that in the if statement instead
+        if (item.getAlbumArtBitmap() != null || item.getAlbumArtUri() != null) {
+            iconView.setVisibility(View.VISIBLE);
+        } else {
+            iconView.setVisibility(View.GONE);
         }
     }
 
-    @Override
-    public void cleanup() {
-        super.cleanup();
-        if (mCurrentFetcher != null) {
-            mCurrentFetcher.cleanup();
-            mCurrentFetcher = null;
-            notifyDataSetChanged();
-        }
-        closeFetch();
-    }
+    protected abstract void populateEndIconView(ImageView endIconView, int position);
 
-    private void closeFetch() {
-        if (mFetchCallback != null) {
-            mFetchCallback.onFetchEnd();
-            mFetchCallback = null;
-        }
-    }
+    protected abstract void onItemClick(int position);
 
     public void scrollToCurrent() {
-        if (mCurrentFetcher == null) {
-            return;
-        }
-        int scrollPosition = mCurrentFetcher.getScrollPosition();
-        if (scrollPosition != MediaItemsFetcher.DONT_SCROLL
+        int scrollPosition = getScrollPosition();
+        if (scrollPosition != DONT_SCROLL
                 && mCurrentScrollPosition != scrollPosition) {
             mDrawerController.scrollToPosition(scrollPosition);
             mCurrentScrollPosition = scrollPosition;
         }
     }
 
-    @Override
-    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
-        if (mCurrentFetcher != null) {
-            MediaItemsFetcher fetcher = mCurrentFetcher;
-            fetcher.cleanup();
-            setFetcherAndInvoke(fetcher);
-        }
+    protected int getScrollPosition() {
+        return DONT_SCROLL;
     }
 
 }

@@ -15,8 +15,7 @@
  */
 package com.android.car.media.drawer;
 
-import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.session.MediaSessionCompat;
+import com.android.car.media.common.MediaItemMetadata;
 
 /**
  * Interface for an object that will be notified when an item in the play queue has been clicked.
@@ -25,16 +24,15 @@ interface MediaItemOnClickListener {
     /**
      * Called when an item in the queue has been clicked.
      *
-     * @param queueItem The {@link MediaSessionCompat.QueueItem} corresponding to the one that has
-     *                  been clicked.
+     * @param queueItem The {@link MediaItemMetadata} corresponding to the one that has been
+     *                  clicked.
      */
-    void onQueueItemClicked(MediaSessionCompat.QueueItem queueItem);
+    void onQueueItemClicked(MediaItemMetadata queueItem);
 
     /**
      * Called when an item in a list of playable media items has been clicked.
      *
-     * @param mediaItem The {@link MediaBrowserCompat.MediaItem} corresponding to the one that been
-     *                  clicked.
+     * @param mediaItem The {@link MediaItemMetadata} corresponding to the one that been clicked.
      */
-    void onMediaItemClicked(MediaBrowserCompat.MediaItem mediaItem);
+    void onMediaItemClicked(MediaItemMetadata mediaItem);
 }
