@@ -31,14 +31,15 @@ public enum BrowseItemViewType {
     /** An item in a panel of items (menu) */
     PANEL_ITEM(com.android.car.media.R.layout.media_browse_panel_item),
     /** A footer that can be used to navigate to an expanded version of a section */
-    MORE_FOOTER(com.android.car.media.R.layout.media_browse_more_footer),
-    ;
-    private final @LayoutRes int mLayoutId;
+    MORE_FOOTER(com.android.car.media.R.layout.media_browse_more_footer);
+
+    @LayoutRes
+    private final int mLayoutId;
     private final int mSpanSize;
 
     /**
-     * {@link BrowseItemViewType} that take the whole width of the
-     * {@link androidx.recyclerview.widget.RecyclerView}
+     * {@link BrowseItemViewType} that take the whole width of the {@link
+     * androidx.recyclerview.widget.RecyclerView}
      */
     BrowseItemViewType(@LayoutRes int layoutId) {
         mLayoutId = layoutId;
@@ -62,9 +63,10 @@ public enum BrowseItemViewType {
     }
 
     /**
-     * @return layout that should be inflated to generate this view type.
+     * Returns the layout that should be inflated to generate this view type.
      */
-    public @LayoutRes int getLayoutId() {
+    @LayoutRes
+    public int getLayoutId() {
         return mLayoutId;
     }
 }
