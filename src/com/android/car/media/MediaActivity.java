@@ -353,9 +353,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             String packageName = intent.getStringExtra(Car.CAR_EXTRA_MEDIA_PACKAGE);
             if (packageName != null) {
                 // We were told to navigate to a particular package: we open browse for it.
-                closeAppSelector();
-                changeMediaSource(new SimpleMediaSource(this, packageName));
-                switchToMode(Mode.BROWSING);
+                onMediaSourceSelected(new SimpleMediaSource(this, packageName));
                 return;
             }
 
