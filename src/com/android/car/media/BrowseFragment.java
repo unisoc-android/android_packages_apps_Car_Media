@@ -108,7 +108,7 @@ public class BrowseFragment extends Fragment {
      */
     public void navigateBack() {
         mBrowseStack.pop();
-        getMediaBrowserViewModel().setCurrentBrowseId(getCurrentMediaItem().getId());
+        getMediaBrowserViewModel().setCurrentBrowseId(getCurrentMediaItemId());
         getParent().onBackStackChanged();
     }
 
@@ -198,7 +198,7 @@ public class BrowseFragment extends Fragment {
 
         MediaBrowserViewModel viewModel = getMediaBrowserViewModel();
         if (savedInstanceState == null) {
-            viewModel.setCurrentBrowseId(getCurrentMediaItem().getId());
+            viewModel.setCurrentBrowseId(getCurrentMediaItemId());
         }
         viewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
             if (isLoading) {
@@ -269,11 +269,18 @@ public class BrowseFragment extends Fragment {
     /**
      * @return the current item being displayed
      */
+    @Nullable
     private MediaItemMetadata getCurrentMediaItem() {
         if (mBrowseStack.isEmpty()) {
             return mTopMediaItem;
         } else {
             return mBrowseStack.lastElement();
         }
+    }
+
+    @Nullable
+    private String getCurrentMediaItemId() {
+        MediaItemMetadata currentItem = getCurrentMediaItem();
+        return currentItem != null ? currentItem.getId() : null;
     }
 }

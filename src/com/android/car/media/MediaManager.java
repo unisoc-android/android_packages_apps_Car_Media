@@ -58,8 +58,6 @@ public class MediaManager {
     private static final String THEME_META_DATA_NAME = "com.google.android.gms.car.application.theme";
 
     public static final String KEY_MEDIA_COMPONENT = "media_component";
-    /** Intent extra specifying the package with the MediaBrowser **/
-    public static final String KEY_MEDIA_PACKAGE = "media_package";
     /** Intent extra specifying the MediaBrowserService **/
     public static final String KEY_MEDIA_CLASS = "media_class";
 
