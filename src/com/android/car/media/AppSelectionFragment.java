@@ -16,8 +16,8 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.apps.common.FragmentUtils;
+import com.android.car.media.common.source.MediaSource;
 import com.android.car.media.common.source.MediaSourceViewModel;
-import com.android.car.media.common.source.SimpleMediaSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,12 +28,12 @@ import java.util.List;
 public class AppSelectionFragment extends Fragment {
 
     private class AppGridAdapter extends RecyclerView.Adapter<AppItemViewHolder> {
-        private List<SimpleMediaSource> mMediaSources;
+        private List<MediaSource> mMediaSources;
 
         /**
          * Triggers a refresh of media sources
          */
-        void updateSources(List<SimpleMediaSource> mediaSources) {
+        void updateSources(List<MediaSource> mediaSources) {
             mMediaSources = new ArrayList<>(mediaSources);
             notifyDataSetChanged();
         }
@@ -73,7 +73,7 @@ public class AppSelectionFragment extends Fragment {
         /**
          * Binds a media source to a view
          */
-        void bind(@NonNull SimpleMediaSource mediaSource) {
+        void bind(@NonNull MediaSource mediaSource) {
             mAppItem.setOnClickListener(
                     v -> FragmentUtils
                             .requireParent(AppSelectionFragment.this, Callbacks.class)
@@ -90,7 +90,7 @@ public class AppSelectionFragment extends Fragment {
         /**
          * Invoked when the user makes a selection
          */
-        void onMediaSourceSelected(@NonNull SimpleMediaSource mediaSource);
+        void onMediaSourceSelected(@NonNull MediaSource mediaSource);
     }
 
     @Override
