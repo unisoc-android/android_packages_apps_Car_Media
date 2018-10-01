@@ -204,9 +204,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         ViewModel localViewModel = ViewModelProviders.of(this).get(ViewModel.class);
         if (savedInstanceState == null) {
             playbackViewModel.setMediaController(mediaSourceViewModel.getMediaController());
-            browserViewModel.setConnectedMediaBrowser(
-                    mediaSourceViewModel.getConnectedMediaBrowser());
-            browserViewModel.setCurrentBrowseId(null);
             localViewModel.init(playbackViewModel);
         }
 
@@ -537,7 +534,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     }
 
     private MediaBrowserViewModel getMediaBrowserViewModel() {
-        return ViewModelProviders.of(this).get(MediaBrowserViewModel.class);
+        return MediaBrowserViewModel.Factory.getInstance(ViewModelProviders.of(this));
     }
 
     public ViewModel getInnerViewModel() {

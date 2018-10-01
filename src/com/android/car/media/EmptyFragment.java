@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.android.car.media.common.browse.MediaBrowserViewModel;
@@ -56,10 +57,11 @@ public class EmptyFragment extends Fragment {
         mErrorIcon = view.findViewById(R.id.error_icon);
         mErrorMessage = view.findViewById(R.id.error_message);
 
+        ViewModelProvider viewModelProvider = ViewModelProviders.of(requireActivity());
         MediaSourceViewModel mediaSourceViewModel =
-                ViewModelProviders.of(requireActivity()).get(MediaSourceViewModel.class);
+                viewModelProvider.get(MediaSourceViewModel.class);
         MediaBrowserViewModel mediaBrowserViewModel =
-                ViewModelProviders.of(requireActivity()).get(MediaBrowserViewModel.class);
+                MediaBrowserViewModel.Factory.getInstance(viewModelProvider);
         LiveData<MediaBrowserViewModel.BrowseState> browseState =
                 mediaBrowserViewModel.getBrowseState();
         LiveData<MediaSource> selectedMediaSource =
