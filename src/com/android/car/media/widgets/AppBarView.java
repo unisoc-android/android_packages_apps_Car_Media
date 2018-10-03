@@ -22,9 +22,6 @@ import android.widget.TextView;
 import com.android.car.media.R;
 import com.android.car.media.common.MediaItemMetadata;
 
-import com.google.android.material.tabs.TabLayout;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
