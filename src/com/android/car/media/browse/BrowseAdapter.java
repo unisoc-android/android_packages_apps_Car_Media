@@ -401,9 +401,9 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
 
     @Override
     public boolean getShowDivider(int position) {
-        return (position >= getItemCount() - 1
-                && position < 0
-                && getItem(position).mViewType != BrowseItemViewType.PANEL_ITEM
-                && getItem(position + 1).mViewType != BrowseItemViewType.PANEL_ITEM);
+        return (position < getItemCount() - 1
+                && position >= 0
+                && getItem(position).mViewType == BrowseItemViewType.PANEL_ITEM
+                && getItem(position + 1).mViewType == BrowseItemViewType.PANEL_ITEM);
     }
 }

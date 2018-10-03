@@ -33,6 +33,7 @@ import android.widget.TextView;
 
 import androidx.car.widget.PagedListView;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,7 +43,6 @@ import com.android.car.media.browse.ContentForwardStrategy;
 import com.android.car.media.common.GridSpacingItemDecoration;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.browse.MediaBrowserViewModel;
-import com.android.car.media.common.source.MediaSourceViewModel;
 import com.android.car.media.widgets.ViewUtils;
 
 import java.util.ArrayList;
@@ -67,6 +67,7 @@ public class BrowseFragment extends Fragment {
     private int mProgressBarDelay;
     private Handler mHandler = new Handler();
     private Stack<MediaItemMetadata> mBrowseStack = new Stack<>();
+    private MediaBrowserViewModel.WithMutableBrowseId mMediaBrowserViewModel;
     private BrowseAdapter.Observer mBrowseAdapterObserver = new BrowseAdapter.Observer() {
 
         @Override
@@ -108,7 +109,7 @@ public class BrowseFragment extends Fragment {
      */
     public void navigateBack() {
         mBrowseStack.pop();
-        getMediaBrowserViewModel().setCurrentBrowseId(getCurrentMediaItemId());
+        mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
         getParent().onBackStackChanged();
     }
 
@@ -154,15 +155,8 @@ public class BrowseFragment extends Fragment {
             }
         }
 
-        MediaBrowserViewModel mediaBrowserViewModel = getMediaBrowserViewModel();
-        mediaBrowserViewModel.setConnectedMediaBrowser(
-                ViewModelProviders.of(requireActivity()).get(MediaSourceViewModel.class)
-                        .getConnectedMediaBrowser());
-    }
-
-    @NonNull
-    private MediaBrowserViewModel getMediaBrowserViewModel() {
-        return ViewModelProviders.of(this).get(MediaBrowserViewModel.class);
+        ViewModelProvider viewModelProvider = ViewModelProviders.of(requireActivity());
+        mMediaBrowserViewModel = MediaBrowserViewModel.Factory.getInstance(viewModelProvider);
     }
 
     @Override
@@ -196,18 +190,17 @@ public class BrowseFragment extends Fragment {
         mBrowseList.setDividerVisibilityManager(mBrowseAdapter);
         mBrowseAdapter.registerObserver(mBrowseAdapterObserver);
 
-        MediaBrowserViewModel viewModel = getMediaBrowserViewModel();
         if (savedInstanceState == null) {
-            viewModel.setCurrentBrowseId(getCurrentMediaItemId());
+            mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
         }
-        viewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
+        mMediaBrowserViewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
             if (isLoading) {
                 startLoadingIndicator();
             } else {
                 stopLoadingIndicator();
             }
         });
-        viewModel.getBrowsedMediaItems().observe(getViewLifecycleOwner(),
+        mMediaBrowserViewModel.getBrowsedMediaItems().observe(getViewLifecycleOwner(),
                 items -> {
                     mBrowseAdapter.submitItems(getCurrentMediaItem(), items);
                     if (items == null) {
@@ -262,7 +255,7 @@ public class BrowseFragment extends Fragment {
 
     private void navigateInto(MediaItemMetadata item) {
         mBrowseStack.push(item);
-        getMediaBrowserViewModel().setCurrentBrowseId(item.getId());
+        mMediaBrowserViewModel.setCurrentBrowseId(item.getId());
         getParent().onBackStackChanged();
     }
 

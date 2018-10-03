@@ -15,92 +15,87 @@
  */
 package com.android.car.media.drawer;
 
-import android.content.ComponentName;
 import android.content.Context;
-import android.os.Bundle;
-import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.session.MediaControllerCompat;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
-import android.view.View;
 
-import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
 import androidx.car.drawer.CarDrawerAdapter;
 import androidx.car.drawer.CarDrawerController;
-import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelProviders;
 
-import com.android.car.media.MediaManager;
-import com.android.car.media.MediaPlaybackModel;
-import com.android.car.media.R;
+import com.android.car.media.MediaActivity;
+import com.android.car.media.common.MediaItemMetadata;
+import com.android.car.media.common.browse.MediaBrowserViewModel;
+import com.android.car.media.common.playback.PlaybackViewModel;
+import com.android.car.media.common.source.MediaSourceViewModel;
 
 /**
  * Manages drawer navigation and item selection.
  * <p>
- * Maintains separate MediaPlaybackModel for media browsing and control. Sets up root Drawer
- * adapter with root of media-browse tree (using MediaBrowserItemsFetcher). Supports switching the
- * rootAdapter to show the queue-items (using MediaQueueItemsFetcher).
+ * Maintains separate MediaBrowserViewModels for each adapter, and each adapter serves as its own
+ * Lifecycle (becomes inactive when not attached to a RecyclerView).
  */
-public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallback,
-        MediaItemOnClickListener {
+public class MediaDrawerController implements MediaItemOnClickListener {
     private static final String TAG = "MediaDrawerController";
-
-    private static final String EXTRA_ICON_SIZE =
-            "com.google.android.gms.car.media.BrowserIconSize";
+    private static final String KEY_DRAWER_ROOT =
+            "com.android.car.media.drawer.MediaDrawerController#drawerRoot";
 
     private final Context mContext;
+    private final LifecycleOwner mLifecycleOwner;
     private final CarDrawerController mDrawerController;
-    private final MediaPlaybackModel mMediaPlaybackModel;
-    private MediaDrawerAdapter mRootAdapter;
+    private PlaybackViewModel.PlaybackController mPlaybackController;
+    private final RootDrawerAdapter mRootAdapter;
+    private final QueueDrawerAdapter mQueueAdapter;
+    private final ViewModelProvider mViewModelProvider;
 
-    public MediaDrawerController(Context context, CarDrawerController drawerController) {
-        mContext = context;
+    public MediaDrawerController(MediaActivity activity, CarDrawerController drawerController) {
+        mContext = activity;
+        mLifecycleOwner = activity;
         mDrawerController = drawerController;
+        mViewModelProvider = ViewModelProviders.of(activity);
 
-        Bundle extras = new Bundle();
-        extras.putInt(EXTRA_ICON_SIZE,
-                mContext.getResources().getDimensionPixelSize(R.dimen.car_primary_icon_size));
+        MediaSourceViewModel mediaSourceViewModel =
+                mViewModelProvider.get(MediaSourceViewModel.class);
+        PlaybackViewModel playbackViewModel = mViewModelProvider.get(PlaybackViewModel.class);
 
-        mMediaPlaybackModel = new MediaPlaybackModel(mContext, extras);
-        mMediaPlaybackModel.addListener(mModelListener);
+        mQueueAdapter = new QueueDrawerAdapter(mContext, mLifecycleOwner, playbackViewModel,
+                mediaSourceViewModel, drawerController, this);
 
-        mRootAdapter = new MediaDrawerAdapter(mContext, mDrawerController);
-        // Start with a empty title since we depend on the mMediaManagerListener callback to
-        // know which app is being used and set the actual title there.
-        mRootAdapter.setTitle("");
-        mRootAdapter.setFetchCallback(this);
+        MediaBrowserViewModel.WithMutableBrowseId rootBrowser =
+                MediaBrowserViewModel.Factory.getInstanceForKey(mViewModelProvider,
+                        KEY_DRAWER_ROOT);
+        mRootAdapter = new RootDrawerAdapter(mContext, mLifecycleOwner, rootBrowser,
+                mediaSourceViewModel, playbackViewModel, drawerController, this);
 
-        // Kick off MediaBrowser/MediaController connection.
-        mMediaPlaybackModel.start();
+        playbackViewModel.getPlaybackController().observe(activity,
+                controller -> mPlaybackController = controller);
+
     }
 
     @Override
-    public void onQueueItemClicked(MediaSessionCompat.QueueItem queueItem) {
-        MediaControllerCompat.TransportControls controls =
-                mMediaPlaybackModel.getTransportControls();
-
-        if (controls != null) {
-            controls.skipToQueueItem(queueItem.getQueueId());
+    public void onQueueItemClicked(@NonNull MediaItemMetadata queueItem) {
+        if (mPlaybackController != null) {
+            mPlaybackController.skipToQueueItem(queueItem.getQueueId());
         }
 
         mDrawerController.closeDrawer();
     }
 
     @Override
-    public void onMediaItemClicked(MediaBrowserCompat.MediaItem item) {
+    public void onMediaItemClicked(@NonNull MediaItemMetadata item) {
+        if (RootDrawerAdapter.PLAY_QUEUE_MEDIA_ID.equals(item.getId())) {
+            mDrawerController.pushAdapter(mQueueAdapter);
+            return;
+        }
+
         if (item.isBrowsable()) {
-            MediaItemsFetcher fetcher;
-            if (MediaBrowserItemsFetcher.PLAY_QUEUE_MEDIA_ID.equals(item.getMediaId())) {
-                fetcher = createMediaQueueItemsFetcher();
-            } else {
-                fetcher = createMediaBrowserItemFetcher(item.getMediaId(),
-                        false /* showQueueItem */);
-            }
-            setupAdapterAndSwitch(fetcher, item.getDescription().getTitle());
+            BrowseDrawerAdapter browseDrawerAdapter = createChildAdapter(item.getId());
+            mDrawerController.pushAdapter(browseDrawerAdapter);
         } else if (item.isPlayable()) {
-            MediaControllerCompat.TransportControls controls =
-                    mMediaPlaybackModel.getTransportControls();
-            if (controls != null) {
-                controls.playFromMediaId(item.getMediaId(), item.getDescription().getExtras());
+            if (mPlaybackController != null) {
+                mPlaybackController.playItem(item.getId());
             }
             mDrawerController.closeDrawer();
         } else {
@@ -108,122 +103,33 @@ public class MediaDrawerController implements MediaDrawerAdapter.MediaFetchCallb
         }
     }
 
-    @Override
-    public void onFetchStart() {
-        // Initially there will be no items and we don't want to show empty-list indicator
-        // briefly until items are fetched.
-        mDrawerController.showLoadingProgressBar(true);
-    }
-
-    @Override
-    public void onFetchEnd() {
-        mDrawerController.showLoadingProgressBar(false);
-    }
-
-    /**
-     * Creates a new sub-level in the drawer and switches to that as the currently displayed view.
-     *
-     * @param fetcher The {@link MediaItemsFetcher} that is responsible for fetching the items to be
-     *                displayed in the new view.
-     * @param title The title text of the new view in the drawer.
-     */
-    private void setupAdapterAndSwitch(MediaItemsFetcher fetcher, CharSequence title) {
-        MediaDrawerAdapter subAdapter = new MediaDrawerAdapter(mContext, mDrawerController);
-        subAdapter.setFetcher(fetcher);
-        subAdapter.setTitle(title);
-        subAdapter.setFetchCallback(this);
-        mDrawerController.pushAdapter(subAdapter);
-    }
 
     /**
      * Opens the drawer and displays the current playing queue of items. When the drawer is closed,
      * the view is switched back to the drawer root.
      */
     public void showPlayQueue() {
-        mRootAdapter.setFetcherAndInvoke(createMediaQueueItemsFetcher());
-        mRootAdapter.setTitle(mMediaPlaybackModel.getQueueTitle());
         mDrawerController.openDrawer();
-        mRootAdapter.scrollToCurrent();
-        mDrawerController.addDrawerListener(mQueueDrawerListener);
+        mDrawerController.pushAdapter(mQueueAdapter);
+        mQueueAdapter.scrollToCurrent();
     }
 
     public void cleanup() {
-        mDrawerController.removeDrawerListener(mQueueDrawerListener);
-        mRootAdapter.cleanup();
-        mMediaPlaybackModel.removeListener(mModelListener);
-        mMediaPlaybackModel.stop();
     }
 
     /**
-     * @return Adapter to display root items of MediaBrowse tree. {@link #showPlayQueue()} can
-     *      be used to display items from the queue.
+     * @return Adapter to display root items of MediaBrowse tree. {@link #showPlayQueue()} can be
+     * used to display items from the queue.
      */
     public CarDrawerAdapter getRootAdapter() {
         return mRootAdapter;
     }
 
-    /**
-     * Creates a {@link MediaBrowserItemsFetcher} that whose root is the given {@code mediaId}.
-     */
-    private MediaBrowserItemsFetcher createMediaBrowserItemFetcher(String mediaId,
-            boolean showQueueItem) {
-        return new MediaBrowserItemsFetcher(mContext, mMediaPlaybackModel, this /* listener */,
-                mediaId, showQueueItem);
+    private BrowseDrawerAdapter createChildAdapter(String browseId) {
+        MediaBrowserViewModel browserViewModel =
+                MediaBrowserViewModel.Factory.getInstanceForBrowseId(mViewModelProvider, browseId);
+        return new BrowseDrawerAdapter(mContext, mLifecycleOwner, browserViewModel,
+                mDrawerController, this);
+
     }
-
-    /**
-     * Creates a {@link MediaQueueItemsFetcher} that is responsible for fetching items in the user's
-     * current play queue.
-     */
-    private MediaQueueItemsFetcher createMediaQueueItemsFetcher() {
-        return new MediaQueueItemsFetcher(mContext, mMediaPlaybackModel, this /* listener */);
-    }
-
-    /**
-     * Creates a {@link MediaItemsFetcher} that will display the top-most level of the drawer.
-     */
-    private MediaItemsFetcher createRootMediaItemsFetcher() {
-        return createMediaBrowserItemFetcher(mMediaPlaybackModel.getMediaBrowser().getRoot(),
-                true /* showQueueItem */);
-    }
-
-    /**
-     * A {@link androidx.drawerlayout.widget.DrawerLayout.DrawerListener} specifically to be used
-     * when the play queue has been shown in the drawer. When the drawer is closed following this
-     * display, this listener will reset the drawer to display the root view.
-     */
-    private final DrawerLayout.DrawerListener mQueueDrawerListener =
-            new DrawerLayout.DrawerListener() {
-        @Override
-        public void onDrawerClosed(View drawerView) {
-            mRootAdapter.setFetcherAndInvoke(createRootMediaItemsFetcher());
-            mRootAdapter.setTitle(
-                    MediaManager.getInstance(mContext).getMediaClientName());
-            mDrawerController.removeDrawerListener(this);
-        }
-
-        @Override
-        public void onDrawerSlide(View drawerView, float slideOffset) {}
-        @Override
-        public void onDrawerOpened(View drawerView) {}
-        @Override
-        public void onDrawerStateChanged(int newState) {}
-    };
-
-    private final MediaPlaybackModel.Listener mModelListener =
-            new MediaPlaybackModel.AbstractListener() {
-        @Override
-        public void onMediaAppChanged(@Nullable ComponentName currentName,
-                @Nullable ComponentName newName) {
-            // Only store MediaManager instance to a local variable when it is short lived.
-            MediaManager mediaManager = MediaManager.getInstance(mContext);
-            mRootAdapter.cleanup();
-            mRootAdapter.setTitle(mediaManager.getMediaClientName());
-        }
-
-        @Override
-        public void onMediaConnected() {
-            mRootAdapter.setFetcherAndInvoke(createRootMediaItemsFetcher());
-        }
-    };
 }
