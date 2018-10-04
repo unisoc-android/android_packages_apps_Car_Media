@@ -80,7 +80,7 @@ public class QueueDrawerAdapter extends MediaDrawerAdapter {
     @Override
     protected void populateEndIconView(ImageView endIconView, int position) {
         Context context = endIconView.getContext();
-        if (position == mActiveQueuePosition) {
+        if (mActiveQueuePosition != null && (position == mActiveQueuePosition)) {
             Drawable drawable = context.getDrawable(R.drawable.ic_music_active);
             drawable.setColorFilter(mPrimaryColor, PorterDuff.Mode.SRC_IN);
             endIconView.setImageDrawable(drawable);
