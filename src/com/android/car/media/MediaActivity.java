@@ -72,8 +72,6 @@ import com.android.car.media.widgets.AppBarView;
 import com.android.car.media.widgets.MetadataView;
 import com.android.car.media.widgets.ViewUtils;
 
-import com.google.android.material.appbar.AppBarLayout;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
