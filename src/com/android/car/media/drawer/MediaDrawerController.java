@@ -39,8 +39,6 @@ import com.android.car.media.common.source.MediaSourceViewModel;
  */
 public class MediaDrawerController implements MediaItemOnClickListener {
     private static final String TAG = "MediaDrawerController";
-    private static final String KEY_DRAWER_ROOT =
-            "com.android.car.media.drawer.MediaDrawerController#drawerRoot";
 
     private final Context mContext;
     private final LifecycleOwner mLifecycleOwner;
@@ -63,9 +61,8 @@ public class MediaDrawerController implements MediaItemOnClickListener {
         mQueueAdapter = new QueueDrawerAdapter(mContext, mLifecycleOwner, playbackViewModel,
                 mediaSourceViewModel, drawerController, this);
 
-        MediaBrowserViewModel.WithMutableBrowseId rootBrowser =
-                MediaBrowserViewModel.Factory.getInstanceForKey(mViewModelProvider,
-                        KEY_DRAWER_ROOT);
+        MediaBrowserViewModel rootBrowser =
+                MediaBrowserViewModel.Factory.getInstanceForBrowseRoot(mViewModelProvider);
         mRootAdapter = new RootDrawerAdapter(mContext, mLifecycleOwner, rootBrowser,
                 mediaSourceViewModel, playbackViewModel, drawerController, this);
 
@@ -112,9 +109,6 @@ public class MediaDrawerController implements MediaItemOnClickListener {
         mDrawerController.openDrawer();
         mDrawerController.pushAdapter(mQueueAdapter);
         mQueueAdapter.scrollToCurrent();
-    }
-
-    public void cleanup() {
     }
 
     /**

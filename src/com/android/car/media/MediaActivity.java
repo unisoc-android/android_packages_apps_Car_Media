@@ -198,7 +198,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
         PlaybackViewModel playbackViewModel = getPlaybackViewModel();
-        MediaBrowserViewModel browserViewModel = getMediaBrowserViewModel();
         ViewModel localViewModel = ViewModelProviders.of(this).get(ViewModel.class);
         if (savedInstanceState == null) {
             playbackViewModel.setMediaController(mediaSourceViewModel.getMediaController());
@@ -232,7 +231,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         if (mContentForwardBrowseEnabled) {
             // If content forward browsing is disabled, then no need to observe browsed items, we
             // will use the drawer instead.
-            browserViewModel.getBrowsedMediaItems().observe(this, this::updateTabs);
+            getRootBrowserViewModel().getBrowsedMediaItems().observe(this, this::updateTabs);
         }
 
         mPlaybackFragment = new PlaybackFragment();
@@ -271,12 +270,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                         localViewModel.setAlbumArtSize(
                                 mAlbumBackground.getWidth(), mAlbumBackground.getHeight()));
         localViewModel.getAlbumArt().observe(this, this::setBackgroundImage);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mDrawerController.cleanup();
     }
 
     @Override
@@ -531,8 +524,8 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         return ViewModelProviders.of(this).get(PlaybackViewModel.class);
     }
 
-    private MediaBrowserViewModel getMediaBrowserViewModel() {
-        return MediaBrowserViewModel.Factory.getInstance(ViewModelProviders.of(this));
+    private MediaBrowserViewModel getRootBrowserViewModel() {
+        return MediaBrowserViewModel.Factory.getInstanceForBrowseRoot(ViewModelProviders.of(this));
     }
 
     public ViewModel getInnerViewModel() {
