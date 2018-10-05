@@ -23,6 +23,7 @@ import static com.android.car.arch.common.LiveDataFunctions.nullLiveData;
 
 import static java.util.Objects.requireNonNull;
 
+import android.app.ActionBar;
 import android.app.Application;
 import android.car.Car;
 import android.content.ActivityNotFoundException;
@@ -226,6 +227,16 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 mAppBarView.setAppIcon(source.getRoundPackageIcon());
                 mAppBarView.setTitle(source.getName());
             }
+            if (mContentForwardBrowseEnabled) {
+                boolean enableCFB = (source != null) && source.supportsContentForwardBrowse();
+                mAppBarView.setContentForwardEnabled(enableCFB);
+                ActionBar actionBar = requireNonNull(getActionBar());
+                if (enableCFB) {
+                    actionBar.hide();
+                } else {
+                    actionBar.show();
+                }
+            }
         });
 
         if (mContentForwardBrowseEnabled) {
@@ -333,6 +344,17 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         });
     }
 
+    private boolean useContentForwardBrowse() {
+        if (mContentForwardBrowseEnabled) {
+            MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
+            MediaSource source = mediaSourceViewModel.getSelectedMediaSource().getValue();
+            if (source != null) {
+                return source.supportsContentForwardBrowse();
+            }
+        }
+        return false;
+    }
+
     /**
      * Sets the media source being browsed.
      *
@@ -422,7 +444,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     private void switchToMode(Mode mode) {
         // If content forward is not enable, then we always show the playback UI (browse will be
         // done in the drawer)
-        mMode = mContentForwardBrowseEnabled ? mode : Mode.PLAYBACK;
+        mMode = useContentForwardBrowse() ? mode : Mode.PLAYBACK;
         updateMetadata();
         switch (mMode) {
             case PLAYBACK:
@@ -508,7 +530,8 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         closeAppSelector();
         if (mediaSource.isBrowsable() && !mediaSource.isCustom()) {
             changeMediaSource(mediaSource);
-            switchToMode(Mode.BROWSING);
+            switchToMode(
+                    mediaSource.supportsContentForwardBrowse() ? Mode.BROWSING : Mode.PLAYBACK);
         } else {
             String packageName = mediaSource.getPackageName();
             Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
@@ -536,7 +559,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     @Override
     public void onQueueButtonClicked() {
-        if (mContentForwardBrowseEnabled) {
+        if (useContentForwardBrowse()) {
             mPlaybackFragment.toggleQueueVisibility();
         } else {
             mDrawerController.showPlayQueue();
