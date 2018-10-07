@@ -46,13 +46,12 @@ public class RootDrawerAdapter extends BrowseDrawerAdapter {
     private CharSequence mQueueTitle;
 
     RootDrawerAdapter(Context context, LifecycleOwner parentLifecycle,
-            MediaBrowserViewModel.WithMutableBrowseId mediaBrowserViewModel,
+            MediaBrowserViewModel rootBrowserViewModel,
             MediaSourceViewModel mediaSourceViewModel,
             PlaybackViewModel playbackViewModel,
             CarDrawerController drawerController,
             MediaItemOnClickListener clickListener) {
-        super(context, parentLifecycle, mediaBrowserViewModel, drawerController, clickListener);
-        mediaBrowserViewModel.setCurrentBrowseId(null);
+        super(context, parentLifecycle, rootBrowserViewModel, drawerController, clickListener);
         playbackViewModel.hasQueue().observe(this, this::setQueueAvailable);
         playbackViewModel.getQueueTitle().observe(this, this::setQueueTitle);
         mediaSourceViewModel.getSelectedMediaSource().observe(this,
