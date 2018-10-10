@@ -43,6 +43,9 @@ import android.util.Size;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -160,6 +163,14 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                     Log.e(TAG, "onSettingsSelection " + e);
                 }
             }
+        }
+
+        @Override
+        public void onSearch(String query) {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "onSearch: " + query);
+            }
+            setCurrentFragment(BrowseFragment.newSearchInstance(query));
         }
     };
     private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {

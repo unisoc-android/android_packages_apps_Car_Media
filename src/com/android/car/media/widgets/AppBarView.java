@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.transition.Fade;
 import android.transition.Transition;
 import android.transition.TransitionManager;
@@ -14,6 +15,9 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -42,6 +46,7 @@ public class AppBarView extends RelativeLayout {
     private TextView mTitle;
     private ViewGroup mAppSwitchContainer;
     private View mSettingsButton;
+    private EditText mSearchText;
     private Context mContext;
     private int mMaxTabs;
     private Drawable mArrowDropDown;
@@ -86,6 +91,11 @@ public class AppBarView extends RelativeLayout {
          * Invoked when the user clicks on the settings button.
          */
         void onSettingsSelection();
+
+        /**
+         * Invoked when the user submits a search query.
+         */
+        void onSearch(String query);
     }
 
     /**
@@ -153,6 +163,17 @@ public class AppBarView extends RelativeLayout {
         mAppSwitchContainer.setOnClickListener(view -> onAppSwitchClicked());
         mSettingsButton = findViewById(R.id.settings);
         mSettingsButton.setOnClickListener(view -> onSettingsClicked());
+        mSearchText = findViewById(R.id.search);
+        mSearchText.setOnFocusChangeListener(
+                (view, b) -> ((InputMethodManager)
+                        context.getSystemService(Context.INPUT_METHOD_SERVICE))
+                        .hideSoftInputFromWindow(view.getWindowToken(), 0));
+        mSearchText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                onSearch(v.getText().toString());
+            }
+            return false;
+        });
         mTitle = findViewById(R.id.title);
         mArrowDropDown = getResources().getDrawable(R.drawable.ic_arrow_drop_down, null);
         mArrowDropUp = getResources().getDrawable(R.drawable.ic_arrow_drop_up, null);
@@ -196,6 +217,13 @@ public class AppBarView extends RelativeLayout {
             return;
         }
         mListener.onSettingsSelection();
+    }
+
+    private void onSearch(String query) {
+        if (mListener == null || TextUtils.isEmpty(query)) {
+            return;
+        }
+        mListener.onSearch(query);
     }
 
     /**
@@ -254,7 +282,7 @@ public class AppBarView extends RelativeLayout {
 
     /** Controls whether the settings button is visible. */
     public void showSettings(boolean show) {
-        mSettingsButton.setVisibility(show ? VISIBLE : INVISIBLE);
+        mSettingsButton.setVisibility(show ? VISIBLE : GONE);
     }
 
     /**

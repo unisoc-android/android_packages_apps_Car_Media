@@ -55,6 +55,7 @@ import java.util.Stack;
 public class BrowseFragment extends Fragment {
     private static final String TAG = "BrowseFragment";
     private static final String TOP_MEDIA_ITEM_KEY = "top_media_item";
+    private static final String SEARCH_QUERY_KEY = "search_query";
     private static final String BROWSE_STACK_KEY = "browse_stack";
 
     private PagedListView mBrowseList;
@@ -63,6 +64,7 @@ public class BrowseFragment extends Fragment {
     private TextView mErrorMessage;
     private BrowseAdapter mBrowseAdapter;
     private MediaItemMetadata mTopMediaItem;
+    private String mSearchQuery;
     private int mFadeDuration;
     private int mProgressBarDelay;
     private Handler mHandler = new Handler();
@@ -109,6 +111,7 @@ public class BrowseFragment extends Fragment {
      */
     public void navigateBack() {
         mBrowseStack.pop();
+        mMediaBrowserViewModel.search(mSearchQuery);
         mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
         getParent().onBackStackChanged();
     }
@@ -139,12 +142,27 @@ public class BrowseFragment extends Fragment {
         return fragment;
     }
 
+    /**
+     * Creates a new instance of this fragment.
+     *
+     * @param searchQuery Search query to display results for.
+     * @return a fully initialized {@link BrowseFragment}
+     */
+    public static BrowseFragment newSearchInstance(String searchQuery) {
+        BrowseFragment fragment = new BrowseFragment();
+        Bundle args = new Bundle();
+        args.putString(SEARCH_QUERY_KEY, searchQuery);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Bundle arguments = getArguments();
         if (arguments != null) {
             mTopMediaItem = arguments.getParcelable(TOP_MEDIA_ITEM_KEY);
+            mSearchQuery = arguments.getString(SEARCH_QUERY_KEY);
         }
         if (savedInstanceState != null) {
             List<MediaItemMetadata> savedStack =
@@ -191,6 +209,7 @@ public class BrowseFragment extends Fragment {
         mBrowseAdapter.registerObserver(mBrowseAdapterObserver);
 
         if (savedInstanceState == null) {
+            mMediaBrowserViewModel.search(mSearchQuery);
             mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
         }
         mMediaBrowserViewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
