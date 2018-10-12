@@ -170,6 +170,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "onSearch: " + query);
             }
+            mAppBarView.setActiveItem(null);
             setCurrentFragment(BrowseFragment.newSearchInstance(query));
         }
     };
