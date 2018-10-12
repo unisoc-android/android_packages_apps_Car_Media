@@ -27,6 +27,7 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -74,6 +75,7 @@ public class BrowseFragment extends Fragment {
 
         @Override
         protected void onPlayableItemClicked(MediaItemMetadata item) {
+            hideKeyboard();
             getParent().onPlayableItemClicked(item);
         }
 
@@ -154,6 +156,11 @@ public class BrowseFragment extends Fragment {
         args.putString(SEARCH_QUERY_KEY, searchQuery);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    public void updateSearchQuery(String query) {
+        mSearchQuery = query;
+        mMediaBrowserViewModel.search(query);
     }
 
     @Override
@@ -273,6 +280,7 @@ public class BrowseFragment extends Fragment {
     }
 
     private void navigateInto(MediaItemMetadata item) {
+        hideKeyboard();
         mBrowseStack.push(item);
         mMediaBrowserViewModel.setCurrentBrowseId(item.getId());
         getParent().onBackStackChanged();
@@ -294,5 +302,12 @@ public class BrowseFragment extends Fragment {
     private String getCurrentMediaItemId() {
         MediaItemMetadata currentItem = getCurrentMediaItem();
         return currentItem != null ? currentItem.getId() : null;
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager in =
+                (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        in.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+
     }
 }
