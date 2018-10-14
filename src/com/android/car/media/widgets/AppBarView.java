@@ -315,9 +315,7 @@ public class AppBarView extends RelativeLayout {
      */
     public void setActiveItem(MediaItemMetadata item) {
         mSelectedItem = item;
-        // TODO(b/79264184): Updating tabs alpha is causing them to disappear randomly. We are
-        // de-activating this feature for not.
-        // updateTabs();
+        updateTabs();
     }
 
     private void updateTabs() {
@@ -361,6 +359,7 @@ public class AppBarView extends RelativeLayout {
                 mNavIcon.setImageDrawable(mCollapse);
                 mNavIconContainer.setVisibility(hasItems || !mContentForwardEnabled ? View.GONE
                         : View.VISIBLE);
+                setActiveItem(null);
                 mTabsContainer.setVisibility(hasItems && mContentForwardEnabled ? View.VISIBLE
                         : View.GONE);
                 mTitle.setVisibility(hasItems || !mContentForwardEnabled ? View.GONE
