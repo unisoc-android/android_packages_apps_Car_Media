@@ -20,9 +20,11 @@
     android:id="@+id/container"
     android:focusable="true"
     android:clickable="true"
+    android:foreground="@drawable/car_card_ripple_background"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/car_padding_4">
 
     <com.android.car.media.common.FixedRatioImageView
         android:id="@+id/thumbnail"
