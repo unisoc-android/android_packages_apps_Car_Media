@@ -14,6 +14,7 @@ import android.transition.TransitionManager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -167,9 +168,15 @@ public class AppBarView extends RelativeLayout {
         mSettingsButton.setOnClickListener(view -> onSettingsClicked());
         mSearchText = findViewById(R.id.search);
         mSearchText.setOnFocusChangeListener(
-                (view, b) -> ((InputMethodManager)
-                        context.getSystemService(Context.INPUT_METHOD_SERVICE))
-                        .hideSoftInputFromWindow(view.getWindowToken(), 0));
+                (view, hasFocus) -> {
+                    if (hasFocus) {
+                        mSearchText.setCursorVisible(true);
+                    } else {
+                        ((InputMethodManager)
+                                context.getSystemService(Context.INPUT_METHOD_SERVICE))
+                                .hideSoftInputFromWindow(view.getWindowToken(), 0);
+                    }
+                });
         mSearchText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -183,6 +190,12 @@ public class AppBarView extends RelativeLayout {
             public void afterTextChanged(Editable editable) {
                 onSearch(editable.toString());
             }
+        });
+        mSearchText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                mSearchText.setCursorVisible(false);
+            }
+            return false;
         });
 
         mTitle = findViewById(R.id.title);
