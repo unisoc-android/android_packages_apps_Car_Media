@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.transition.Fade;
 import android.transition.Transition;
 import android.transition.TransitionManager;
@@ -168,12 +170,21 @@ public class AppBarView extends RelativeLayout {
                 (view, b) -> ((InputMethodManager)
                         context.getSystemService(Context.INPUT_METHOD_SERVICE))
                         .hideSoftInputFromWindow(view.getWindowToken(), 0));
-        mSearchText.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                onSearch(v.getText().toString());
+        mSearchText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
             }
-            return false;
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                onSearch(editable.toString());
+            }
         });
+
         mTitle = findViewById(R.id.title);
         mArrowDropDown = getResources().getDrawable(R.drawable.ic_arrow_drop_down, null);
         mArrowDropUp = getResources().getDrawable(R.drawable.ic_arrow_drop_up, null);
@@ -347,6 +358,7 @@ public class AppBarView extends RelativeLayout {
                 mTabsContainer.setVisibility(hasItems ? View.VISIBLE : View.GONE);
                 mTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
+                mSearchText.setVisibility(View.VISIBLE);
                 break;
             case STACKED:
                 mNavIcon.setImageDrawable(mArrowBack);
@@ -354,6 +366,7 @@ public class AppBarView extends RelativeLayout {
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
+                mSearchText.setVisibility(View.GONE);
                 break;
             case PLAYING:
                 mNavIcon.setImageDrawable(mCollapse);
@@ -365,12 +378,14 @@ public class AppBarView extends RelativeLayout {
                 mTitle.setVisibility(hasItems || !mContentForwardEnabled ? View.GONE
                         : View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
+                mSearchText.setVisibility(View.VISIBLE);
                 break;
             case APP_SELECTION:
                 mNavIconContainer.setVisibility(View.GONE);
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(mContentForwardEnabled ? View.VISIBLE : View.GONE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropUp);
+                mSearchText.setVisibility(View.GONE);
                 break;
         }
     }

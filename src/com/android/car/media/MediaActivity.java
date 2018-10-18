@@ -43,9 +43,6 @@ import android.util.Size;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -171,7 +168,13 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 Log.d(TAG, "onSearch: " + query);
             }
             mAppBarView.setActiveItem(null);
-            setCurrentFragment(BrowseFragment.newSearchInstance(query));
+            Fragment fragment = getCurrentFragment();
+            if (fragment instanceof  BrowseFragment) {
+                BrowseFragment browseFragment = (BrowseFragment) fragment;
+                browseFragment.updateSearchQuery(query);
+            } else {
+                setCurrentFragment(BrowseFragment.newSearchInstance(query));
+            }
         }
     };
     private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {

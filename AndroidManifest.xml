@@ -34,7 +34,7 @@
         <activity
             android:name=".MediaActivity"
             android:resizeableActivity="true"
-            android:windowSoftInputMode="stateUnchanged"
+            android:windowSoftInputMode="stateUnchanged|adjustPan"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
