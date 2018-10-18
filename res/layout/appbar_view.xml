@@ -51,6 +51,7 @@
         android:inputType="text"
         android:maxLines="1"
         android:imeOptions="actionDone"
+        android:cursorVisible="false"
         android:layout_toLeftOf="@+id/settings" />
 
     <ImageView
