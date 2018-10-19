@@ -65,6 +65,7 @@ public class AppBarView extends RelativeLayout {
     private String mMediaAppTitle;
     private Drawable mDefaultIcon;
     private boolean mContentForwardEnabled;
+    private boolean mSearchSupported;
 
     /**
      * Application bar listener
@@ -342,6 +343,14 @@ public class AppBarView extends RelativeLayout {
         updateTabs();
     }
 
+    /**
+     * Sets whether the search box should be shown
+     */
+    public void setSearchSupported(boolean supported) {
+        mSearchSupported = supported;
+        mSearchText.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
+    }
+
     private void updateTabs() {
         for (int i = 0; i < mTabsContainer.getChildCount(); i++) {
             View child = mTabsContainer.getChildAt(i);
@@ -371,7 +380,7 @@ public class AppBarView extends RelativeLayout {
                 mTabsContainer.setVisibility(hasItems ? View.VISIBLE : View.GONE);
                 mTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
-                mSearchText.setVisibility(View.VISIBLE);
+                mSearchText.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
             case STACKED:
                 mNavIcon.setImageDrawable(mArrowBack);
@@ -391,7 +400,7 @@ public class AppBarView extends RelativeLayout {
                 mTitle.setVisibility(hasItems || !mContentForwardEnabled ? View.GONE
                         : View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
-                mSearchText.setVisibility(View.VISIBLE);
+                mSearchText.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
             case APP_SELECTION:
                 mNavIconContainer.setVisibility(View.GONE);
