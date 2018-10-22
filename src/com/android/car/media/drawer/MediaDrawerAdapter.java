@@ -52,8 +52,8 @@ abstract class MediaDrawerAdapter extends LifecycleDrawerAdapter {
         mClickListener = clickListener;
     }
 
-    final void setMediaItems(@NonNull List<MediaItemMetadata> mediaItems) {
-        mMediaItems = mediaItems;
+    final void setMediaItems(@Nullable List<MediaItemMetadata> mediaItems) {
+        mMediaItems = mediaItems != null ? mediaItems : Collections.emptyList();
         notifyDataSetChanged();
     }
 
