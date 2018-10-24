@@ -219,32 +219,32 @@ public class BrowseFragment extends Fragment {
             mMediaBrowserViewModel.search(mSearchQuery);
             mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
         }
-        mMediaBrowserViewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
+        mMediaBrowserViewModel.getBrowsedMediaItems().observe(getViewLifecycleOwner(), futureData ->
+        {
+            boolean isLoading = futureData.isLoading();
+            List<MediaItemMetadata> items = futureData.getData();
             if (isLoading) {
                 startLoadingIndicator();
+                return;
+            }
+            stopLoadingIndicator();
+            mBrowseAdapter.submitItems(getCurrentMediaItem(), items);
+            if (items == null) {
+                mErrorMessage.setText(R.string.unknown_error);
+                ViewUtils.hideViewAnimated(mBrowseList, mFadeDuration);
+                ViewUtils.showViewAnimated(mErrorMessage, mFadeDuration);
+                ViewUtils.showViewAnimated(mErrorIcon, mFadeDuration);
+            } else if (items.isEmpty()) {
+                mErrorMessage.setText(R.string.nothing_to_play);
+                ViewUtils.hideViewAnimated(mBrowseList, mFadeDuration);
+                ViewUtils.hideViewAnimated(mErrorIcon, mFadeDuration);
+                ViewUtils.showViewAnimated(mErrorMessage, mFadeDuration);
             } else {
-                stopLoadingIndicator();
+                ViewUtils.showViewAnimated(mBrowseList, mFadeDuration);
+                ViewUtils.hideViewAnimated(mErrorIcon, mFadeDuration);
+                ViewUtils.hideViewAnimated(mErrorMessage, mFadeDuration);
             }
         });
-        mMediaBrowserViewModel.getBrowsedMediaItems().observe(getViewLifecycleOwner(),
-                items -> {
-                    mBrowseAdapter.submitItems(getCurrentMediaItem(), items);
-                    if (items == null) {
-                        mErrorMessage.setText(R.string.unknown_error);
-                        ViewUtils.hideViewAnimated(mBrowseList, mFadeDuration);
-                        ViewUtils.showViewAnimated(mErrorMessage, mFadeDuration);
-                        ViewUtils.showViewAnimated(mErrorIcon, mFadeDuration);
-                    } else if (items.isEmpty()) {
-                        mErrorMessage.setText(R.string.nothing_to_play);
-                        ViewUtils.hideViewAnimated(mBrowseList, mFadeDuration);
-                        ViewUtils.hideViewAnimated(mErrorIcon, mFadeDuration);
-                        ViewUtils.showViewAnimated(mErrorMessage, mFadeDuration);
-                    } else {
-                        ViewUtils.showViewAnimated(mBrowseList, mFadeDuration);
-                        ViewUtils.hideViewAnimated(mErrorIcon, mFadeDuration);
-                        ViewUtils.hideViewAnimated(mErrorMessage, mFadeDuration);
-                    }
-                });
         return view;
     }
 
