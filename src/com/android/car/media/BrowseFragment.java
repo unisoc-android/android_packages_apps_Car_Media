@@ -307,7 +307,7 @@ public class BrowseFragment extends Fragment {
     private void hideKeyboard() {
         InputMethodManager in =
                 (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-        in.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+        in.hideSoftInputFromWindow(getView().getWindowToken(), 0);
 
     }
 }
