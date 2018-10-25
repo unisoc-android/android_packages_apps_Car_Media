@@ -23,11 +23,14 @@ import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 import androidx.car.drawer.CarDrawerController;
+import androidx.core.util.Pair;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.android.car.media.R;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.browse.MediaBrowserViewModel;
+
+import java.util.List;
 
 /**
  * CarDrawerAdapter that shows the media items in the browse tree. Displays the data from a {@link
@@ -40,8 +43,11 @@ public class BrowseDrawerAdapter extends MediaDrawerAdapter {
             CarDrawerController drawerController,
             @Nullable MediaItemOnClickListener clickListener) {
         super(context, parentLifecycle, drawerController, clickListener);
-        mediaBrowserViewModel.isLoading().observe(this, drawerController::showLoadingProgressBar);
-        mediaBrowserViewModel.getBrowsedMediaItems().observe(this, this::setMediaItems);
+        mediaBrowserViewModel.getBrowsedMediaItems().observe(this, futureData ->
+        {
+            drawerController.showLoadingProgressBar(futureData.isLoading());
+            setMediaItems(futureData.getData());
+        });
     }
 
     protected void onItemClick(int position) {
@@ -63,4 +69,5 @@ public class BrowseDrawerAdapter extends MediaDrawerAdapter {
             endIconView.setImageDrawable(null);
         }
     }
+
 }
