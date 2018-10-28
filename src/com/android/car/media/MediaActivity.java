@@ -17,7 +17,6 @@ package com.android.car.media;
 
 import static androidx.lifecycle.Transformations.switchMap;
 
-import static com.android.car.arch.common.LiveDataFunctions.combine;
 import static com.android.car.arch.common.LiveDataFunctions.distinct;
 import static com.android.car.arch.common.LiveDataFunctions.nullLiveData;
 
@@ -58,8 +57,6 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.android.car.apps.common.DrawerActivity;
-import com.android.car.arch.common.preference.StringPreferenceLiveData;
-import com.android.car.arch.common.switching.SwitchingLiveData;
 import com.android.car.media.common.CrossfadeImageView;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.PlaybackControls;
@@ -87,8 +84,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     /** Shared preferences files */
     public static final String SHARED_PREF = "com.android.car.media";
-    /** Shared preference containing the last controlled source */
-    public static final String LAST_MEDIA_SOURCE_SHARED_PREF_KEY = "last_media_source";
 
     /** Configuration (controlled from resources) */
     private boolean mContentForwardBrowseEnabled;
@@ -257,7 +252,12 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         if (mContentForwardBrowseEnabled) {
             // If content forward browsing is disabled, then no need to observe browsed items, we
             // will use the drawer instead.
-            getRootBrowserViewModel().getBrowsedMediaItems().observe(this, this::updateTabs);
+            getRootBrowserViewModel().getBrowsedMediaItems().observe(this, futureData ->
+                    {
+                        if (!futureData.isLoading()) {
+                            updateTabs(futureData.getData());
+                        }
+                    });
         }
 
         mPlaybackFragment = new PlaybackFragment();
@@ -335,6 +335,8 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             // UI for the playing media source.
             LiveData<MediaControllerCompat> topActiveMediaController =
                     getMediaSourceViewModel().getTopActiveMediaController();
+            // TODO(arnaudberry) observeOnce should be removed as things could have changed when
+            // the lambda is executed...
             observeOnce(topActiveMediaController, controller -> {
                 if (controller != null) {
                     closeAppSelector();
@@ -346,17 +348,32 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             });
         }
 
-        // If we don't have a current media source, we try with the last one we remember.
-        observeOnce(getInnerViewModel().getLastMediaSource(), lastMediaSource -> {
-            if (lastMediaSource != null) {
-                closeAppSelector();
-                changeMediaSource(lastMediaSource);
-                switchToMode(Mode.BROWSING);
-            } else {
-                // If we don't have anything from before: open the app selector.
-                openAppSelector();
+        // If we don't have a current media source, we try with the last one we remember...
+        // after checking that the stored package name corresponds to a currently installed source.
+        String lastPackageName = getInnerViewModel().getLastMediaSourcePackageName();
+        List<MediaSource> mediaSources = getMediaSourceViewModel().getMediaSourcesList();
+        MediaSource mediaSource = validateSourcePackage(lastPackageName, mediaSources);
+        if (mediaSource != null) {
+            closeAppSelector();
+            changeMediaSource(mediaSource);
+            switchToMode(Mode.BROWSING);
+        } else {
+            // If we don't have anything from before: open the app selector.
+            openAppSelector();
+        }
+    }
+
+    @Nullable
+    private MediaSource validateSourcePackage(String packageName, List<MediaSource> sources) {
+        if (packageName == null) {
+            return null;
+        }
+        for (MediaSource mediaSource : sources) {
+            if (mediaSource.getPackageName().equals(packageName)) {
+                return mediaSource;
             }
-        });
+        }
+        return null;
     }
 
     private boolean useContentForwardBrowse() {
@@ -457,7 +474,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     }
 
     private void switchToMode(Mode mode) {
-        // If content forward is not enable, then we always show the playback UI (browse will be
+        // If content forward is not enabled, then we always show the playback UI (browse will be
         // done in the drawer)
         mMode = useContentForwardBrowse() ? mode : Mode.PLAYBACK;
         updateMetadata();
@@ -567,9 +584,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     }
 
     public ViewModel getInnerViewModel() {
-        ViewModel viewModel = ViewModelProviders.of(this).get(ViewModel.class);
-        viewModel.setMediaSources(getMediaSourceViewModel().getMediaSources());
-        return viewModel;
+        return ViewModelProviders.of(this).get(ViewModel.class);
     }
 
     @Override
@@ -583,12 +598,10 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     public static class ViewModel extends AndroidViewModel {
 
-        private SharedPreferences mSharedPreferences;
+        /** Shared preference containing the last controlled source */
+        private static final String LAST_MEDIA_SOURCE_SHARED_PREF_KEY = "last_media_source";
 
-        private final SwitchingLiveData<List<MediaSource>> mMediaSources =
-                SwitchingLiveData.newInstance();
-        private final LiveData<String> mLastMediaSourcePackageName;
-        private final LiveData<MediaSource> mLastMediaSource;
+        private SharedPreferences mSharedPreferences;
 
         private LiveData<Bitmap> mAlbumArt;
         private MutableLiveData<Size> mAlbumArtSize = new MutableLiveData<>();
@@ -598,22 +611,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             super(application);
             mSharedPreferences = application.getSharedPreferences(SHARED_PREF,
                     Context.MODE_PRIVATE);
-            mLastMediaSourcePackageName = new StringPreferenceLiveData(mSharedPreferences,
-                    LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
-            mLastMediaSource = combine(mMediaSources.asLiveData(), mLastMediaSourcePackageName,
-                    (sources, packageName) -> {
-                        if (packageName == null) {
-                            return null;
-                        }
-                        // Verify that the stored package name corresponds to a currently
-                        // installed media source.
-                        for (MediaSource mediaSource : sources) {
-                            if (mediaSource.getPackageName().equals(packageName)) {
-                                return mediaSource;
-                            }
-                        }
-                        return null;
-                    });
         }
 
         void init(@NonNull PlaybackViewModel playbackViewModel) {
@@ -641,18 +638,14 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             return mAlbumArt;
         }
 
-        void setMediaSources(LiveData<List<MediaSource>> mediaSources) {
-            mMediaSources.setSource(mediaSources);
-        }
-
-        LiveData<MediaSource> getLastMediaSource() {
-            return mLastMediaSource;
-        }
-
         void setLastMediaSource(MediaSource mediaSource) {
             mSharedPreferences.edit()
                     .putString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, mediaSource.getPackageName())
                     .apply();
+        }
+
+        String getLastMediaSourcePackageName() {
+            return mSharedPreferences.getString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
         }
     }
 }
