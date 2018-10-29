@@ -24,6 +24,7 @@ import static java.util.Objects.requireNonNull;
 
 import android.app.ActionBar;
 import android.app.Application;
+import android.app.PendingIntent;
 import android.car.Car;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -36,6 +37,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.transition.Fade;
 import android.util.Log;
 import android.util.Size;
@@ -58,6 +60,7 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.android.car.apps.common.DrawerActivity;
 import com.android.car.media.common.CrossfadeImageView;
+import com.android.car.media.common.MediaConstants;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.browse.MediaBrowserViewModel;
@@ -102,6 +105,8 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     private EmptyFragment mEmptyFragment;
     private ViewGroup mBrowseContainer;
     private ViewGroup mPlaybackContainer;
+    private ViewGroup mErrorContainer;
+    private ErrorFragment mErrorFragment;
 
     /** Current state */
     private Intent mCurrentSourcePreferences;
@@ -164,7 +169,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             }
             mAppBarView.setActiveItem(null);
             Fragment fragment = getCurrentFragment();
-            if (fragment instanceof  BrowseFragment) {
+            if (fragment instanceof BrowseFragment) {
                 BrowseFragment browseFragment = (BrowseFragment) fragment;
                 browseFragment.updateSearchQuery(query);
             } else {
@@ -198,7 +203,9 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         /** The user is browsing a media source */
         BROWSING,
         /** The user is interacting with the full screen playback UI */
-        PLAYBACK
+        PLAYBACK,
+        /** The MediaService is in an error state */
+        SERVICE_ERROR
     }
 
     @Override
@@ -249,7 +256,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             // will use the drawer instead.
             MediaBrowserViewModel mediaBrowserViewModel = getRootBrowserViewModel();
             mediaBrowserViewModel.getBrowsedMediaItems().observe(this, futureData -> {
-                if (!futureData.isLoading()) {
+                if (!futureData.isLoading() && mMode != Mode.SERVICE_ERROR) {
                     updateTabs(futureData.getData());
                 }
             });
@@ -276,6 +283,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 R.integer.new_album_art_fade_in_duration);
         mEmptyFragment = new EmptyFragment();
         mBrowseContainer = findViewById(R.id.fragment_container);
+        mErrorContainer = findViewById(R.id.error_container);
         mPlaybackContainer = findViewById(R.id.playback_container);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.playback_container, mPlaybackFragment)
@@ -293,6 +301,41 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                         localViewModel.setAlbumArtSize(
                                 mAlbumBackground.getWidth(), mAlbumBackground.getHeight()));
         localViewModel.getAlbumArt().observe(this, this::setBackgroundImage);
+
+        playbackViewModel.getPlaybackState().observe(this, state -> {
+            handlePlaybackState(state);
+        });
+    }
+
+    private void handlePlaybackState(PlaybackStateCompat state) {
+        if (state != null) {
+            if (Log.isLoggable(TAG, Log.INFO)) {
+                Log.i(TAG, "handlePlaybackState(); state change: " + state.getState());
+            }
+
+            if (state.getState() == PlaybackStateCompat.STATE_ERROR) {
+                String message = state.getErrorMessage().toString();
+                PendingIntent intent = null;
+                String label = null;
+
+                Bundle extras = state.getExtras();
+                if (extras != null) {
+                    intent = extras.getParcelable(MediaConstants.ERROR_RESOLUTION_ACTION_INTENT);
+                    label = extras.getString(MediaConstants.ERROR_RESOLUTION_ACTION_LABEL);
+                }
+
+                if (message != null) {
+                    mErrorFragment = ErrorFragment.newInstance(message, label, intent);
+                    setErrorFragment(mErrorFragment);
+                    switchToMode(Mode.SERVICE_ERROR);
+                } else {
+                    Log.e(TAG, "PlaybackState error requires an error message");
+                }
+            } else if (state.getState() == PlaybackStateCompat.STATE_NONE) {
+                ViewUtils.hideViewAnimated(mErrorContainer, mFadeDuration);
+                switchToMode(Mode.BROWSING);
+            }
+        }
     }
 
     @Override
@@ -353,7 +396,10 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         if (mediaSource != null) {
             closeAppSelector();
             changeMediaSource(mediaSource);
-            switchToMode(Mode.BROWSING);
+
+            if (mMode != Mode.SERVICE_ERROR) {
+                switchToMode(Mode.BROWSING);
+            }
         } else {
             // If we don't have anything from before: open the app selector.
             openAppSelector();
@@ -456,6 +502,12 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         mAppBarView.setActiveItem(topItem);
     }
 
+    private void setErrorFragment(Fragment fragment) {
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.error_container, fragment)
+                .commitAllowingStateLoss();
+    }
+
     private void setCurrentFragment(Fragment fragment) {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, fragment)
@@ -472,16 +524,29 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         // done in the drawer)
         mMode = useContentForwardBrowse() ? mode : Mode.PLAYBACK;
         updateMetadata();
+
+        if (Log.isLoggable(TAG, Log.INFO)) {
+            Log.i(TAG, "switchToMode(); mode: " + mode);
+        }
+
         switch (mMode) {
             case PLAYBACK:
+                ViewUtils.hideViewAnimated(mErrorContainer, mFadeDuration);
                 ViewUtils.showViewAnimated(mPlaybackContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mBrowseContainer, mFadeDuration);
                 mAppBarView.setState(AppBarView.State.PLAYING);
                 break;
             case BROWSING:
+                ViewUtils.hideViewAnimated(mErrorContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mPlaybackContainer, mFadeDuration);
                 ViewUtils.showViewAnimated(mBrowseContainer, mFadeDuration);
                 mAppBarView.setState(AppBarView.State.BROWSING);
+                break;
+            case SERVICE_ERROR:
+                ViewUtils.showViewAnimated(mErrorContainer, mFadeDuration);
+                ViewUtils.hideViewAnimated(mPlaybackContainer, mFadeDuration);
+                ViewUtils.hideViewAnimated(mBrowseContainer, mFadeDuration);
+                mAppBarView.setState(AppBarView.State.EMPTY);
                 break;
         }
     }
@@ -564,6 +629,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         }
     }
 
+
     public MediaSourceViewModel getMediaSourceViewModel() {
         return ViewModelProviders.of(this).get(MediaSourceViewModel.class);
     }
@@ -607,6 +673,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         }
 
         void init(@NonNull PlaybackViewModel playbackViewModel) {
+
             if (mPlaybackViewModel == playbackViewModel) {
                 return;
             }
