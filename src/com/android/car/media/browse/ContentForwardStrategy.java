@@ -19,7 +19,7 @@ package com.android.car.media.browse;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.android.car.media.common.ContentStyleMediaConstants;
+import com.android.car.media.common.MediaConstants;
 import com.android.car.media.common.MediaItemMetadata;
 
 /**
@@ -103,7 +103,7 @@ public interface ContentForwardStrategy {
                 return BrowseItemViewType.PANEL_ITEM;
             }
             return (mediaItem.getBrowsableContentStyleHint()
-                    == ContentStyleMediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
+                    == MediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
                     ? BrowseItemViewType.LIST_ITEM
                     : BrowseItemViewType.PANEL_ITEM;
         }
@@ -114,7 +114,7 @@ public interface ContentForwardStrategy {
                 return BrowseItemViewType.GRID_ITEM;
             }
             return (mediaItem.getPlayableContentStyleHint()
-                    == ContentStyleMediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
+                    == MediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
                     ? BrowseItemViewType.LIST_ITEM
                     : BrowseItemViewType.GRID_ITEM;
         }

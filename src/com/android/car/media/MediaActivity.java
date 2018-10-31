@@ -252,12 +252,14 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         if (mContentForwardBrowseEnabled) {
             // If content forward browsing is disabled, then no need to observe browsed items, we
             // will use the drawer instead.
-            getRootBrowserViewModel().getBrowsedMediaItems().observe(this, futureData ->
-                    {
-                        if (!futureData.isLoading()) {
-                            updateTabs(futureData.getData());
-                        }
-                    });
+            MediaBrowserViewModel mediaBrowserViewModel = getRootBrowserViewModel();
+            mediaBrowserViewModel.getBrowsedMediaItems().observe(this, futureData -> {
+                if (!futureData.isLoading()) {
+                    updateTabs(futureData.getData());
+                }
+            });
+            mediaBrowserViewModel.supportsSearch().observe(this,
+                    mAppBarView::setSearchSupported);
         }
 
         mPlaybackFragment = new PlaybackFragment();
