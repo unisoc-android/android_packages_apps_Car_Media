@@ -47,5 +47,4 @@
 
     <include
         layout="@layout/playback_controls"/>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

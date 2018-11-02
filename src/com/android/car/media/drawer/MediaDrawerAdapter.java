@@ -95,13 +95,6 @@ abstract class MediaDrawerAdapter extends LifecycleDrawerAdapter {
 
         ImageView iconView = holder.getIconView();
         MediaItemMetadata.updateImageView(context, item, iconView, 0);
-        // TODO (robertoalexis): change updateImageView() to return boolean based on whether it
-        // has something to display and use that in the if statement instead
-        if (item.getAlbumArtBitmap() != null || item.getAlbumArtUri() != null) {
-            iconView.setVisibility(View.VISIBLE);
-        } else {
-            iconView.setVisibility(View.GONE);
-        }
     }
 
     protected abstract void populateEndIconView(ImageView endIconView, int position);

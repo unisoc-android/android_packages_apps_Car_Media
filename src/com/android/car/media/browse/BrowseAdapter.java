@@ -387,6 +387,12 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
                             mCFBStrategy.getMaxRows(item, mCFBStrategy.getBrowsableViewType(item)),
                             mCFBStrategy.includeHeader(item),
                             mCFBStrategy.showMoreButton(item));
+                } else {
+                    // We need this fallback because the local MP's children are NEVER loaded here
+                    // TODO(b/118759409) sort this out...
+                    itemsBuilder.addItem(item,
+                            mCFBStrategy.getBrowsableViewType(mParentMediaItem),
+                            observer -> observer.onBrowseableItemClicked(item));
                 }
             } else if (item.isPlayable()) {
                 // If we only have playable items: show them as so.

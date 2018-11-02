@@ -25,6 +25,7 @@
 
     <androidx.car.widget.PagedListView
         android:id="@+id/apps_grid"
+        android:theme="@style/PagedListTheme"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="@dimen/appbar_height"
