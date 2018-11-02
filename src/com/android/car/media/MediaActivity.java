@@ -388,6 +388,15 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             // No change, nothing to do.
             return;
         }
+
+        MediaControllerCompat controller = mediaSourceViewModel.getMediaController().getValue();
+        if (controller != null) {
+            MediaControllerCompat.TransportControls controls = controller.getTransportControls();
+            if (controls != null) {
+                controls.pause();
+            }
+        }
+
         mediaSourceViewModel.setSelectedMediaSource(mediaSource);
         getInnerViewModel().setLastMediaSource(mediaSource);
         if (mediaSource != null) {
