@@ -238,14 +238,9 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 mAppBarView.setTitle(source.getName());
             }
             if (mContentForwardBrowseEnabled) {
-                boolean enableCFB = (source != null) && source.supportsContentForwardBrowse();
-                mAppBarView.setContentForwardEnabled(enableCFB);
+                mAppBarView.setContentForwardEnabled(true);
                 ActionBar actionBar = requireNonNull(getActionBar());
-                if (enableCFB) {
-                    actionBar.hide();
-                } else {
-                    actionBar.show();
-                }
+                actionBar.hide();
             }
         });
 
@@ -379,14 +374,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     }
 
     private boolean useContentForwardBrowse() {
-        if (mContentForwardBrowseEnabled) {
-            MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
-            MediaSource source = mediaSourceViewModel.getSelectedMediaSource().getValue();
-            if (source != null) {
-                return source.supportsContentForwardBrowse();
-            }
-        }
-        return false;
+        return mContentForwardBrowseEnabled;
     }
 
     /**
@@ -400,6 +388,15 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             // No change, nothing to do.
             return;
         }
+
+        MediaControllerCompat controller = mediaSourceViewModel.getMediaController().getValue();
+        if (controller != null) {
+            MediaControllerCompat.TransportControls controls = controller.getTransportControls();
+            if (controls != null) {
+                controls.pause();
+            }
+        }
+
         mediaSourceViewModel.setSelectedMediaSource(mediaSource);
         getInnerViewModel().setLastMediaSource(mediaSource);
         if (mediaSource != null) {
@@ -454,14 +451,9 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         showTopItem(browsableTopLevel.isEmpty() ? null : browsableTopLevel.get(0));
     }
 
-    private void showTopItem(MediaItemMetadata topItem) {
-        if (topItem != null) {
-            setCurrentFragment(BrowseFragment.newInstance(topItem));
-            mAppBarView.setActiveItem(topItem);
-        } else {
-            setCurrentFragment(BrowseFragment.newInstance(null));
-            mAppBarView.setActiveItem(null);
-        }
+    private void showTopItem(@Nullable MediaItemMetadata topItem) {
+        setCurrentFragment(BrowseFragment.newInstance(topItem));
+        mAppBarView.setActiveItem(topItem);
     }
 
     private void setCurrentFragment(Fragment fragment) {
@@ -564,8 +556,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         closeAppSelector();
         if (mediaSource.isBrowsable() && !mediaSource.isCustom()) {
             changeMediaSource(mediaSource);
-            switchToMode(
-                    mediaSource.supportsContentForwardBrowse() ? Mode.BROWSING : Mode.PLAYBACK);
+            switchToMode(Mode.BROWSING);
         } else {
             String packageName = mediaSource.getPackageName();
             Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);

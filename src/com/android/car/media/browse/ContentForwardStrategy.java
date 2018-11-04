@@ -76,11 +76,8 @@ public interface ContentForwardStrategy {
      */
     BrowseItemViewType getQueueViewType();
 
-    /**
-     * Default strategy TODO(b/77646944): Expand this implementation to honor the media source
-     * expectations.
-     */
     ContentForwardStrategy DEFAULT_STRATEGY = new ContentForwardStrategy() {
+
         @Override
         public boolean includeHeader(@NonNull MediaItemMetadata mediaItem) {
             return true;
@@ -103,9 +100,8 @@ public interface ContentForwardStrategy {
                 return BrowseItemViewType.PANEL_ITEM;
             }
             return (mediaItem.getBrowsableContentStyleHint()
-                    == MediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
-                    ? BrowseItemViewType.LIST_ITEM
-                    : BrowseItemViewType.PANEL_ITEM;
+                    == MediaConstants.CONTENT_STYLE_GRID_ITEM_HINT_VALUE)
+                    ? BrowseItemViewType.PANEL_ITEM : BrowseItemViewType.LIST_ITEM;
         }
 
         @Override
@@ -114,9 +110,8 @@ public interface ContentForwardStrategy {
                 return BrowseItemViewType.GRID_ITEM;
             }
             return (mediaItem.getPlayableContentStyleHint()
-                    == MediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
-                    ? BrowseItemViewType.LIST_ITEM
-                    : BrowseItemViewType.GRID_ITEM;
+                    == MediaConstants.CONTENT_STYLE_GRID_ITEM_HINT_VALUE)
+                    ? BrowseItemViewType.GRID_ITEM : BrowseItemViewType.LIST_ITEM;
         }
 
         @Override

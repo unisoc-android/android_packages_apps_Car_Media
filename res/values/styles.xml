@@ -25,4 +25,9 @@
         <item name="android:textSize">@dimen/car_body3_size</item>
         <item name="android:textColor">@color/no_content_text_color</item>
     </style>
+
+    <style name="PagedListTheme" parent="Theme.Car.NoActionBar">
+        <item name="android:colorAccent">@*android:color/accent_device_default_light</item>
+    </style>
+
 </resources>
