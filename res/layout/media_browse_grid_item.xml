@@ -41,6 +41,6 @@
         android:layout_marginBottom="@dimen/car_padding_2"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textAppearance="@style/TextAppearance.Car.Body2.Light"/>
+        android:textAppearance="?android:attr/textAppearanceMedium"/>
 
 </LinearLayout>

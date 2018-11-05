@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <resources>
-    <!-- The theme for the main MediaActivity. -->
+    <!-- The theme for the Media Center application. -->
     <style name="Theme.Media" parent="Theme.NoActionBar.Drawer" >
         <item name="listItemBackgroundColor">@android:color/transparent</item>
-        <item name="listItemTitleTextAppearance">@style/TextAppearance.Car.Body1.Light</item>
-        <item name="listItemBodyTextAppearance">@style/TextAppearance.Car.Body2.Light</item>
+        <item name="listItemTitleTextAppearance">?android:attr/textAppearanceLarge</item>
+        <item name="listItemBodyTextAppearance">?android:attr/textAppearanceSmall</item>
     </style>
 </resources>

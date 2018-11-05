@@ -28,5 +28,5 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/car_padding_1"
         android:includeFontPadding="false"
-        android:textAppearance="@style/TextAppearance.Car.Body1.Light"/>
+        android:textAppearance="?android:attr/textAppearanceLarge"/>
 </FrameLayout>
