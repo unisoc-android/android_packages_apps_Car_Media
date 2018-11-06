@@ -25,13 +25,13 @@
         android:layout_centerInParent="true"
         android:layout_marginLeft="34dp"
         android:layout_toLeftOf="@+id/app_switch_indicator"
-        android:padding="@dimen/car_padding_1"
+        android:padding="@dimen/appbar_view_icon_padding"
         android:background="@drawable/app_item_background">
         <ImageView
             android:id="@+id/nav_icon"
-            android:layout_width="@dimen/car_primary_icon_size"
-            android:layout_height="@dimen/car_primary_icon_size"
-            android:tint="@color/car_body1_light"/>
+            android:layout_width="@dimen/appbar_view_icon_size"
+            android:layout_height="@dimen/appbar_view_icon_size"
+            android:tint="@color/appbar_view_icon_tint"/>
     </FrameLayout>
 
     <LinearLayout
@@ -45,7 +45,7 @@
 
     <EditText
         android:id="@+id/search"
-        android:layout_height="@dimen/car_app_bar_height"
+        android:layout_height="match_parent"
         android:layout_width="250dp"
         android:hint="@string/search_hint"
         android:inputType="text"
@@ -56,34 +56,34 @@
 
     <ImageView
         android:id="@+id/settings"
-        android:layout_width="@dimen/car_primary_icon_size"
-        android:layout_height="@dimen/car_primary_icon_size"
-        android:tint="@color/car_body1_light"
+        android:layout_width="@dimen/appbar_view_icon_size"
+        android:layout_height="@dimen/appbar_view_icon_size"
+        android:tint="@color/appbar_view_icon_tint"
         android:layout_toLeftOf="@id/app_switch_container"
         android:layout_centerInParent="true"
         android:src="@drawable/ic_settings" />
 
     <LinearLayout
         android:id="@+id/app_switch_container"
-        android:layout_width="@dimen/car_margin"
+        android:layout_width="@dimen/appbar_view_app_switch_width"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_centerInParent="true"
-        android:padding="@dimen/car_padding_1"
+        android:padding="@dimen/appbar_view_icon_padding"
         android:orientation="horizontal"
         android:background="@drawable/app_item_background"
         android:gravity="center">
 
         <ImageView
             android:id="@+id/app_icon"
-            android:layout_width="@dimen/car_primary_icon_size"
-            android:layout_height="@dimen/car_primary_icon_size"/>
+            android:layout_width="@dimen/appbar_view_icon_size"
+            android:layout_height="@dimen/appbar_view_icon_size"/>
 
         <ImageView
             android:id="@+id/app_switch_icon"
-            android:layout_width="@dimen/car_primary_icon_size"
-            android:layout_height="@dimen/car_primary_icon_size"
-            android:tint="@color/car_body1_light"/>
+            android:layout_width="@dimen/appbar_view_icon_size"
+            android:layout_height="@dimen/appbar_view_icon_size"
+            android:tint="@color/appbar_view_icon_tint"/>
 
     </LinearLayout>
 

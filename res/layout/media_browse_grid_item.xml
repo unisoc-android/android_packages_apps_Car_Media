@@ -20,11 +20,11 @@
     android:id="@+id/container"
     android:focusable="true"
     android:clickable="true"
-    android:foreground="@drawable/car_card_ripple_background"
+    android:foreground="?android:attr/selectableItemBackground"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="@dimen/car_padding_4">
+    android:layout_marginTop="@dimen/media_browse_grid_item_margin_top">
 
     <com.android.car.media.common.FixedRatioImageView
         android:id="@+id/thumbnail"
@@ -37,8 +37,8 @@
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/car_padding_2"
-        android:layout_marginBottom="@dimen/car_padding_2"
+        android:layout_marginTop="@dimen/media_browse_grid_item_text_margin_y"
+        android:layout_marginBottom="@dimen/media_browse_grid_item_text_margin_y"
         android:ellipsize="end"
         android:maxLines="1"
         android:textAppearance="?android:attr/textAppearanceMedium"/>
