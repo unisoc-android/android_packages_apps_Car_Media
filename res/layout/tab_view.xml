@@ -36,6 +36,6 @@
         android:ellipsize="end"
         android:includeFontPadding="false"
         android:textColor="@color/car_subtext2_light"
-        android:textAppearance="@style/TextAppearance.Car.SubText2"/>
+        android:textAppearance="?android:attr/textAppearanceSmall"/>
 
 </merge>

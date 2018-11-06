@@ -26,7 +26,7 @@
         android:ellipsize="end"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:textAppearance="@style/TextAppearance.Car.Body1.Light"
+        android:textAppearance="?android:attr/textAppearanceLarge"
         tools:text="Body 1 Header"/>
     <TextView
         android:id="@+id/subtitle"
@@ -37,7 +37,7 @@
         android:ellipsize="end"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:textAppearance="@style/TextAppearance.Car.Body2.Light"
+        android:textAppearance="?android:attr/textAppearanceMedium"
         tools:text="Body 2"/>
     <SeekBar
         android:id="@+id/seek_bar"

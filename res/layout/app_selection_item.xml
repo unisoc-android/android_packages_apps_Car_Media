@@ -40,7 +40,7 @@
         android:id="@+id/app_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.Car.Body3.Medium.Light"
+        android:textAppearance="?android:attr/textAppearanceLarge"
         android:gravity="center"
         android:ellipsize="end"
         android:maxLines="1" />
