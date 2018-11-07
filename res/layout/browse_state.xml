@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/error_icon"
         android:layout_marginTop="@dimen/car_padding_4"
-        android:textAppearance="@style/TextAppearance.Car.Body2.Light"
+        android:textAppearance="?android:attr/textAppearanceMedium"
         android:gravity="center"
         android:maxLines="3"
         android:text="@string/nothing_to_play"
