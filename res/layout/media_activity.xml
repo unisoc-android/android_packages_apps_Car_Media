@@ -67,7 +67,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:layout_marginRight="@dimen/media_activity_controls_margin_right"
-            app:columns="3"/>
+            app:columns="3"
+            app:enableOverflow="false"/>
 
         <com.android.car.media.widgets.MetadataView
             android:id="@+id/browse_metadata"

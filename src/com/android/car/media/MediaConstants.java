@@ -29,6 +29,11 @@ import java.lang.annotation.RetentionPolicy;
  * Please refer to <a href="https://developer.android.com/training/auto/audio/index.html">Providing
  * Audio Playback for Auto</a> for a detailed explanation.
  */
+
+/**
+ * Media constants should go to packages/apps/Car/libs/car-media-common/src/MediaConstants.java
+ */
+@Deprecated
 public class MediaConstants {
     /**
      * Action along with the media connection broadcast, which contains the current media
