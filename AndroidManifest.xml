@@ -36,6 +36,7 @@
             android:resizeableActivity="true"
             android:windowSoftInputMode="stateUnchanged|adjustPan"
             android:launchMode="singleTop">
+            <meta-data android:name="distractionOptimized" android:value="true"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.INFO" />
