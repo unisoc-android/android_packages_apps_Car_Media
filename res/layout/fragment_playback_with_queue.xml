@@ -26,21 +26,21 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="vertical"
-        app:layout_constraintGuide_begin="@dimen/car_margin"/>
+        app:layout_constraintGuide_begin="@dimen/fragment_playback_guide_margin_x"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/margin_end"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_end="@dimen/car_margin"/>
+        app:layout_constraintGuide_end="@dimen/fragment_playback_guide_margin_x"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/margin_top"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="@dimen/car_padding_4"/>
+        app:layout_constraintGuide_begin="@dimen/fragment_playback_guide_margin_top"/>
 
     <include
         layout="@layout/fragment_metadata_with_queue"/>

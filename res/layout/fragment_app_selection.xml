@@ -31,7 +31,7 @@
         android:layout_marginTop="@dimen/appbar_height"
         android:clickable="true"
         android:focusable="true"
-        app:listContentTopOffset="@dimen/car_padding_5"
+        app:listContentTopOffset="@dimen/fragment_app_selection_list_top_offset"
         app:showPagedListViewDivider="false" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
