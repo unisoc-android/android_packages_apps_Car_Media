@@ -55,7 +55,7 @@
         android:id="@+id/browse_controls_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/car_padding_4"
+        android:padding="@dimen/media_activity_controls_container_padding"
         android:background="@color/browse_playback_bg"
         android:orientation="horizontal"
         android:gravity="center_vertical"
@@ -66,7 +66,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
-            android:layout_marginRight="@dimen/car_padding_4"
+            android:layout_marginRight="@dimen/media_activity_controls_margin_right"
             app:columns="3"/>
 
         <com.android.car.media.widgets.MetadataView
@@ -84,7 +84,7 @@
 
     <com.android.car.media.widgets.AppBarView
         android:id="@+id/app_bar"
-        android:layout_height="@dimen/car_app_bar_height"
+        android:layout_height="@dimen/media_activity_app_bar_height"
         android:layout_width="match_parent"
         app:layout_constraintTop_toTopOf="parent"/>
 

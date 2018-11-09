@@ -21,19 +21,19 @@
     android:id="@+id/app_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="@dimen/car_padding_2"
-    android:layout_marginEnd="@dimen/car_padding_2"
-    android:layout_marginBottom="@dimen/car_padding_5"
+    android:layout_marginStart="@dimen/app_selection_item_margin_h"
+    android:layout_marginEnd="@dimen/app_selection_item_margin_h"
+    android:layout_marginBottom="@dimen/app_selection_item_margin_bottom"
     android:orientation="vertical"
     android:background="@drawable/app_item_background"
-    android:padding="@dimen/car_padding_1"
+    android:padding="@dimen/app_selection_item_padding"
     android:gravity="center">
 
     <ImageView
         android:id="@+id/app_icon"
-        android:layout_width="@dimen/car_touch_target_size"
-        android:layout_height="@dimen/car_touch_target_size"
-        android:layout_marginBottom="@dimen/car_padding_4"
+        android:layout_width="@dimen/app_selection_item_app_icon_size"
+        android:layout_height="@dimen/app_selection_item_app_icon_size"
+        android:layout_marginBottom="@dimen/app_selection_item_app_icon_margin_bottom"
         android:layout_gravity="center_horizontal" />
 
     <TextView
