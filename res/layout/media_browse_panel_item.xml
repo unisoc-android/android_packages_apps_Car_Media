@@ -18,18 +18,18 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/container"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/car_single_line_list_item_height"
+    android:layout_height="@dimen/media_browse_panel_item_height"
     android:focusable="true"
-    android:foreground="@drawable/car_card_ripple_background"
+    android:foreground="?android:attr/selectableItemBackground"
     android:gravity="center"
     android:orientation="horizontal"
-    android:layout_marginStart="@dimen/car_keyline_1"
-    android:layout_marginEnd="@dimen/car_keyline_1">
+    android:layout_marginStart="@dimen/media_browse_panel_item_margin_x"
+    android:layout_marginEnd="@dimen/media_browse_panel_item_margin_x">
     <ImageView
         android:id="@+id/thumbnail"
-        android:layout_width="@dimen/car_primary_icon_size"
-        android:layout_height="@dimen/car_primary_icon_size"
-        android:layout_marginEnd="@dimen/car_drawer_list_item_icon_end_margin"
+        android:layout_width="@dimen/media_browse_panel_item_icon_size"
+        android:layout_height="@dimen/media_browse_panel_item_icon_size"
+        android:layout_marginEnd="@dimen/media_browse_panel_item_icon_margin_end"
         android:layout_gravity="center_vertical"
         android:scaleType="centerCrop" />
     <LinearLayout
@@ -43,7 +43,7 @@
             android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/car_text_vertical_margin"
+            android:layout_marginBottom="@dimen/media_browse_panel_item_title_margin_bottom"
             android:maxLines="1"
             android:textAppearance="?attr/drawerItemTitleTextAppearance" />
         <TextView

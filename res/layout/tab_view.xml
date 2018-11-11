@@ -19,12 +19,12 @@
 
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="@dimen/car_primary_icon_size"
-        android:layout_height="@dimen/car_primary_icon_size"
-        android:layout_marginBottom="@dimen/car_padding_1"
+        android:layout_width="@dimen/tab_view_icon_size"
+        android:layout_height="@dimen/tab_view_icon_size"
+        android:layout_marginBottom="@dimen/tab_view_icon_margin_bottom"
         android:scaleType="fitCenter"
         android:layout_gravity="center_horizontal"
-        android:tint="@color/car_tint_light"/>
+        android:tint="@color/tab_view_icon_tint"/>
 
     <TextView
         android:id="@+id/title"
@@ -35,7 +35,6 @@
         android:maxWidth="@dimen/browse_tab_width"
         android:ellipsize="end"
         android:includeFontPadding="false"
-        android:textColor="@color/car_subtext2_light"
+        android:textColor="@color/tab_view_text_color"
         android:textAppearance="?android:attr/textAppearanceSmall"/>
-
 </merge>
