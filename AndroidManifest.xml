@@ -22,6 +22,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
+    <permission android:name="com.android.car.media.provider.READ"
+        android:protectionLevel="signature"/>
+
     <application
         android:label="Media Center"
         android:theme="@style/Theme.Media"
@@ -47,5 +50,11 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name=".storage.MediaSourceContentProvider"
+            android:authorities="com.android.car.media.provider"
+            android:exported="true"
+            android:readPermission="com.android.car.media.provider.READ"/>
     </application>
 </manifest>

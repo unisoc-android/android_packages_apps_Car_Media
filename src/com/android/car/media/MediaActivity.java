@@ -27,9 +27,7 @@ import android.app.Application;
 import android.car.Car;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -66,6 +64,7 @@ import com.android.car.media.common.playback.PlaybackViewModel;
 import com.android.car.media.common.source.MediaSource;
 import com.android.car.media.common.source.MediaSourceViewModel;
 import com.android.car.media.drawer.MediaDrawerController;
+import com.android.car.media.storage.MediaSourceStorage;
 import com.android.car.media.widgets.AppBarView;
 import com.android.car.media.widgets.MetadataView;
 import com.android.car.media.widgets.ViewUtils;
@@ -82,9 +81,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         AppSelectionFragment.Callbacks, PlaybackFragment.Callbacks {
     private static final String TAG = "MediaActivity";
 
-    /** Shared preferences files */
-    public static final String SHARED_PREF = "com.android.car.media";
-
     /** Configuration (controlled from resources) */
     private boolean mContentForwardBrowseEnabled;
     private int mFadeDuration;
@@ -92,6 +88,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     /** Models */
     private MediaDrawerController mDrawerController;
     private PlaybackViewModel.PlaybackController mPlaybackController;
+    private MediaSourceStorage mMediaSourceStorage;
 
     /** Layout views */
     private AppBarView mAppBarView;
@@ -214,6 +211,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             playbackViewModel.setMediaController(mediaSourceViewModel.getMediaController());
             localViewModel.init(playbackViewModel);
         }
+        mMediaSourceStorage = new MediaSourceStorage(this);
 
         mContentForwardBrowseEnabled = getResources()
                 .getBoolean(R.bool.forward_content_browse_enabled);
@@ -347,7 +345,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         // If we don't have a current media source, we try with the last one we remember...
         // after checking that the stored package name corresponds to a currently installed source.
-        String lastPackageName = getInnerViewModel().getLastMediaSourcePackageName();
+        String lastPackageName = mMediaSourceStorage.getLastMediaSourcePackageName();
         List<MediaSource> mediaSources = getMediaSourceViewModel().getMediaSourcesList();
         MediaSource mediaSource = validateSourcePackage(lastPackageName, mediaSources);
         if (mediaSource != null) {
@@ -398,7 +396,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         }
 
         mediaSourceViewModel.setSelectedMediaSource(mediaSource);
-        getInnerViewModel().setLastMediaSource(mediaSource);
+        mMediaSourceStorage.setLastMediaSource(mediaSource);
         if (mediaSource != null) {
             if (Log.isLoggable(TAG, Log.INFO)) {
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
@@ -558,6 +556,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             changeMediaSource(mediaSource);
             switchToMode(Mode.BROWSING);
         } else {
+            mMediaSourceStorage.setLastMediaSource(mediaSource);
             String packageName = mediaSource.getPackageName();
             Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
             startActivity(intent);
@@ -591,19 +590,12 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     public static class ViewModel extends AndroidViewModel {
 
-        /** Shared preference containing the last controlled source */
-        private static final String LAST_MEDIA_SOURCE_SHARED_PREF_KEY = "last_media_source";
-
-        private SharedPreferences mSharedPreferences;
-
         private LiveData<Bitmap> mAlbumArt;
         private MutableLiveData<Size> mAlbumArtSize = new MutableLiveData<>();
         private PlaybackViewModel mPlaybackViewModel;
 
         public ViewModel(@NonNull Application application) {
             super(application);
-            mSharedPreferences = application.getSharedPreferences(SHARED_PREF,
-                    Context.MODE_PRIVATE);
         }
 
         void init(@NonNull PlaybackViewModel playbackViewModel) {
@@ -629,16 +621,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         LiveData<Bitmap> getAlbumArt() {
             return mAlbumArt;
-        }
-
-        void setLastMediaSource(MediaSource mediaSource) {
-            mSharedPreferences.edit()
-                    .putString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, mediaSource.getPackageName())
-                    .apply();
-        }
-
-        String getLastMediaSourcePackageName() {
-            return mSharedPreferences.getString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
         }
     }
 }
