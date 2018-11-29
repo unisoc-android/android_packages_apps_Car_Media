@@ -10,7 +10,9 @@ import static com.android.car.arch.common.LiveDataFunctions.mapNonNull;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.drawable.ColorDrawable;
 import android.media.session.PlaybackState;
 import android.view.View;
 import android.widget.ImageView;
@@ -59,9 +61,9 @@ public class MetadataController {
                     .getDimensionPixelSize(R.dimen.playback_album_art_size_large));
             model.getAlbumArt().observe(lifecycleOwner, bitmap -> {
                 if (bitmap == null) {
-                    albumArt.setVisibility(View.GONE);
+                    albumArt.setImageDrawable(new ColorDrawable(title.getContext().getResources()
+                            .getColor(R.color.album_art_placeholder_color, null)));
                 } else {
-                    albumArt.setVisibility(View.VISIBLE);
                     albumArt.setImageBitmap(bitmap);
                 }
             });
