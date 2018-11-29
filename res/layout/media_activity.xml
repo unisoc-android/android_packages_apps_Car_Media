@@ -51,32 +51,17 @@
         app:layout_constraintTop_toBottomOf="@+id/app_bar"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
-    <LinearLayout
+    <com.android.car.media.widgets.BrowsePlaybackControlBar
         android:id="@+id/browse_controls_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/media_activity_controls_container_padding"
-        android:background="@color/browse_playback_bg"
+        android:layout_marginHorizontal="@dimen/playback_controls_margin_x"
+        android:layout_marginBottom="@dimen/playback_controls_margin_bottom"
+        android:background="@drawable/browse_playback_background"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         app:layout_constraintBottom_toBottomOf="parent">
-
-        <com.android.car.media.common.PlaybackControlsActionBar
-            android:id="@+id/browse_controls"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.5"
-            android:layout_marginRight="@dimen/media_activity_controls_margin_right"
-            app:columns="3"
-            app:enableOverflow="false"/>
-
-        <com.android.car.media.widgets.MetadataView
-            android:id="@+id/browse_metadata"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.5"/>
-
-    </LinearLayout>
+    </com.android.car.media.widgets.BrowsePlaybackControlBar>
 
     <FrameLayout
         android:id="@+id/app_selection_container"

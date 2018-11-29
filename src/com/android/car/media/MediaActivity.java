@@ -59,7 +59,6 @@ import androidx.lifecycle.ViewModelProviders;
 import com.android.car.apps.common.DrawerActivity;
 import com.android.car.media.common.CrossfadeImageView;
 import com.android.car.media.common.MediaItemMetadata;
-import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.browse.MediaBrowserViewModel;
 import com.android.car.media.common.playback.AlbumArtLiveData;
 import com.android.car.media.common.playback.PlaybackViewModel;
@@ -67,7 +66,7 @@ import com.android.car.media.common.source.MediaSource;
 import com.android.car.media.common.source.MediaSourceViewModel;
 import com.android.car.media.drawer.MediaDrawerController;
 import com.android.car.media.widgets.AppBarView;
-import com.android.car.media.widgets.MetadataView;
+import com.android.car.media.widgets.BrowsePlaybackControlBar;
 import com.android.car.media.widgets.ViewUtils;
 
 import java.util.List;
@@ -263,10 +262,11 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         mAppSelectionFragment.setEnterTransition(new Fade().setDuration(fadeDuration));
         mAppSelectionFragment.setExitTransition(new Fade().setDuration(fadeDuration));
         mAlbumBackground = findViewById(R.id.media_background);
-        PlaybackControls playbackControls = findViewById(R.id.browse_controls);
-        playbackControls.setModel(playbackViewModel, this);
-        MetadataView metadataView = findViewById(R.id.browse_metadata);
-        metadataView.setModel(playbackViewModel, this);
+
+        BrowsePlaybackControlBar browsePlaybackControls =
+                findViewById(R.id.browse_controls_container);
+        browsePlaybackControls.setModel(playbackViewModel, this);
+
         mBrowseControlsContainer = findViewById(R.id.browse_controls_container);
         mBrowseControlsContainer.setOnClickListener(view -> switchToMode(Mode.PLAYBACK));
         TypedValue outValue = new TypedValue();
