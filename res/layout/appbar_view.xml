@@ -19,18 +19,20 @@
 
     <FrameLayout
         android:id="@+id/nav_icon_container"
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/appbar_view_nav_button_width"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_centerInParent="true"
-        android:layout_marginLeft="34dp"
+        android:gravity="center"
+        android:layout_alignParentStart="true"
         android:layout_toLeftOf="@+id/app_switch_indicator"
+        android:layout_centerVertical="true"
         android:padding="@dimen/appbar_view_icon_padding"
         android:background="@drawable/app_item_background">
         <ImageView
             android:id="@+id/nav_icon"
             android:layout_width="@dimen/appbar_view_icon_size"
             android:layout_height="@dimen/appbar_view_icon_size"
+            android:layout_gravity="center"
+            android:scaleType="fitXY"
             android:tint="@color/appbar_view_icon_tint"/>
     </FrameLayout>
 
@@ -40,6 +42,7 @@
         android:layout_height="match_parent"
         android:orientation="horizontal"
         android:gravity="center"
+        android:layout_marginLeft="@dimen/appbar_view_nav_button_width"
         android:layout_alignParentLeft="true"
         android:layout_centerInParent="true"/>
 
