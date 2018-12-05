@@ -128,6 +128,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         @Override
         public void onCollapse() {
             switchToMode(Mode.BROWSING);
+            onBackStackChanged();
         }
 
         @Override
@@ -506,7 +507,11 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     @Override
     public void onBackStackChanged() {
-        // TODO: Update ActionBar
+        Fragment currentFragment = getCurrentFragment();
+        if (currentFragment instanceof BrowseFragment) {
+            BrowseFragment fragment = (BrowseFragment) currentFragment;
+            mAppBarView.setNavIconVisible(fragment.isBackEnabled());
+        }
     }
 
     @Override
