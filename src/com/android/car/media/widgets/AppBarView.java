@@ -221,6 +221,9 @@ public class AppBarView extends RelativeLayout {
             return;
         }
         switch (mState) {
+            case BROWSING:
+                mListener.onBack();
+                break;
             case STACKED:
                 mListener.onBack();
                 break;
@@ -351,6 +354,13 @@ public class AppBarView extends RelativeLayout {
         mSearchText.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
     }
 
+    /**
+     * Sets whether the nav icon should be shown
+     */
+    public void setNavIconVisible(boolean visible) {
+        mNavIconContainer.setVisibility(visible ? VISIBLE : INVISIBLE);
+    }
+
     private void updateTabs() {
         for (int i = 0; i < mTabsContainer.getChildCount(); i++) {
             View child = mTabsContainer.getChildAt(i);
@@ -376,7 +386,8 @@ public class AppBarView extends RelativeLayout {
         Log.d(TAG, "Updating state: " + state + " (has items: " + hasItems + ")");
         switch (state) {
             case BROWSING:
-                mNavIconContainer.setVisibility(View.GONE);
+                mNavIconContainer.setVisibility(View.INVISIBLE);
+                mNavIcon.setImageDrawable(mArrowBack);
                 mTabsContainer.setVisibility(hasItems ? View.VISIBLE : View.GONE);
                 mTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
@@ -392,8 +403,7 @@ public class AppBarView extends RelativeLayout {
                 break;
             case PLAYING:
                 mNavIcon.setImageDrawable(mCollapse);
-                mNavIconContainer.setVisibility(hasItems || !mContentForwardEnabled ? View.GONE
-                        : View.VISIBLE);
+                mNavIconContainer.setVisibility(!mContentForwardEnabled ? View.GONE : View.VISIBLE);
                 setActiveItem(null);
                 mTabsContainer.setVisibility(hasItems && mContentForwardEnabled ? View.VISIBLE
                         : View.GONE);
