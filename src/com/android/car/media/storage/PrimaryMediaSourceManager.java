@@ -18,8 +18,10 @@ package com.android.car.media.storage;
 
 import android.content.Context;
 import android.media.session.MediaController;
+import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,7 +30,10 @@ import com.android.car.media.common.MediaConstants;
 import com.android.car.media.common.source.MediaSource;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -39,6 +44,8 @@ import java.util.List;
  * MediaControllers, and updates the primary source if a new source begins playback.
  */
 public class PrimaryMediaSourceManager {
+    private static final String TAG = "PrimaryMSM";
+
     private Context mContext;
     private MediaSourceStorage mMediaSourceStorage;
     private MediaSessionManager mMediaSessionManager;
@@ -51,30 +58,79 @@ public class PrimaryMediaSourceManager {
     private static PrimaryMediaSourceManager sInstance;
 
     private MediaSessionManager.OnActiveSessionsChangedListener mSessionChangeListener =
-            controllers -> mMediaSessionUpdater.registerCallbacks(controllers);
+            controllers -> {
+                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    String packages = "[";
+                    for (MediaController controller : controllers) {
+                        packages += controller.getPackageName() + ",";
+                    }
+                    packages += "]";
+                    Log.d(TAG, "OnActiveSessionsChangedListener: " + packages);
+                }
+                mMediaSessionUpdater.registerCallbacks(controllers);
+            };
+
+
+    private class MediaControllerCallback extends MediaController.Callback {
+
+        private final MediaController mMediaController;
+
+        private MediaControllerCallback(MediaController mediaController) {
+            mMediaController = mediaController;
+        }
+
+        private void register() {
+            mMediaController.registerCallback(this);
+        }
+
+        private void unregister() {
+            mMediaController.unregisterCallback(this);
+        }
+
+        @Override
+        public void onPlaybackStateChanged(@Nullable PlaybackState state) {
+            if (state.getState() == PlaybackState.STATE_PLAYING) {
+                updatePrimaryMediaSourceWithCurrentlyPlaying(
+                        Collections.singletonList(mMediaController));
+            }
+        }
+    }
+
 
     private class MediaSessionUpdater {
-        private List<MediaController> mControllers = new ArrayList<>();
+        private Map<MediaSession.Token, MediaControllerCallback> mCallbacks = new HashMap<>();
 
-        private MediaController.Callback mCallback = new MediaController.Callback() {
-            @Override
-            public void onPlaybackStateChanged(@Nullable PlaybackState state) {
-                if (state.getState() == PlaybackState.STATE_PLAYING) {
-                    updatePrimaryMediaSourceWithCurrentlyPlaying();
+        /**
+         * Register a {@link MediaControllerCallback} for each given controller. Note that if a
+         * controller was already watched, we don't register a callback again. This prevents an
+         * undesired revert of the primary media source. Callbacks for previously watched
+         * controllers that are not present in the given list are unregistered.
+         */
+        private void registerCallbacks(List<MediaController> newControllers) {
+
+            List<MediaController> additions = new ArrayList<>(newControllers.size());
+            Map<MediaSession.Token, MediaControllerCallback> updatedCallbacks =
+                    new HashMap<>(newControllers.size());
+
+            for (MediaController controller : newControllers) {
+                MediaSession.Token token = controller.getSessionToken();
+                MediaControllerCallback callback = mCallbacks.get(token);
+                if (callback == null) {
+                    callback = new MediaControllerCallback(controller);
+                    callback.register();
+                    additions.add(controller);
+                }
+                updatedCallbacks.put(token, callback);
+            }
+
+            for (MediaSession.Token token : mCallbacks.keySet()) {
+                if (!updatedCallbacks.containsKey(token)) {
+                    mCallbacks.get(token).unregister();
                 }
             }
-        };
 
-        private void registerCallbacks(List<MediaController> newControllers) {
-            for (MediaController oldController : mControllers) {
-                oldController.unregisterCallback(mCallback);
-            }
-            for (MediaController newController : newControllers) {
-                newController.registerCallback(mCallback);
-            }
-            mControllers.clear();
-            mControllers.addAll(newControllers);
-            updatePrimaryMediaSourceWithCurrentlyPlaying();
+            mCallbacks = updatedCallbacks;
+            updatePrimaryMediaSourceWithCurrentlyPlaying(additions);
         }
     }
 
@@ -84,6 +140,10 @@ public class PrimaryMediaSourceManager {
         mMediaSessionUpdater = new MediaSessionUpdater();
         mMediaSourceStorage = new MediaSourceStorage(context);
         mPrimaryMediaSource = mMediaSourceStorage.getLastMediaSource();
+
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, "Initial source: " + MediaSource.getPackageName(mPrimaryMediaSource));
+        }
 
         // Add callbacks after initializing the object (b/122845938).
         mMediaSessionManager.addOnActiveSessionsChangedListener(mSessionChangeListener, null);
@@ -107,6 +167,7 @@ public class PrimaryMediaSourceManager {
         if (mPrimaryMediaSource != null && mPrimaryMediaSource.equals((mediaSource))) {
             return;
         }
+
         if (mPrimaryMediaController != null) {
             MediaController.TransportControls controls =
                     mPrimaryMediaController.getTransportControls();
@@ -114,6 +175,7 @@ public class PrimaryMediaSourceManager {
                 controls.pause();
             }
         }
+
         mPrimaryMediaSource = mediaSource;
         mPrimaryMediaController = null;
         mMediaSourceStorage.setLastMediaSource(mediaSource);
@@ -131,10 +193,8 @@ public class PrimaryMediaSourceManager {
     /**
      * Finds the currently playing media source, then updates the active source if different
      */
-    private void updatePrimaryMediaSourceWithCurrentlyPlaying() {
-        List<MediaController> activeSessions =
-                mMediaSessionManager.getActiveSessions(null);
-        for(MediaController controller : activeSessions) {
+    private void updatePrimaryMediaSourceWithCurrentlyPlaying(List<MediaController> controllers) {
+        for(MediaController controller : controllers) {
             if (controller.getPlaybackState() != null
                     && controller.getPlaybackState().getState() == PlaybackState.STATE_PLAYING) {
                 if (mPrimaryMediaSource == null || !mPrimaryMediaSource.getPackageName().equals(

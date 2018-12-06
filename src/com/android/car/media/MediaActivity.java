@@ -227,7 +227,6 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                 .replace(R.id.search_container, mSearchFragment)
                 .commit();
 
-        handleIntent();
         playbackViewModel.getPlaybackController().observe(this,
                 playbackController -> {
                     if (playbackController != null) playbackController.prepare();
@@ -281,26 +280,20 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
     }
 
     @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        if (Log.isLoggable(TAG, Log.VERBOSE)) {
-            Log.v(TAG, "onNewIntent(); intent: " + (intent == null ? "<< NULL >>" : intent));
-        }
-
-        setIntent(intent);
-        handleIntent();
-    }
-
-    @Override
     public void onBackPressed() {
         mPlaybackFragment.closeOverflowMenu();
         super.onBackPressed();
     }
 
-    private void handleIntent() {
+    @Override
+    protected void onResume() {
+        super.onResume();
+
         MediaSource mediaSource = getMediaSourceViewModel().getPrimaryMediaSource().getValue();
         if (mediaSource == null) {
-            openAppSelector();
+            mAppBarView.openAppSelector();
+        } else {
+            mAppBarView.closeAppSelector();
         }
     }
 
@@ -470,20 +463,17 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
         setIntent(null);
     }
 
-    private void openAppSelector() {
-        mAppBarView.openAppSelector();
-    }
-
     public MediaSourceViewModel getMediaSourceViewModel() {
-        return ViewModelProviders.of(this).get(MediaSourceViewModel.class);
+        return MediaSourceViewModel.get(getApplication());
     }
 
     public PlaybackViewModel getPlaybackViewModel() {
-        return ViewModelProviders.of(this).get(PlaybackViewModel.class);
+        return PlaybackViewModel.get(getApplication());
     }
 
     private MediaBrowserViewModel getRootBrowserViewModel() {
-        return MediaBrowserViewModel.Factory.getInstanceForBrowseRoot(ViewModelProviders.of(this));
+        return MediaBrowserViewModel.Factory.getInstanceForBrowseRoot(getMediaSourceViewModel(),
+                ViewModelProviders.of(this));
     }
 
     public ViewModel getInnerViewModel() {
