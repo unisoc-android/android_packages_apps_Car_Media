@@ -126,7 +126,12 @@ public class AppBarView extends RelativeLayout {
          * navigation, we show the title of the application and we show the app switch icon
          * point up
          */
-        APP_SELECTION
+        APP_SELECTION,
+        /**
+         * Used whenever the app bar should not display any information such as when MediaCenter
+         * is in an error state
+         */
+        EMPTY
     }
 
     public AppBarView(Context context) {
@@ -385,6 +390,11 @@ public class AppBarView extends RelativeLayout {
         TransitionManager.beginDelayedTransition(this, transition);
         Log.d(TAG, "Updating state: " + state + " (has items: " + hasItems + ")");
         switch (state) {
+            case EMPTY:
+                mNavIconContainer.setVisibility(View.GONE);
+                mTabsContainer.setVisibility(View.GONE);
+                mTitle.setVisibility(View.GONE);
+                mSearchText.setVisibility(View.GONE);
             case BROWSING:
                 mNavIconContainer.setVisibility(View.INVISIBLE);
                 mNavIcon.setImageDrawable(mArrowBack);
