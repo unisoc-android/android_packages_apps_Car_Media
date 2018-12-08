@@ -61,7 +61,8 @@ public class EmptyFragment extends Fragment {
         MediaSourceViewModel mediaSourceViewModel =
                 viewModelProvider.get(MediaSourceViewModel.class);
         MediaBrowserViewModel mediaBrowserViewModel =
-                MediaBrowserViewModel.Factory.getInstance(viewModelProvider);
+                MediaBrowserViewModel.Factory.getInstanceWithMediaBrowser(viewModelProvider,
+                        mediaSourceViewModel.getConnectedMediaBrowser());
         LiveData<MediaBrowserViewModel.BrowseState> browseState =
                 mediaBrowserViewModel.getBrowseState();
         LiveData<MediaSource> selectedMediaSource =

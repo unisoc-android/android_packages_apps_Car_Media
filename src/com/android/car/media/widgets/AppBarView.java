@@ -14,7 +14,6 @@ import android.transition.TransitionManager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,6 +48,7 @@ public class AppBarView extends RelativeLayout {
     private TextView mTitle;
     private ViewGroup mAppSwitchContainer;
     private View mSettingsButton;
+    private View mSearchButton;
     private EditText mSearchText;
     private Context mContext;
     private int mMaxTabs;
@@ -100,6 +100,11 @@ public class AppBarView extends RelativeLayout {
          * Invoked when the user submits a search query.
          */
         void onSearch(String query);
+
+        /**
+         * Invoked when the user clicks on the search button
+         */
+        void onSearchSelection();
     }
 
     /**
@@ -127,6 +132,11 @@ public class AppBarView extends RelativeLayout {
          * point up
          */
         APP_SELECTION,
+        /**
+         * Indicates that the user is currently entering a search query. We show the search bar and
+         * a collapse icon
+         */
+        SEARCHING,
         /**
          * Used whenever the app bar should not display any information such as when MediaCenter
          * is in an error state
@@ -172,12 +182,18 @@ public class AppBarView extends RelativeLayout {
         mAppSwitchContainer.setOnClickListener(view -> onAppSwitchClicked());
         mSettingsButton = findViewById(R.id.settings);
         mSettingsButton.setOnClickListener(view -> onSettingsClicked());
-        mSearchText = findViewById(R.id.search);
+        mSearchButton = findViewById(R.id.search);
+        mSearchButton.setOnClickListener(view -> onSearchClicked());
+        mSearchText = findViewById(R.id.search_bar);
         mSearchText.setOnFocusChangeListener(
                 (view, hasFocus) -> {
                     if (hasFocus) {
                         mSearchText.setCursorVisible(true);
+                        ((InputMethodManager)
+                                context.getSystemService(Context.INPUT_METHOD_SERVICE))
+                                .showSoftInput(view, 0);
                     } else {
+                        mSearchText.setCursorVisible(false);
                         ((InputMethodManager)
                                 context.getSystemService(Context.INPUT_METHOD_SERVICE))
                                 .hideSoftInputFromWindow(view.getWindowToken(), 0);
@@ -227,11 +243,14 @@ public class AppBarView extends RelativeLayout {
         }
         switch (mState) {
             case BROWSING:
-                mListener.onBack();
-                break;
             case STACKED:
                 mListener.onBack();
                 break;
+            case SEARCHING:
+                if (mState == State.SEARCHING) {
+                    mSearchText.setVisibility(View.GONE);
+                    mSearchText.getText().clear();
+                }
             case PLAYING:
                 mListener.onCollapse();
                 break;
@@ -250,6 +269,13 @@ public class AppBarView extends RelativeLayout {
             return;
         }
         mListener.onSettingsSelection();
+    }
+
+    private void onSearchClicked() {
+        if (mListener == null) {
+            return;
+        }
+        mListener.onSearchSelection();
     }
 
     private void onSearch(String query) {
@@ -356,7 +382,7 @@ public class AppBarView extends RelativeLayout {
      */
     public void setSearchSupported(boolean supported) {
         mSearchSupported = supported;
-        mSearchText.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
+        mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
     }
 
     /**
@@ -401,7 +427,7 @@ public class AppBarView extends RelativeLayout {
                 mTabsContainer.setVisibility(hasItems ? View.VISIBLE : View.GONE);
                 mTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
-                mSearchText.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
+                mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
             case STACKED:
                 mNavIcon.setImageDrawable(mArrowBack);
@@ -409,7 +435,7 @@ public class AppBarView extends RelativeLayout {
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
-                mSearchText.setVisibility(View.GONE);
+                mSearchButton.setVisibility(View.GONE);
                 break;
             case PLAYING:
                 mNavIcon.setImageDrawable(mCollapse);
@@ -420,14 +446,21 @@ public class AppBarView extends RelativeLayout {
                 mTitle.setVisibility(hasItems || !mContentForwardEnabled ? View.GONE
                         : View.VISIBLE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropDown);
-                mSearchText.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
+                mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
             case APP_SELECTION:
                 mNavIconContainer.setVisibility(View.GONE);
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(mContentForwardEnabled ? View.VISIBLE : View.GONE);
                 mAppSwitchIcon.setImageDrawable(mArrowDropUp);
-                mSearchText.setVisibility(View.GONE);
+                break;
+            case SEARCHING:
+                mNavIcon.setImageDrawable(mCollapse);
+                mNavIconContainer.setVisibility(View.VISIBLE);
+                mTabsContainer.setVisibility(View.GONE);
+                mTitle.setVisibility(View.GONE);
+                mSearchText.setVisibility(View.VISIBLE);
+                mSearchText.requestFocus();
                 break;
         }
     }

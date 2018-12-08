@@ -96,6 +96,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     private AppBarView mAppBarView;
     private CrossfadeImageView mAlbumBackground;
     private PlaybackFragment mPlaybackFragment;
+    private BrowseFragment mSearchFragment;
     private AppSelectionFragment mAppSelectionFragment;
     private ViewGroup mBrowseControlsContainer;
     private EmptyFragment mEmptyFragment;
@@ -103,6 +104,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     private ViewGroup mPlaybackContainer;
     private ViewGroup mErrorContainer;
     private ErrorFragment mErrorFragment;
+    private ViewGroup mSearchContainer;
 
     /** Current state */
     private Intent mCurrentSourcePreferences;
@@ -160,18 +162,16 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         }
 
         @Override
+        public void onSearchSelection() {
+            switchToMode(Mode.SEARCHING);
+        }
+
+        @Override
         public void onSearch(String query) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "onSearch: " + query);
             }
-            mAppBarView.setActiveItem(null);
-            Fragment fragment = getCurrentFragment();
-            if (fragment instanceof BrowseFragment) {
-                BrowseFragment browseFragment = (BrowseFragment) fragment;
-                browseFragment.updateSearchQuery(query);
-            } else {
-                setCurrentFragment(BrowseFragment.newSearchInstance(query));
-            }
+            mSearchFragment.updateSearchQuery(query);
         }
     };
     private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {
@@ -202,7 +202,9 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         /** The user is interacting with the full screen playback UI */
         PLAYBACK,
         /** The MediaService is in an error state */
-        SERVICE_ERROR
+        SERVICE_ERROR,
+        /** The user is searching within a media source */
+        SEARCHING
     }
 
     @Override
@@ -263,6 +265,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         }
 
         mPlaybackFragment = new PlaybackFragment();
+        mSearchFragment = BrowseFragment.newSearchInstance(null);
         mAppSelectionFragment = new AppSelectionFragment();
         int fadeDuration = getResources().getInteger(R.integer.app_selector_fade_duration);
         mAppSelectionFragment.setEnterTransition(new Fade().setDuration(fadeDuration));
@@ -284,8 +287,12 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         mBrowseContainer = findViewById(R.id.fragment_container);
         mErrorContainer = findViewById(R.id.error_container);
         mPlaybackContainer = findViewById(R.id.playback_container);
+        mSearchContainer = findViewById(R.id.search_container);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.playback_container, mPlaybackFragment)
+                .commit();
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.search_container, mSearchFragment)
                 .commit();
 
         handleIntent();
@@ -533,19 +540,29 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 ViewUtils.hideViewAnimated(mErrorContainer, mFadeDuration);
                 ViewUtils.showViewAnimated(mPlaybackContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mBrowseContainer, mFadeDuration);
+                ViewUtils.hideViewAnimated(mSearchContainer, mFadeDuration);
                 mAppBarView.setState(AppBarView.State.PLAYING);
                 break;
             case BROWSING:
                 ViewUtils.hideViewAnimated(mErrorContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mPlaybackContainer, mFadeDuration);
                 ViewUtils.showViewAnimated(mBrowseContainer, mFadeDuration);
+                ViewUtils.hideViewAnimated(mSearchContainer, mFadeDuration);
                 mAppBarView.setState(AppBarView.State.BROWSING);
                 break;
             case SERVICE_ERROR:
                 ViewUtils.showViewAnimated(mErrorContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mPlaybackContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mBrowseContainer, mFadeDuration);
+                ViewUtils.hideViewAnimated(mSearchContainer, mFadeDuration);
                 mAppBarView.setState(AppBarView.State.EMPTY);
+                break;
+            case SEARCHING:
+                ViewUtils.hideViewAnimated(mErrorContainer, mFadeDuration);
+                ViewUtils.hideViewAnimated(mPlaybackContainer, mFadeDuration);
+                ViewUtils.hideViewAnimated(mBrowseContainer, mFadeDuration);
+                ViewUtils.showViewAnimated(mSearchContainer, mFadeDuration);
+                mAppBarView.setState(AppBarView.State.SEARCHING);
                 break;
         }
     }
