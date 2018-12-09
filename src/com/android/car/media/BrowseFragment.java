@@ -34,7 +34,6 @@ import android.widget.TextView;
 
 import androidx.car.widget.PagedListView;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -44,6 +43,7 @@ import com.android.car.media.browse.ContentForwardStrategy;
 import com.android.car.media.common.GridSpacingItemDecoration;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.browse.MediaBrowserViewModel;
+import com.android.car.media.common.source.MediaSourceViewModel;
 import com.android.car.media.widgets.ViewUtils;
 
 import java.util.ArrayList;
@@ -180,8 +180,15 @@ public class BrowseFragment extends Fragment {
             }
         }
 
-        ViewModelProvider viewModelProvider = ViewModelProviders.of(requireActivity());
-        mMediaBrowserViewModel = MediaBrowserViewModel.Factory.getInstance(viewModelProvider);
+        // Get the MediaBrowserViewModel tied to the lifecycle of this fragment, but using the
+        // MediaSourceViewModel of the activity. This means the media source is consistent across
+        // all fragments, but the fragment contents themselves will vary
+        // (e.g. between different browse tabs, search)
+        mMediaBrowserViewModel = MediaBrowserViewModel.Factory.getInstanceWithMediaBrowser(
+                ViewModelProviders.of(this),
+                ViewModelProviders.of(requireActivity()).get(MediaSourceViewModel.class)
+                        .getConnectedMediaBrowser()
+        );
     }
 
     @Override
