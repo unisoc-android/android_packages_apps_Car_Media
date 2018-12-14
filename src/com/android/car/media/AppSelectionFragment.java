@@ -11,13 +11,12 @@ import android.widget.TextView;
 
 import androidx.car.widget.PagedListView;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.apps.common.FragmentUtils;
 import com.android.car.media.common.source.MediaSource;
-import com.android.car.media.common.source.MediaSourceViewModel;
+import com.android.car.media.common.source.MediaSourcesLiveData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,15 +104,8 @@ public class AppSelectionFragment extends Fragment {
         gridView.getRecyclerView().setLayoutManager(gridLayoutManager);
         gridView.setAdapter(gridAdapter);
 
-
-        getMediaSourceViewModel().getMediaSources()
-                .observe(getViewLifecycleOwner(), gridAdapter::updateSources);
+        gridAdapter.updateSources(MediaSourcesLiveData.getInstance(getContext()).getList());
         return view;
-    }
-
-    @NonNull
-    private MediaSourceViewModel getMediaSourceViewModel() {
-        return ViewModelProviders.of(this).get(MediaSourceViewModel.class);
     }
 
     @Override

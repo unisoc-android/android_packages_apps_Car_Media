@@ -65,6 +65,7 @@ import com.android.car.media.common.playback.AlbumArtLiveData;
 import com.android.car.media.common.playback.PlaybackViewModel;
 import com.android.car.media.common.source.MediaSource;
 import com.android.car.media.common.source.MediaSourceViewModel;
+import com.android.car.media.common.source.MediaSourcesLiveData;
 import com.android.car.media.drawer.MediaDrawerController;
 import com.android.car.media.storage.MediaSourceStorage;
 import com.android.car.media.widgets.AppBarView;
@@ -235,7 +236,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         mAppBarView = findViewById(R.id.app_bar);
         mAppBarView.setListener(mAppBarListener);
         mAppBarView.setContentForwardEnabled(mContentForwardBrowseEnabled);
-        mediaSourceViewModel.hasMediaSources().observe(this, mAppBarView::setAppSelection);
         mediaSourceViewModel.getSelectedMediaSource().observe(this, source -> {
             if (source == null) {
                 mAppBarView.setAppIcon(null);
@@ -395,10 +395,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         }
 
         // If we don't have a current media source, we try with the last one we remember...
-        // after checking that the stored package name corresponds to a currently installed source.
-        String lastPackageName = mMediaSourceStorage.getLastMediaSourcePackageName();
-        List<MediaSource> mediaSources = getMediaSourceViewModel().getMediaSourcesList();
-        MediaSource mediaSource = validateSourcePackage(lastPackageName, mediaSources);
+        MediaSource mediaSource = mMediaSourceStorage.getLastMediaSource();
         if (mediaSource != null) {
             closeAppSelector();
             changeMediaSource(mediaSource);
@@ -410,19 +407,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             // If we don't have anything from before: open the app selector.
             openAppSelector();
         }
-    }
-
-    @Nullable
-    private MediaSource validateSourcePackage(String packageName, List<MediaSource> sources) {
-        if (packageName == null) {
-            return null;
-        }
-        for (MediaSource mediaSource : sources) {
-            if (mediaSource.getPackageName().equals(packageName)) {
-                return mediaSource;
-            }
-        }
-        return null;
     }
 
     private boolean useContentForwardBrowse() {
