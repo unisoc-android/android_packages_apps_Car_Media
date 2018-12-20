@@ -84,8 +84,8 @@ public class PrimaryMediaSourceManager {
         mPrimaryMediaSource = mMediaSourceStorage.getLastMediaSource();
     }
 
-    public static @NonNull
-    PrimaryMediaSourceManager getInstance(Context context) {
+    @NonNull
+    static PrimaryMediaSourceManager getInstance(Context context) {
         if (sInstance != null) return sInstance;
         synchronized (PrimaryMediaSourceManager.class) {
             if (sInstance != null) return sInstance;
@@ -97,7 +97,10 @@ public class PrimaryMediaSourceManager {
     /**
      * Updates the primary media source, then notifies content observers of the change
      */
-    public void setPrimaryMediaSource(@Nullable MediaSource mediaSource) {
+    void setPrimaryMediaSource(@Nullable MediaSource mediaSource) {
+        if (mPrimaryMediaSource != null && mPrimaryMediaSource.equals((mediaSource))) {
+            return;
+        }
         mPrimaryMediaSource = mediaSource;
         mMediaSourceStorage.setLastMediaSource(mediaSource);
         mContext.getContentResolver().notifyChange(MediaConstants.URI_MEDIA_SOURCE, null);
@@ -107,7 +110,7 @@ public class PrimaryMediaSourceManager {
      * Gets the primary media source
      */
     @Nullable
-    public MediaSource getPrimaryMediaSource() {
+    MediaSource getPrimaryMediaSource() {
         return mPrimaryMediaSource;
     }
 

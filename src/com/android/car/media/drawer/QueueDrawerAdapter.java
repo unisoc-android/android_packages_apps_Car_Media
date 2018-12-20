@@ -47,7 +47,7 @@ public class QueueDrawerAdapter extends MediaDrawerAdapter {
         playbackViewModel.getPlaybackInfo().getActiveQueuePosition()
                 .observe(this, this::setActiveQueuePosition);
         playbackViewModel.getQueue().observe(this, this::setMediaItems);
-        mediaSourceViewModel.getSelectedMediaSource()
+        mediaSourceViewModel.getPrimaryMediaSource()
                 .observe(this, mediaSource ->
                         this.setPrimaryColor(
                                 colorsFactory.extractColors(mediaSource).getPrimaryColor(0)));

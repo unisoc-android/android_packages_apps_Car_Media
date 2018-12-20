@@ -30,7 +30,6 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
-import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
@@ -65,7 +64,6 @@ import com.android.car.media.common.playback.PlaybackViewModel;
 import com.android.car.media.common.source.MediaSource;
 import com.android.car.media.common.source.MediaSourceViewModel;
 import com.android.car.media.drawer.MediaDrawerController;
-import com.android.car.media.storage.PrimaryMediaSourceManager;
 import com.android.car.media.widgets.AppBarView;
 import com.android.car.media.widgets.BrowsePlaybackControlBar;
 import com.android.car.media.widgets.ViewUtils;
@@ -89,7 +87,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     /** Models */
     private MediaDrawerController mDrawerController;
     private PlaybackViewModel.PlaybackController mPlaybackController;
-    private PrimaryMediaSourceManager mPrimaryMediaSourceManager;
 
     /** Layout views */
     private AppBarView mAppBarView;
@@ -212,8 +209,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         setContentView(R.layout.media_activity);
 
-        mPrimaryMediaSourceManager = PrimaryMediaSourceManager.getInstance(this);
-
         MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
         PlaybackViewModel playbackViewModel = getPlaybackViewModel();
         ViewModel localViewModel = ViewModelProviders.of(this).get(ViewModel.class);
@@ -235,7 +230,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         mAppBarView = findViewById(R.id.app_bar);
         mAppBarView.setListener(mAppBarListener);
         mAppBarView.setContentForwardEnabled(mContentForwardBrowseEnabled);
-        mediaSourceViewModel.getSelectedMediaSource().observe(this, source -> {
+        mediaSourceViewModel.getPrimaryMediaSource().observe(this, source -> {
             if (source == null) {
                 mAppBarView.setAppIcon(null);
                 mAppBarView.setTitle(null);
@@ -247,7 +242,9 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 mAppBarView.setContentForwardEnabled(true);
                 ActionBar actionBar = requireNonNull(getActionBar());
                 actionBar.hide();
+                switchToMode(Mode.BROWSING);
             }
+            changeMediaSource(source);
         });
 
         if (mContentForwardBrowseEnabled) {
@@ -309,17 +306,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         playbackViewModel.getPlaybackState().observe(this, state -> {
             handlePlaybackState(state);
-        });
-
-        getContentResolver().registerContentObserver(MediaConstants.URI_MEDIA_SOURCE, false,
-                new ContentObserver(new Handler()) {
-            @Override
-            public void onChange(boolean selfChange) {
-                super.onChange(selfChange);
-                MediaSource source = mPrimaryMediaSourceManager.getPrimaryMediaSource();
-                changeMediaSource(source);
-                switchToMode(Mode.BROWSING);
-            }
         });
     }
 
@@ -390,7 +376,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         // If we don't specify a media source, we get the primary media source - typically the one
         // currently playing, or last played if none currently playing.
-        MediaSource mediaSource = mPrimaryMediaSourceManager.getPrimaryMediaSource();
+        MediaSource mediaSource = getMediaSourceViewModel().getPrimaryMediaSource().getValue();
         if (mediaSource != null) {
             closeAppSelector();
             onMediaSourceSelected(mediaSource);
@@ -415,7 +401,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
      */
     private void changeMediaSource(@Nullable MediaSource mediaSource) {
         MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
-        if (Objects.equals(mediaSource, mediaSourceViewModel.getSelectedMediaSource().getValue())) {
+        if (Objects.equals(mediaSource, mediaSourceViewModel.getPrimaryMediaSource().getValue())) {
             // No change, nothing to do.
             return;
         }
@@ -428,7 +414,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             }
         }
 
-        mediaSourceViewModel.setSelectedMediaSource(mediaSource);
         if (mediaSource != null) {
             if (Log.isLoggable(TAG, Log.INFO)) {
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
@@ -601,7 +586,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     @Override
     public void onMediaSourceSelected(@NonNull MediaSource mediaSource) {
         closeAppSelector();
-        mPrimaryMediaSourceManager.setPrimaryMediaSource(mediaSource);
+        getMediaSourceViewModel().setPrimaryMediaSource(mediaSource);
         if (!mediaSource.isBrowsable() || mediaSource.isCustom()) {
             String packageName = mediaSource.getPackageName();
             Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);

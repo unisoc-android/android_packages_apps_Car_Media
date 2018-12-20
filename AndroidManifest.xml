@@ -22,7 +22,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
-    <permission android:name="com.android.car.media.provider.READ"
+    <permission android:name="com.android.car.media.provider.READ_WRITE"
         android:protectionLevel="signature"/>
 
     <application
@@ -56,6 +56,6 @@
             android:name=".storage.MediaSourceContentProvider"
             android:authorities="com.android.car.media.provider"
             android:exported="true"
-            android:readPermission="com.android.car.media.provider.READ"/>
+            android:permission="com.android.car.media.provider.READ_WRITE"/>
     </application>
 </manifest>

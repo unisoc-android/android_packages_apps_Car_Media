@@ -27,13 +27,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.car.media.common.MediaConstants;
+import com.android.car.media.common.source.MediaSource;
 
 /**
  * ContentProvider that provides the last browsed media app.
  */
 public class MediaSourceContentProvider extends ContentProvider {
 
-    private final static String[] COLUMN_NAMES = {"package_name"};
+    private final static String[] COLUMN_NAMES = {MediaConstants.KEY_PACKAGE_NAME};
 
     private PrimaryMediaSourceManager mPrimaryMediaSourceManager;
 
@@ -82,6 +83,12 @@ public class MediaSourceContentProvider extends ContentProvider {
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection,
             @Nullable String[] selectionArgs) {
+        if (MediaConstants.URI_MEDIA_SOURCE.equals(uri)) {
+            String packageName = values.getAsString(MediaConstants.KEY_PACKAGE_NAME);
+            mPrimaryMediaSourceManager.setPrimaryMediaSource(
+                    new MediaSource(getContext(), packageName));
+            return 1;
+        }
         return 0;
     }
 
