@@ -30,6 +30,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
+import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,14 +47,12 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.car.drawer.CarDrawerController;
-import androidx.core.util.Consumer;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.android.car.apps.common.DrawerActivity;
@@ -65,9 +64,8 @@ import com.android.car.media.common.playback.AlbumArtLiveData;
 import com.android.car.media.common.playback.PlaybackViewModel;
 import com.android.car.media.common.source.MediaSource;
 import com.android.car.media.common.source.MediaSourceViewModel;
-import com.android.car.media.common.source.MediaSourcesLiveData;
 import com.android.car.media.drawer.MediaDrawerController;
-import com.android.car.media.storage.MediaSourceStorage;
+import com.android.car.media.storage.PrimaryMediaSourceManager;
 import com.android.car.media.widgets.AppBarView;
 import com.android.car.media.widgets.BrowsePlaybackControlBar;
 import com.android.car.media.widgets.ViewUtils;
@@ -91,7 +89,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     /** Models */
     private MediaDrawerController mDrawerController;
     private PlaybackViewModel.PlaybackController mPlaybackController;
-    private MediaSourceStorage mMediaSourceStorage;
+    private PrimaryMediaSourceManager mPrimaryMediaSourceManager;
 
     /** Layout views */
     private AppBarView mAppBarView;
@@ -214,6 +212,8 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
         setContentView(R.layout.media_activity);
 
+        mPrimaryMediaSourceManager = PrimaryMediaSourceManager.getInstance(this);
+
         MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
         PlaybackViewModel playbackViewModel = getPlaybackViewModel();
         ViewModel localViewModel = ViewModelProviders.of(this).get(ViewModel.class);
@@ -221,7 +221,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             playbackViewModel.setMediaController(mediaSourceViewModel.getMediaController());
             localViewModel.init(playbackViewModel);
         }
-        mMediaSourceStorage = new MediaSourceStorage(this);
 
         mContentForwardBrowseEnabled = getResources()
                 .getBoolean(R.bool.forward_content_browse_enabled);
@@ -311,6 +310,17 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         playbackViewModel.getPlaybackState().observe(this, state -> {
             handlePlaybackState(state);
         });
+
+        getContentResolver().registerContentObserver(MediaConstants.URI_MEDIA_SOURCE, false,
+                new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                super.onChange(selfChange);
+                MediaSource source = mPrimaryMediaSourceManager.getPrimaryMediaSource();
+                changeMediaSource(source);
+                switchToMode(Mode.BROWSING);
+            }
+        });
     }
 
     private void handlePlaybackState(PlaybackStateCompat state) {
@@ -376,29 +386,14 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 onMediaSourceSelected(new MediaSource(this, packageName));
                 return;
             }
-
-            // If we didn't receive a package name and we are playing something: show the playback
-            // UI for the playing media source.
-            LiveData<MediaControllerCompat> topActiveMediaController =
-                    getMediaSourceViewModel().getTopActiveMediaController();
-            // TODO(arnaudberry) observeOnce should be removed as things could have changed when
-            // the lambda is executed...
-            observeOnce(topActiveMediaController, controller -> {
-                if (controller != null) {
-                    closeAppSelector();
-                    changeMediaSource(
-                            new MediaSource(MediaActivity.this,
-                                    controller.getPackageName()));
-                    switchToMode(Mode.PLAYBACK);
-                }
-            });
         }
 
-        // If we don't have a current media source, we try with the last one we remember...
-        MediaSource mediaSource = mMediaSourceStorage.getLastMediaSource();
+        // If we don't specify a media source, we get the primary media source - typically the one
+        // currently playing, or last played if none currently playing.
+        MediaSource mediaSource = mPrimaryMediaSourceManager.getPrimaryMediaSource();
         if (mediaSource != null) {
             closeAppSelector();
-            changeMediaSource(mediaSource);
+            onMediaSourceSelected(mediaSource);
 
             if (mMode != Mode.SERVICE_ERROR) {
                 switchToMode(Mode.BROWSING);
@@ -434,7 +429,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         }
 
         mediaSourceViewModel.setSelectedMediaSource(mediaSource);
-        mMediaSourceStorage.setLastMediaSource(mediaSource);
         if (mediaSource != null) {
             if (Log.isLoggable(TAG, Log.INFO)) {
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
@@ -604,36 +598,16 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 .commit();
     }
 
-    private <T> void observeOnce(@NonNull LiveData<T> data, Consumer<T> consumer) {
-        data.observe(this, new Observer<T>() {
-
-            private boolean hasObserved = false;
-
-            @Override
-            public void onChanged(T value) {
-                if (!hasObserved) {
-                    consumer.accept(value);
-                }
-                hasObserved = true;
-                mHandler.post(() -> data.removeObserver(this));
-            }
-        });
-    }
-
     @Override
     public void onMediaSourceSelected(@NonNull MediaSource mediaSource) {
         closeAppSelector();
-        if (mediaSource.isBrowsable() && !mediaSource.isCustom()) {
-            changeMediaSource(mediaSource);
-            switchToMode(Mode.BROWSING);
-        } else {
-            mMediaSourceStorage.setLastMediaSource(mediaSource);
+        mPrimaryMediaSourceManager.setPrimaryMediaSource(mediaSource);
+        if (!mediaSource.isBrowsable() || mediaSource.isCustom()) {
             String packageName = mediaSource.getPackageName();
             Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
             startActivity(intent);
         }
     }
-
 
     public MediaSourceViewModel getMediaSourceViewModel() {
         return ViewModelProviders.of(this).get(MediaSourceViewModel.class);

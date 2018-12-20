@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * This class is used to manage the most recently used media sources. Uses SharedPreferences to
  * store the media sources, ordered by how recently they were used.
  */
-public class MediaSourceStorage {
+class MediaSourceStorage {
 
     private static final String LAST_MEDIA_SOURCE_SHARED_PREF_KEY = "last_media_source";
     private static final String SHARED_PREF = "com.android.car.media";
@@ -27,13 +27,13 @@ public class MediaSourceStorage {
     private final SharedPreferences mSharedPreferences;
     private final MediaSourcesLiveData mMediaSources;
 
-    public MediaSourceStorage(Context context) {
+    MediaSourceStorage(Context context) {
         mSharedPreferences =
                 context.getSharedPreferences(SHARED_PREF, Context.MODE_PRIVATE);
         mMediaSources = MediaSourcesLiveData.getInstance(context);
     }
 
-    public void setLastMediaSource(MediaSource mediaSource) {
+    void setLastMediaSource(MediaSource mediaSource) {
         String serialized = mSharedPreferences.getString(
                 LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
         if (serialized == null) {
@@ -51,11 +51,11 @@ public class MediaSourceStorage {
     }
 
     /**
-     * Gets the last browsed media source, excluding any custom sources. Returns {@code null} if no
-     * non-custom sources have been selected. Filters out sources that are not available.
+     * Gets the last browsed media source. Returns {@code null} if no sources have been selected.
+     * Filters out sources that are not available.
      */
     @Nullable
-    public MediaSource getLastMediaSource() {
+    MediaSource getLastMediaSource() {
         String serialized = mSharedPreferences.getString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
         if (TextUtils.isEmpty(serialized)) {
             return null;
@@ -64,7 +64,7 @@ public class MediaSourceStorage {
         List<MediaSource> sources = mMediaSources.getList();
         for (String packageName : getPackageNameList(serialized)) {
             MediaSource source = validateSourcePackage(packageName, sources);
-            if (source != null && !source.isCustom()) {
+            if (source != null) {
                 return source;
             }
         }
@@ -83,18 +83,6 @@ public class MediaSourceStorage {
             }
         }
         return null;
-    }
-
-    /**
-     * Gets all browsed media sources, ordered by most to least recently used
-     */
-    @NonNull
-    public Deque<String> getAllPackageNames() {
-        String serialized = mSharedPreferences.getString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
-        if (TextUtils.isEmpty(serialized)) {
-            return new ArrayDeque();
-        }
-        return getPackageNameList(serialized);
     }
 
     private String serializePackageNameList(@NonNull Deque<String> packageNames) {
