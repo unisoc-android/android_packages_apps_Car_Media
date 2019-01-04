@@ -19,21 +19,14 @@ package com.android.car.media.storage;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 
-import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.car.media.common.MediaConstants;
-
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.Iterator;
 
 /**
  * ContentProvider that provides the last browsed media app.
@@ -42,7 +35,7 @@ public class MediaSourceContentProvider extends ContentProvider {
 
     private final static String[] COLUMN_NAMES = {"package_name"};
 
-    private MediaSourceStorage mMediaSourceStorage;
+    private PrimaryMediaSourceManager mPrimaryMediaSourceManager;
 
     @Override
     public boolean onCreate() {
@@ -50,7 +43,7 @@ public class MediaSourceContentProvider extends ContentProvider {
         if (context == null) {
             return false;
         }
-        mMediaSourceStorage = new MediaSourceStorage(context);
+        mPrimaryMediaSourceManager = PrimaryMediaSourceManager.getInstance(context);
         return true;
     }
 
@@ -60,11 +53,9 @@ public class MediaSourceContentProvider extends ContentProvider {
             @Nullable String[] selectionArgs, @Nullable String sortOrder) {
         if (MediaConstants.URI_MEDIA_SOURCE.equals(uri)) {
             MatrixCursor cursor = new MatrixCursor(COLUMN_NAMES);
-            for (String packageName : mMediaSourceStorage.getAllPackageNames()) {
-                String[] row = new String[1];
-                row[0] = packageName;
-                cursor.addRow(row);
-            }
+            Object[] row = new Object[1];
+            row[0] = mPrimaryMediaSourceManager.getPrimaryMediaSource().getPackageName();
+            cursor.addRow(row);
             return cursor;
         }
         return null;
