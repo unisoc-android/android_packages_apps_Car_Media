@@ -54,9 +54,12 @@ public class MediaSourceContentProvider extends ContentProvider {
             @Nullable String[] selectionArgs, @Nullable String sortOrder) {
         if (MediaConstants.URI_MEDIA_SOURCE.equals(uri)) {
             MatrixCursor cursor = new MatrixCursor(COLUMN_NAMES);
-            Object[] row = new Object[1];
-            row[0] = mPrimaryMediaSourceManager.getPrimaryMediaSource().getPackageName();
-            cursor.addRow(row);
+            MediaSource source = mPrimaryMediaSourceManager.getPrimaryMediaSource();
+            if (source != null) {
+                Object[] row = new Object[1];
+                row[0] = source.getPackageName();
+                cursor.addRow(row);
+            }
             return cursor;
         }
         return null;

@@ -56,6 +56,7 @@ import androidx.lifecycle.ViewModelProviders;
 import com.android.car.apps.common.DrawerActivity;
 import com.android.car.media.common.AppSelectionFragment;
 import com.android.car.media.common.CrossfadeImageView;
+import com.android.car.media.common.MediaAppSelectorWidget;
 import com.android.car.media.common.MediaConstants;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.browse.MediaBrowserViewModel;
@@ -225,6 +226,9 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             }
             onMediaSourceChanged(source);
         });
+
+        MediaAppSelectorWidget appSelector = findViewById(R.id.app_switch_container);
+        appSelector.setFragmentActivity(this);
 
         if (mContentForwardBrowseEnabled) {
             // If content forward browsing is disabled, then no need to observe browsed items, we
