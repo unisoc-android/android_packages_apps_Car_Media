@@ -26,6 +26,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.android.car.media.R;
+import com.android.car.media.common.MediaAppSelectorWidget;
 import com.android.car.media.common.MediaItemMetadata;
 
 import java.util.List;
@@ -41,19 +42,15 @@ public class AppBarView extends RelativeLayout {
     private static int DEFAULT_MAX_TABS = 4;
 
     private LinearLayout mTabsContainer;
-    private ImageView mAppIcon;
-    private ImageView mAppSwitchIcon;
     private ImageView mNavIcon;
     private ViewGroup mNavIconContainer;
     private TextView mTitle;
-    private ViewGroup mAppSwitchContainer;
     private View mSettingsButton;
     private View mSearchButton;
     private EditText mSearchText;
+    private MediaAppSelectorWidget mAppSelector;
     private Context mContext;
     private int mMaxTabs;
-    private Drawable mArrowDropDown;
-    private Drawable mArrowDropUp;
     private Drawable mArrowBack;
     private Drawable mCollapse;
     private State mState = State.BROWSING;
@@ -63,7 +60,6 @@ public class AppBarView extends RelativeLayout {
     private float mUnselectedTabAlpha;
     private MediaItemMetadata mSelectedItem;
     private String mMediaAppTitle;
-    private Drawable mDefaultIcon;
     private boolean mContentForwardEnabled;
     private boolean mSearchSupported;
 
@@ -85,11 +81,6 @@ public class AppBarView extends RelativeLayout {
          * Invoked when the user clicks on the collapse button
          */
         void onCollapse();
-
-        /**
-         * Invoked when the user clicks on the app selection switch
-         */
-        void onAppSelection();
 
         /**
          * Invoked when the user clicks on the settings button.
@@ -126,12 +117,6 @@ public class AppBarView extends RelativeLayout {
          * title of the application and a collapse icon
          */
         PLAYING,
-        /**
-         * Used to indicate that the user is inside the app selector. In this case we disable
-         * navigation, we show the title of the application and we show the app switch icon
-         * point up
-         */
-        APP_SELECTION,
         /**
          * Indicates that the user is currently entering a search query. We show the search bar and
          * a collapse icon
@@ -176,10 +161,7 @@ public class AppBarView extends RelativeLayout {
         mNavIcon = findViewById(R.id.nav_icon);
         mNavIconContainer = findViewById(R.id.nav_icon_container);
         mNavIconContainer.setOnClickListener(view -> onNavIconClicked());
-        mAppIcon = findViewById(R.id.app_icon);
-        mAppSwitchIcon = findViewById(R.id.app_switch_icon);
-        mAppSwitchContainer = findViewById(R.id.app_switch_container);
-        mAppSwitchContainer.setOnClickListener(view -> onAppSwitchClicked());
+        mAppSelector = findViewById(R.id.app_switch_container);
         mSettingsButton = findViewById(R.id.settings);
         mSettingsButton.setOnClickListener(view -> onSettingsClicked());
         mSearchButton = findViewById(R.id.search);
@@ -221,8 +203,6 @@ public class AppBarView extends RelativeLayout {
         });
 
         mTitle = findViewById(R.id.title);
-        mArrowDropDown = getResources().getDrawable(R.drawable.ic_arrow_drop_down, null);
-        mArrowDropUp = getResources().getDrawable(R.drawable.ic_arrow_drop_up, null);
         mArrowBack = getResources().getDrawable(R.drawable.ic_arrow_back, null);
         mCollapse = getResources().getDrawable(R.drawable.ic_expand_more, null);
         mFadeDuration = getResources().getInteger(R.integer.app_selector_fade_duration);
@@ -232,9 +212,12 @@ public class AppBarView extends RelativeLayout {
         getResources().getValue(R.dimen.browse_tab_alpha_unselected, outValue, true);
         mUnselectedTabAlpha = outValue.getFloat();
         mMediaAppTitle = getResources().getString(R.string.media_app_title);
-        mDefaultIcon = getResources().getDrawable(R.drawable.ic_music);
 
         setState(State.BROWSING);
+    }
+
+    public void openAppSelector() {
+        mAppSelector.open();
     }
 
     private void onNavIconClicked() {
@@ -255,13 +238,6 @@ public class AppBarView extends RelativeLayout {
                 mListener.onCollapse();
                 break;
         }
-    }
-
-    private void onAppSwitchClicked() {
-        if (mListener == null) {
-            return;
-        }
-        mListener.onAppSelection();
     }
 
     private void onSettingsClicked() {
@@ -352,24 +328,6 @@ public class AppBarView extends RelativeLayout {
     }
 
     /**
-     * Updates the application icon to show next to the application switcher.
-     */
-    public void setAppIcon(Bitmap icon) {
-        if (icon != null) {
-            mAppIcon.setImageBitmap(icon);
-        } else {
-            mAppIcon.setImageDrawable(mDefaultIcon);
-        }
-    }
-
-    /**
-     * Indicates whether or not the application switcher should be enabled.
-     */
-    public void setAppSelection(boolean enabled) {
-        mAppSwitchIcon.setVisibility(enabled ? View.VISIBLE : View.GONE);
-    }
-
-    /**
      * Updates the currently active item
      */
     public void setActiveItem(MediaItemMetadata item) {
@@ -426,7 +384,6 @@ public class AppBarView extends RelativeLayout {
                 mNavIcon.setImageDrawable(mArrowBack);
                 mTabsContainer.setVisibility(hasItems ? View.VISIBLE : View.GONE);
                 mTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
-                mAppSwitchIcon.setImageDrawable(mArrowDropDown);
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
             case STACKED:
@@ -434,7 +391,6 @@ public class AppBarView extends RelativeLayout {
                 mNavIconContainer.setVisibility(View.VISIBLE);
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(View.VISIBLE);
-                mAppSwitchIcon.setImageDrawable(mArrowDropDown);
                 mSearchButton.setVisibility(View.GONE);
                 break;
             case PLAYING:
@@ -445,14 +401,7 @@ public class AppBarView extends RelativeLayout {
                         : View.GONE);
                 mTitle.setVisibility(hasItems || !mContentForwardEnabled ? View.GONE
                         : View.VISIBLE);
-                mAppSwitchIcon.setImageDrawable(mArrowDropDown);
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
-                break;
-            case APP_SELECTION:
-                mNavIconContainer.setVisibility(View.GONE);
-                mTabsContainer.setVisibility(View.GONE);
-                mTitle.setVisibility(mContentForwardEnabled ? View.VISIBLE : View.GONE);
-                mAppSwitchIcon.setImageDrawable(mArrowDropUp);
                 break;
             case SEARCHING:
                 mNavIcon.setImageDrawable(mCollapse);
