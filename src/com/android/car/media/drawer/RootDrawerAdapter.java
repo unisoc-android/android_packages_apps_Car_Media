@@ -54,7 +54,7 @@ public class RootDrawerAdapter extends BrowseDrawerAdapter {
         super(context, parentLifecycle, rootBrowserViewModel, drawerController, clickListener);
         playbackViewModel.hasQueue().observe(this, this::setQueueAvailable);
         playbackViewModel.getQueueTitle().observe(this, this::setQueueTitle);
-        mediaSourceViewModel.getSelectedMediaSource().observe(this,
+        mediaSourceViewModel.getPrimaryMediaSource().observe(this,
                 mediaSource -> setTitle(mediaSource == null ? "" : mediaSource.getName()));
     }
 
