@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.android.car.media.R;
 import com.android.car.media.common.source.MediaSource;
 import com.android.car.media.common.source.MediaSourcesLiveData;
 
@@ -26,11 +28,13 @@ class MediaSourceStorage {
 
     private final SharedPreferences mSharedPreferences;
     private final MediaSourcesLiveData mMediaSources;
+    private final String mDefaultSourcePackage;
 
     MediaSourceStorage(Context context) {
         mSharedPreferences =
                 context.getSharedPreferences(SHARED_PREF, Context.MODE_PRIVATE);
         mMediaSources = MediaSourcesLiveData.getInstance(context);
+        mDefaultSourcePackage = context.getString(R.string.default_media_application);
     }
 
     void setLastMediaSource(MediaSource mediaSource) {
@@ -51,22 +55,24 @@ class MediaSourceStorage {
     }
 
     /**
-     * Gets the last browsed media source. Returns {@code null} if no sources have been selected.
-     * Filters out sources that are not available.
+     * Gets the last browsed media source or the default one. Filters out sources that are not
+     * available.
      */
     @Nullable
     MediaSource getLastMediaSource() {
         String serialized = mSharedPreferences.getString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
-        if (TextUtils.isEmpty(serialized)) {
-            return null;
-        }
-
         List<MediaSource> sources = mMediaSources.getList();
-        for (String packageName : getPackageNameList(serialized)) {
-            MediaSource source = validateSourcePackage(packageName, sources);
-            if (source != null) {
-                return source;
+        if (!TextUtils.isEmpty(serialized)) {
+            for (String packageName : getPackageNameList(serialized)) {
+                MediaSource source = validateSourcePackage(packageName, sources);
+                if (source != null) {
+                    return source;
+                }
             }
+        }
+        MediaSource defaultSource = validateSourcePackage(mDefaultSourcePackage, sources);
+        if (defaultSource != null) {
+            return defaultSource;
         }
         return null;
     }
