@@ -66,7 +66,7 @@ public class EmptyFragment extends Fragment {
         LiveData<MediaBrowserViewModel.BrowseState> browseState =
                 mediaBrowserViewModel.getBrowseState();
         LiveData<MediaSource> selectedMediaSource =
-                mediaSourceViewModel.getSelectedMediaSource();
+                mediaSourceViewModel.getPrimaryMediaSource();
         pair(browseState, selectedMediaSource)
                 .observe(getViewLifecycleOwner(), split(this::setState));
         return view;

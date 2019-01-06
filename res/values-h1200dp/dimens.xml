@@ -14,9 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <resources>
-    <!-- media_activity.xml -->
-    <dimen name="media_activity_app_bar_height">116dp</dimen>
-
     <!-- fragment_metadata.xml -->
     <dimen name="fragment_metadata_art_margin_end">@*android:dimen/car_keyline_2</dimen>
 

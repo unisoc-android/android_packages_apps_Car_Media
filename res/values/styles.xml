@@ -21,7 +21,4 @@
         <item name="android:textColor">@color/no_content_text_color</item>
     </style>
 
-    <style name="PagedListTheme" parent="Theme.CarSupportWrapper.NoActionBar">
-    </style>
-
 </resources>

@@ -27,9 +27,6 @@
     <!-- Number of columns in the browse view -->
     <integer name="num_browse_columns">3</integer>
 
-    <!-- Number of columns in app selector -->
-    <integer name="num_app_selector_columns">3</integer>
-
     <!-- The amount of time it takes for the app selector to fade in and out -->
     <integer name="app_selector_fade_duration">500</integer>
 

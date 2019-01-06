@@ -22,7 +22,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
-    <permission android:name="com.android.car.media.provider.READ"
+    <permission android:name="com.android.car.media.provider.READ_WRITE"
         android:protectionLevel="signature"/>
 
     <application
@@ -40,10 +40,16 @@
             android:windowSoftInputMode="stateUnchanged|adjustPan"
             android:launchMode="singleTop">
             <meta-data android:name="distractionOptimized" android:value="true"/>
+        </activity>
+
+        <!-- The Media center entry point that trampolines into MediaActivity or the radio app. -->
+        <activity
+            android:name=".MediaDispatcherActivity"
+            android:launchMode="singleTask">
+            <meta-data android:name="distractionOptimized" android:value="true"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.INFO" />
-                <category android:name="android.intent.category.APP_MUSIC" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
@@ -56,6 +62,6 @@
             android:name=".storage.MediaSourceContentProvider"
             android:authorities="com.android.car.media.provider"
             android:exported="true"
-            android:readPermission="com.android.car.media.provider.READ"/>
+            android:permission="com.android.car.media.provider.READ_WRITE"/>
     </application>
 </manifest>

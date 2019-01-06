@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright 2018, The Android Open Source Project
+  Copyright 2019, The Android Open Source Project
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -14,12 +14,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-        android:width="24dp"
-        android:height="24dp"
-        android:viewportWidth="24.0"
-        android:viewportHeight="24.0">
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M7,14l5,-5 5,5z"/>
-</vector>
+
+<!-- This file is intended for non translatable string resources. -->
+<resources>
+    <!-- The package name of the media application that will be selected as the default. -->
+    <string name="default_media_application" translatable="false">com.android.bluetooth</string>
+</resources>

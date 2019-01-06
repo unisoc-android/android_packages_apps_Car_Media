@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.android.car.media.R;
 import com.android.car.media.common.source.MediaSource;
 import com.android.car.media.common.source.MediaSourcesLiveData;
 
@@ -18,7 +20,7 @@ import java.util.stream.Collectors;
  * This class is used to manage the most recently used media sources. Uses SharedPreferences to
  * store the media sources, ordered by how recently they were used.
  */
-public class MediaSourceStorage {
+class MediaSourceStorage {
 
     private static final String LAST_MEDIA_SOURCE_SHARED_PREF_KEY = "last_media_source";
     private static final String SHARED_PREF = "com.android.car.media";
@@ -26,14 +28,16 @@ public class MediaSourceStorage {
 
     private final SharedPreferences mSharedPreferences;
     private final MediaSourcesLiveData mMediaSources;
+    private final String mDefaultSourcePackage;
 
-    public MediaSourceStorage(Context context) {
+    MediaSourceStorage(Context context) {
         mSharedPreferences =
                 context.getSharedPreferences(SHARED_PREF, Context.MODE_PRIVATE);
         mMediaSources = MediaSourcesLiveData.getInstance(context);
+        mDefaultSourcePackage = context.getString(R.string.default_media_application);
     }
 
-    public void setLastMediaSource(MediaSource mediaSource) {
+    void setLastMediaSource(MediaSource mediaSource) {
         String serialized = mSharedPreferences.getString(
                 LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
         if (serialized == null) {
@@ -51,22 +55,24 @@ public class MediaSourceStorage {
     }
 
     /**
-     * Gets the last browsed media source, excluding any custom sources. Returns {@code null} if no
-     * non-custom sources have been selected. Filters out sources that are not available.
+     * Gets the last browsed media source or the default one. Filters out sources that are not
+     * available.
      */
     @Nullable
-    public MediaSource getLastMediaSource() {
+    MediaSource getLastMediaSource() {
         String serialized = mSharedPreferences.getString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
-        if (TextUtils.isEmpty(serialized)) {
-            return null;
-        }
-
         List<MediaSource> sources = mMediaSources.getList();
-        for (String packageName : getPackageNameList(serialized)) {
-            MediaSource source = validateSourcePackage(packageName, sources);
-            if (source != null && !source.isCustom()) {
-                return source;
+        if (!TextUtils.isEmpty(serialized)) {
+            for (String packageName : getPackageNameList(serialized)) {
+                MediaSource source = validateSourcePackage(packageName, sources);
+                if (source != null) {
+                    return source;
+                }
             }
+        }
+        MediaSource defaultSource = validateSourcePackage(mDefaultSourcePackage, sources);
+        if (defaultSource != null) {
+            return defaultSource;
         }
         return null;
     }
@@ -83,18 +89,6 @@ public class MediaSourceStorage {
             }
         }
         return null;
-    }
-
-    /**
-     * Gets all browsed media sources, ordered by most to least recently used
-     */
-    @NonNull
-    public Deque<String> getAllPackageNames() {
-        String serialized = mSharedPreferences.getString(LAST_MEDIA_SOURCE_SHARED_PREF_KEY, null);
-        if (TextUtils.isEmpty(serialized)) {
-            return new ArrayDeque();
-        }
-        return getPackageNameList(serialized);
     }
 
     private String serializePackageNameList(@NonNull Deque<String> packageNames) {
