@@ -16,8 +16,6 @@
 
 package com.android.car.media.browse;
 
-import static java.util.stream.Collectors.toList;
-
 import android.content.Context;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,6 +30,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.car.media.common.MediaConstants;
 import com.android.car.media.common.MediaItemMetadata;
 
 import java.util.ArrayList;
@@ -49,9 +48,6 @@ import java.util.function.Consumer;
  * <p>This adapter assumes that the attached {@link RecyclerView} uses a {@link GridLayoutManager},
  * as it can use both grid and list elements to produce the desired representation.
  *
- * <p> The actual strategy to group and expand media items has to be supplied by providing an
- * instance of {@link ContentForwardStrategy}.
- *
  * <p>Consumers of this adapter should use {@link #registerObserver(Observer)} to receive updates.
  */
 public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder> implements
@@ -59,8 +55,6 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
     private static final String TAG = "BrowseAdapter";
     @NonNull
     private final Context mContext;
-    @NonNull
-    private final ContentForwardStrategy mCFBStrategy;
     @NonNull
     private List<Observer> mObservers = new ArrayList<>();
     @Nullable
@@ -86,20 +80,6 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
             };
 
     /**
-     * Possible states of the adapter
-     */
-    public enum State {
-        /** Loading of this item hasn't started yet */
-        IDLE,
-        /** There is pending information before this item can be displayed */
-        LOADING,
-        /** It was not possible to load metadata for this item */
-        ERROR,
-        /** Metadata for this items has been correctly loaded */
-        LOADED
-    }
-
-    /**
      * An {@link BrowseAdapter} observer.
      */
     public static abstract class Observer {
@@ -113,13 +93,7 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
         /**
          * Callback invoked when a user clicks on a browsable item.
          */
-        protected void onBrowseableItemClicked(MediaItemMetadata item) {
-        }
-
-        /**
-         * Callback invoked when a user clicks on a the "more items" button on a section.
-         */
-        protected void onMoreButtonClicked(MediaItemMetadata item) {
+        protected void onBrowsableItemClicked(MediaItemMetadata item) {
         }
 
         /**
@@ -127,51 +101,14 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
          */
         protected void onTitleClicked() {
         }
-
-    }
-
-    /**
-     * Represents the loading state of children of a single {@link MediaItemMetadata} in the {@link
-     * BrowseAdapter}
-     */
-    private class MediaItemState {
-        /**
-         * {@link com.android.car.media.common.MediaItemMetadata} whose children are being loaded
-         */
-        final MediaItemMetadata mItem;
-        /** Playable children of the given item */
-        List<MediaItemMetadata> mPlayableChildren = new ArrayList<>();
-        /** Browsable children of the given item */
-        List<MediaItemMetadata> mBrowsableChildren = new ArrayList<>();
-
-        MediaItemState(MediaItemMetadata item) {
-            mItem = item;
-        }
-
-        void setChildren(List<MediaItemMetadata> children) {
-            mPlayableChildren.clear();
-            mBrowsableChildren.clear();
-            for (MediaItemMetadata child : children) {
-                if (child.isBrowsable()) {
-                    // Browsable items could also be playable
-                    mBrowsableChildren.add(child);
-                } else if (child.isPlayable()) {
-                    mPlayableChildren.add(child);
-                }
-            }
-        }
     }
 
     /**
      * Creates a {@link BrowseAdapter} that displays the children of the given media tree node.
-     *
-     * @param strategy a {@link ContentForwardStrategy} that would determine which items would be
-     *                 expanded and how.
      */
-    public BrowseAdapter(@NonNull Context context, @NonNull ContentForwardStrategy strategy) {
+    public BrowseAdapter(@NonNull Context context) {
         super(DIFF_CALLBACK);
         mContext = context;
-        mCFBStrategy = strategy;
     }
 
     /**
@@ -243,12 +180,11 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
     public void submitItems(@Nullable MediaItemMetadata parentItem,
             @Nullable List<MediaItemMetadata> children) {
         mParentMediaItem = parentItem;
-        List<MediaItemState> mediaItemStates =
-                children == null ? Collections.emptyList()
-                        : children.stream()
-                                .map(MediaItemState::new)
-                                .collect(toList());
-        submitList(generateViewData(mediaItemStates));
+        if (children == null) {
+            submitList(Collections.emptyList());
+            return;
+        }
+        submitList(generateViewData(children));
     }
 
     private void notify(Consumer<Observer> notification) {
@@ -277,39 +213,12 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
             result.add(new BrowseViewData(item, viewType, listener));
         }
 
-        void addItems(List<MediaItemMetadata> items, BrowseItemViewType viewType, int maxRows) {
-            int spanSize = viewType.getSpanSize(mMaxSpanSize);
-            int maxChildren = maxRows * (mMaxSpanSize / spanSize);
-            result.addAll(items.stream()
-                    .limit(maxChildren)
-                    .map(item -> {
-                        Consumer<Observer> notification =
-                                item.isBrowsable()
-                                        ? observer -> observer.onBrowseableItemClicked(item)
-                                        : observer -> observer.onPlayableItemClicked(item);
-                        return new BrowseViewData(item, viewType, view ->
-                                BrowseAdapter.this.notify(notification));
-                    })
-                    .collect(toList()));
-        }
-
         void addTitle(CharSequence title, Consumer<Observer> notification) {
+            if (title == null) {
+                title = "";
+            }
             result.add(new BrowseViewData(title, BrowseItemViewType.HEADER,
                     view -> BrowseAdapter.this.notify(notification)));
-
-        }
-
-        void addBrowseBlock(MediaItemMetadata header,
-                List<MediaItemMetadata> items, BrowseItemViewType viewType, int maxChildren,
-                boolean showHeader, boolean showMoreFooter) {
-            if (showHeader) {
-                addItem(header, BrowseItemViewType.HEADER, null);
-            }
-            addItems(items, viewType, maxChildren);
-            if (showMoreFooter) {
-                addItem(header, BrowseItemViewType.MORE_FOOTER,
-                        observer -> observer.onMoreButtonClicked(header));
-            }
         }
 
         List<BrowseViewData> build() {
@@ -322,27 +231,16 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
      * flickering, the flatting will stop at the first "loading" section, avoiding unnecessary
      * insertion animations during the initial data load.
      */
-    private List<BrowseViewData> generateViewData(Collection<MediaItemState> itemStates) {
+    private List<BrowseViewData> generateViewData(Collection<MediaItemMetadata> items) {
         ItemsBuilder itemsBuilder = new ItemsBuilder();
-
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
             Log.v(TAG, "Generating browse view from:");
-            for (MediaItemState item : itemStates) {
+            for (MediaItemMetadata item : items) {
                 Log.v(TAG, String.format("[%s%s] '%s' (%s)",
-                        item.mItem.isBrowsable() ? "B" : " ",
-                        item.mItem.isPlayable() ? "P" : " ",
-                        item.mItem.getTitle(),
-                        item.mItem.getId()));
-                List<MediaItemMetadata> items = new ArrayList<>();
-                items.addAll(item.mBrowsableChildren);
-                items.addAll(item.mPlayableChildren);
-                for (MediaItemMetadata child : items) {
-                    Log.v(TAG, String.format("   [%s%s] '%s' (%s)",
-                            child.isBrowsable() ? "B" : " ",
-                            child.isPlayable() ? "P" : " ",
-                            child.getTitle(),
-                            child.getId()));
-                }
+                        item.isBrowsable() ? "B" : " ",
+                        item.isPlayable() ? "P" : " ",
+                        item.getTitle(),
+                        item.getId()));
             }
         }
 
@@ -350,55 +248,19 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
             itemsBuilder.addTitle(mTitle, Observer::onTitleClicked);
         }
 
-        boolean containsBrowsableItems = false;
-        boolean containsPlayableItems = false;
-        for (MediaItemState itemState : itemStates) {
-            containsBrowsableItems |= itemState.mItem.isBrowsable();
-            containsPlayableItems |= itemState.mItem.isPlayable();
-        }
-
-        for (MediaItemState itemState : itemStates) {
-            MediaItemMetadata item = itemState.mItem;
-            if (containsPlayableItems && containsBrowsableItems) {
-                // If we have a mix of browsable and playable items: show them all in a list
-                itemsBuilder.addItem(item,
-                        BrowseItemViewType.PANEL_ITEM,
-                        item.isBrowsable()
-                                ? observer -> observer.onBrowseableItemClicked(item)
-                                : observer -> observer.onPlayableItemClicked(item));
-            } else if (itemState.mItem.isBrowsable()) {
-                // If we only have browsable items, check whether we should expand them or not.
-                if (!itemState.mBrowsableChildren.isEmpty()
-                        && !itemState.mPlayableChildren.isEmpty()
-                        || !mCFBStrategy.shouldBeExpanded(item)) {
-                    itemsBuilder.addItem(item,
-                            mCFBStrategy.getBrowsableViewType(mParentMediaItem), null);
-                } else if (!itemState.mPlayableChildren.isEmpty()) {
-                    itemsBuilder.addBrowseBlock(item,
-                            itemState.mPlayableChildren,
-                            mCFBStrategy.getPlayableViewType(item),
-                            mCFBStrategy.getMaxRows(item, mCFBStrategy.getPlayableViewType(item)),
-                            mCFBStrategy.includeHeader(item),
-                            mCFBStrategy.showMoreButton(item));
-                } else if (!itemState.mBrowsableChildren.isEmpty()) {
-                    itemsBuilder.addBrowseBlock(item,
-                            itemState.mBrowsableChildren,
-                            mCFBStrategy.getBrowsableViewType(item),
-                            mCFBStrategy.getMaxRows(item, mCFBStrategy.getBrowsableViewType(item)),
-                            mCFBStrategy.includeHeader(item),
-                            mCFBStrategy.showMoreButton(item));
-                } else {
-                    // We need this fallback because the local MP's children are NEVER loaded here
-                    // TODO(b/118759409) sort this out...
-                    itemsBuilder.addItem(item,
-                            mCFBStrategy.getBrowsableViewType(mParentMediaItem),
-                            observer -> observer.onBrowseableItemClicked(item));
-                }
-            } else if (item.isPlayable()) {
-                // If we only have playable items: show them as so.
-                itemsBuilder.addItem(item,
-                        mCFBStrategy.getPlayableViewType(mParentMediaItem),
+        String currentTitleGrouping = null;
+        for (MediaItemMetadata item : items) {
+            String titleGrouping = item.getTitleGrouping();
+            if (!Objects.equals(currentTitleGrouping, titleGrouping)) {
+                currentTitleGrouping = titleGrouping;
+                itemsBuilder.addTitle(titleGrouping, null);
+            }
+            if (item.isPlayable()) {
+                itemsBuilder.addItem(item, getPlayableViewType(mParentMediaItem),
                         observer -> observer.onPlayableItemClicked(item));
+            } else if (item.isBrowsable()) {
+                itemsBuilder.addItem(item, getBrowsableViewType(mParentMediaItem),
+                        observer -> observer.onBrowsableItemClicked(item));
             }
         }
 
@@ -411,5 +273,24 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
                 && position >= 0
                 && getItem(position).mViewType == BrowseItemViewType.PANEL_ITEM
                 && getItem(position + 1).mViewType == BrowseItemViewType.PANEL_ITEM);
+    }
+
+
+    private BrowseItemViewType getBrowsableViewType(@Nullable MediaItemMetadata mediaItem) {
+        if (mediaItem == null) {
+            return BrowseItemViewType.PANEL_ITEM;
+        }
+        return (mediaItem.getBrowsableContentStyleHint()
+                == MediaConstants.CONTENT_STYLE_GRID_ITEM_HINT_VALUE)
+                ? BrowseItemViewType.PANEL_ITEM : BrowseItemViewType.LIST_ITEM;
+    }
+
+    private BrowseItemViewType getPlayableViewType(@Nullable MediaItemMetadata mediaItem) {
+        if (mediaItem == null) {
+            return BrowseItemViewType.GRID_ITEM;
+        }
+        return (mediaItem.getPlayableContentStyleHint()
+                == MediaConstants.CONTENT_STYLE_GRID_ITEM_HINT_VALUE)
+                ? BrowseItemViewType.GRID_ITEM : BrowseItemViewType.LIST_ITEM;
     }
 }
