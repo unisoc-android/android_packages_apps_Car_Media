@@ -44,6 +44,9 @@ public class PrimaryMediaSourceManager {
     private MediaSessionManager mMediaSessionManager;
     private MediaSessionUpdater mMediaSessionUpdater;
     private MediaSource mPrimaryMediaSource;
+    // MediaController for the primary media source. Can be null if the primary media source has not
+    // played any media yet.
+    private MediaController mPrimaryMediaController;
 
     private static PrimaryMediaSourceManager sInstance;
 
@@ -71,6 +74,7 @@ public class PrimaryMediaSourceManager {
             }
             mControllers.clear();
             mControllers.addAll(newControllers);
+            updatePrimaryMediaSourceWithCurrentlyPlaying();
         }
     }
 
@@ -101,7 +105,15 @@ public class PrimaryMediaSourceManager {
         if (mPrimaryMediaSource != null && mPrimaryMediaSource.equals((mediaSource))) {
             return;
         }
+        if (mPrimaryMediaController != null) {
+            MediaController.TransportControls controls =
+                    mPrimaryMediaController.getTransportControls();
+            if (controls != null) {
+                controls.pause();
+            }
+        }
         mPrimaryMediaSource = mediaSource;
+        mPrimaryMediaController = null;
         mMediaSourceStorage.setLastMediaSource(mediaSource);
         mContext.getContentResolver().notifyChange(MediaConstants.URI_MEDIA_SOURCE, null);
     }
@@ -126,6 +138,14 @@ public class PrimaryMediaSourceManager {
                 if (mPrimaryMediaSource == null || !mPrimaryMediaSource.getPackageName().equals(
                         controller.getPackageName())) {
                     setPrimaryMediaSource(new MediaSource(mContext, controller.getPackageName()));
+                }
+                // The primary MediaSource can be set via the content provider (e.g from app picker)
+                // and the MediaController will enter playing state some time after. This avoids
+                // re-setting the primary media source every time the MediaController changes state.
+                // Also, it's possible that a MediaSource will create a new MediaSession without
+                // us ever changing sources, which is we overwrite our previously saved controller.
+                if (mPrimaryMediaSource.getPackageName().equals(controller.getPackageName())) {
+                    mPrimaryMediaController = controller;
                 }
                 return;
             }
