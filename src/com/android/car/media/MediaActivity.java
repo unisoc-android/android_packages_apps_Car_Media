@@ -358,16 +358,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
      * @param mediaSource the new media source we are going to try to browse
      */
     private void onMediaSourceChanged(@Nullable MediaSource mediaSource) {
-        MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
-        MediaControllerCompat controller = mediaSourceViewModel.getMediaController().getValue();
-
-        if (controller != null) {
-            MediaControllerCompat.TransportControls controls = controller.getTransportControls();
-            if (controls != null) {
-                controls.pause();
-            }
-        }
-
         if (mediaSource != null) {
             if (Log.isLoggable(TAG, Log.INFO)) {
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
