@@ -63,6 +63,10 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
     private MediaItemMetadata mParentMediaItem;
     private int mMaxSpanSize = 1;
 
+    private boolean mContentStyleEnabled = false;
+    private BrowseItemViewType mRootBrowsableViewType = BrowseItemViewType.LIST_ITEM;
+    private BrowseItemViewType mRootPlayableViewType = BrowseItemViewType.LIST_ITEM;
+
     private static final DiffUtil.ItemCallback<BrowseViewData> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<BrowseViewData>() {
                 @Override
@@ -140,6 +144,18 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
      */
     public void setMaxSpanSize(int maxSpanSize) {
         mMaxSpanSize = maxSpanSize;
+    }
+
+    public void setContentStyleEnabled(boolean enabled) {
+        mContentStyleEnabled = enabled;
+    }
+
+    public void setRootBrowsableViewType(int hintValue) {
+        mRootBrowsableViewType = fromMediaHint(hintValue);
+    }
+
+    public void setRootPlayableViewType(int hintValue) {
+        mRootPlayableViewType = fromMediaHint(hintValue);
     }
 
     /**
@@ -251,7 +267,7 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
         String currentTitleGrouping = null;
         for (MediaItemMetadata item : items) {
             String titleGrouping = item.getTitleGrouping();
-            if (!Objects.equals(currentTitleGrouping, titleGrouping)) {
+            if (mContentStyleEnabled && !Objects.equals(currentTitleGrouping, titleGrouping)) {
                 currentTitleGrouping = titleGrouping;
                 itemsBuilder.addTitle(titleGrouping, null);
             }
@@ -275,22 +291,38 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
                 && getItem(position + 1).mViewType == BrowseItemViewType.PANEL_ITEM);
     }
 
-
     private BrowseItemViewType getBrowsableViewType(@Nullable MediaItemMetadata mediaItem) {
-        if (mediaItem == null) {
+        if (mediaItem == null || !mContentStyleEnabled) {
             return BrowseItemViewType.PANEL_ITEM;
         }
-        return (mediaItem.getBrowsableContentStyleHint()
-                == MediaConstants.CONTENT_STYLE_GRID_ITEM_HINT_VALUE)
-                ? BrowseItemViewType.PANEL_ITEM : BrowseItemViewType.LIST_ITEM;
+        if (mediaItem.getPlayableContentStyleHint() == 0) {
+            return mRootBrowsableViewType;
+        }
+        return fromMediaHint(mediaItem.getBrowsableContentStyleHint());
     }
 
     private BrowseItemViewType getPlayableViewType(@Nullable MediaItemMetadata mediaItem) {
-        if (mediaItem == null) {
-            return BrowseItemViewType.GRID_ITEM;
+        if (mediaItem == null || !mContentStyleEnabled) {
+            return BrowseItemViewType.LIST_ITEM;
         }
-        return (mediaItem.getPlayableContentStyleHint()
-                == MediaConstants.CONTENT_STYLE_GRID_ITEM_HINT_VALUE)
-                ? BrowseItemViewType.GRID_ITEM : BrowseItemViewType.LIST_ITEM;
+        if (mediaItem.getPlayableContentStyleHint() == 0) {
+            return mRootPlayableViewType;
+        }
+        return fromMediaHint(mediaItem.getPlayableContentStyleHint());
+    }
+
+    /**
+     * Converts a content style hint to the appropriate {@link BrowseItemViewType}, defaulting to
+     * list items.
+     */
+    private BrowseItemViewType fromMediaHint(int hint) {
+        switch(hint) {
+            case MediaConstants.CONTENT_STYLE_GRID_ITEM_HINT_VALUE:
+                return BrowseItemViewType.GRID_ITEM;
+            case MediaConstants.CONTENT_STYLE_LIST_ITEM_HINT_VALUE:
+                return BrowseItemViewType.LIST_ITEM;
+            default:
+                return BrowseItemViewType.LIST_ITEM;
+        }
     }
 }

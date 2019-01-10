@@ -219,6 +219,12 @@ public class BrowseFragment extends Fragment {
             mMediaBrowserViewModel.search(mSearchQuery);
             mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
         }
+        mMediaBrowserViewModel.contentStyleEnabled().observe(this, enabled ->
+                mBrowseAdapter.setContentStyleEnabled(enabled));
+        mMediaBrowserViewModel.rootBrowsableHint().observe(this, hint ->
+                mBrowseAdapter.setRootBrowsableViewType(hint));
+        mMediaBrowserViewModel.rootPlayableHint().observe(this, hint ->
+                mBrowseAdapter.setRootPlayableViewType(hint));
         mMediaBrowserViewModel.getBrowsedMediaItems().observe(getViewLifecycleOwner(), futureData ->
         {
             boolean isLoading = futureData.isLoading();
