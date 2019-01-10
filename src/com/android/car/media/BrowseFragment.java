@@ -39,7 +39,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.media.browse.BrowseAdapter;
-import com.android.car.media.browse.ContentForwardStrategy;
 import com.android.car.media.common.GridSpacingItemDecoration;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.browse.MediaBrowserViewModel;
@@ -80,12 +79,7 @@ public class BrowseFragment extends Fragment {
         }
 
         @Override
-        protected void onBrowseableItemClicked(MediaItemMetadata item) {
-            navigateInto(item);
-        }
-
-        @Override
-        protected void onMoreButtonClicked(MediaItemMetadata item) {
+        protected void onBrowsableItemClicked(MediaItemMetadata item) {
             navigateInto(item);
         }
     };
@@ -216,8 +210,7 @@ public class BrowseFragment extends Fragment {
                 getResources().getDimensionPixelSize(R.dimen.car_keyline_1)
         ));
 
-        mBrowseAdapter = new BrowseAdapter(recyclerView.getContext(),
-                ContentForwardStrategy.DEFAULT_STRATEGY);
+        mBrowseAdapter = new BrowseAdapter(recyclerView.getContext());
         mBrowseList.setAdapter(mBrowseAdapter);
         mBrowseList.setDividerVisibilityManager(mBrowseAdapter);
         mBrowseAdapter.registerObserver(mBrowseAdapterObserver);
