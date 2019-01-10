@@ -57,18 +57,6 @@ public class EmptyFragment extends Fragment {
         mErrorIcon = view.findViewById(R.id.error_icon);
         mErrorMessage = view.findViewById(R.id.error_message);
 
-        ViewModelProvider viewModelProvider = ViewModelProviders.of(requireActivity());
-        MediaSourceViewModel mediaSourceViewModel =
-                viewModelProvider.get(MediaSourceViewModel.class);
-        MediaBrowserViewModel mediaBrowserViewModel =
-                MediaBrowserViewModel.Factory.getInstanceWithMediaBrowser(viewModelProvider,
-                        mediaSourceViewModel.getConnectedMediaBrowser());
-        LiveData<MediaBrowserViewModel.BrowseState> browseState =
-                mediaBrowserViewModel.getBrowseState();
-        LiveData<MediaSource> selectedMediaSource =
-                mediaSourceViewModel.getPrimaryMediaSource();
-        pair(browseState, selectedMediaSource)
-                .observe(getViewLifecycleOwner(), split(this::setState));
         return view;
     }
 
@@ -84,7 +72,7 @@ public class EmptyFragment extends Fragment {
      * @param state       browsing state to display
      * @param mediaSource media source currently being browsed
      */
-    private void setState(@NonNull MediaBrowserViewModel.BrowseState state,
+    void setState(@NonNull MediaBrowserViewModel.BrowseState state,
             @Nullable MediaSource mediaSource) {
         mHandler.removeCallbacks(mProgressIndicatorRunnable);
         if (this.getView() != null) {

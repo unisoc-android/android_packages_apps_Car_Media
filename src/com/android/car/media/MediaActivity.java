@@ -220,6 +220,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         mediaSourceViewModel.getPrimaryMediaSource().observe(this, source -> {
             if (mContentForwardBrowseEnabled) {
                 mAppBarView.setContentForwardEnabled(true);
+                updateTabs(null);
                 ActionBar actionBar = requireNonNull(getActionBar());
                 actionBar.hide();
                 switchToMode(Mode.BROWSING);
@@ -230,10 +231,14 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         MediaAppSelectorWidget appSelector = findViewById(R.id.app_switch_container);
         appSelector.setFragmentActivity(this);
 
+        mEmptyFragment = new EmptyFragment();
         if (mContentForwardBrowseEnabled) {
             // If content forward browsing is disabled, then no need to observe browsed items, we
             // will use the drawer instead.
             MediaBrowserViewModel mediaBrowserViewModel = getRootBrowserViewModel();
+            mediaBrowserViewModel.getBrowseState().observe(this,
+                    browseState -> mEmptyFragment.setState(browseState,
+                            mediaSourceViewModel.getPrimaryMediaSource().getValue()));
             mediaBrowserViewModel.getBrowsedMediaItems().observe(this, futureData -> {
                 if (!futureData.isLoading() && mMode != Mode.SERVICE_ERROR) {
                     updateTabs(futureData.getData());
@@ -262,7 +267,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         getResources().getValue(R.dimen.playback_background_blur_scale, outValue, true);
         mFadeDuration = getResources().getInteger(
                 R.integer.new_album_art_fade_in_duration);
-        mEmptyFragment = new EmptyFragment();
         mBrowseContainer = findViewById(R.id.fragment_container);
         mErrorContainer = findViewById(R.id.error_container);
         mPlaybackContainer = findViewById(R.id.playback_container);
