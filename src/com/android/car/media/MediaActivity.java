@@ -370,9 +370,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
             }
             // Make the drawer display browse information of the selected source
-            ComponentName component = mediaSource.getBrowseServiceComponentName();
             String packageName = mediaSource.getPackageName();
-            MediaManager.getInstance(this).setMediaClientComponent(component);
             updateSourcePreferences(packageName);
 
             // Always go through the trampoline activity to keep all the dispatching logic there.
