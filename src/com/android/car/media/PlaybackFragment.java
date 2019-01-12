@@ -20,6 +20,7 @@ import static com.android.car.arch.common.LiveDataFunctions.dataOf;
 import static com.android.car.arch.common.LiveDataFunctions.freezable;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
@@ -69,6 +70,7 @@ public class PlaybackFragment extends Fragment {
     private ConstraintLayout mRootView;
 
     private PlaybackViewModel.PlaybackController mController;
+    private Long mActiveQueueItemId;
 
     private MutableLiveData<Boolean> mUpdatesPaused = dataOf(false);
 
@@ -85,6 +87,9 @@ public class PlaybackFragment extends Fragment {
             textListItem.setTitle(item.getTitle() != null ? item.getTitle().toString() : null);
             textListItem.setBody(item.getSubtitle() != null ? item.getSubtitle().toString() : null);
             textListItem.setOnClickListener(v -> onQueueItemClicked(item));
+            if (mActiveQueueItemId != null && mActiveQueueItemId == item.getQueueId()) {
+                textListItem.setSupplementalIcon(R.drawable.ic_equalizer, false);
+            }
 
             return textListItem;
         }
@@ -172,6 +177,11 @@ public class PlaybackFragment extends Fragment {
         recyclerView.setFadingEdgeLength(getResources()
                 .getDimensionPixelSize(R.dimen.car_padding_4));
         mQueueAdapter = new QueueItemsAdapter(getContext(), mQueueItemsProvider);
+        getPlaybackViewModel().getPlaybackInfo().getActiveQueueItemId().observe(
+                getViewLifecycleOwner(), id -> {
+                    mActiveQueueItemId = id;
+                    mQueueAdapter.refresh();
+                });
         queueList.setAdapter(mQueueAdapter);
         freezable(mUpdatesPaused, getPlaybackViewModel().getQueue()).observe(this, this::setQueue);
     }
