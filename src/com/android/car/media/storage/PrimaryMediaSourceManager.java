@@ -81,11 +81,13 @@ public class PrimaryMediaSourceManager {
     private PrimaryMediaSourceManager(Context context) {
         mContext = context;
         mMediaSessionManager = mContext.getSystemService(MediaSessionManager.class);
-        mMediaSessionManager.addOnActiveSessionsChangedListener(mSessionChangeListener, null);
         mMediaSessionUpdater = new MediaSessionUpdater();
-        mMediaSessionUpdater.registerCallbacks(mMediaSessionManager.getActiveSessions(null));
         mMediaSourceStorage = new MediaSourceStorage(context);
         mPrimaryMediaSource = mMediaSourceStorage.getLastMediaSource();
+
+        // Add callbacks after initializing the object (b/122845938).
+        mMediaSessionManager.addOnActiveSessionsChangedListener(mSessionChangeListener, null);
+        mMediaSessionUpdater.registerCallbacks(mMediaSessionManager.getActiveSessions(null));
     }
 
     @NonNull
