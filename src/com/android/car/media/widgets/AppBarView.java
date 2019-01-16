@@ -62,6 +62,7 @@ public class AppBarView extends RelativeLayout {
     private String mMediaAppTitle;
     private boolean mContentForwardEnabled;
     private boolean mSearchSupported;
+    private boolean mShowTabs = true;
 
     /**
      * Application bar listener
@@ -309,10 +310,20 @@ public class AppBarView extends RelativeLayout {
     }
 
     /**
-     * Updates the title to display when the bar is not showing tabs.
+     * Updates the title to display when the bar is not showing tabs. If the provided title is null,
+     * will default to displaying the app name.
      */
     public void setTitle(CharSequence title) {
         mTitle.setText(title != null ? title : mMediaAppTitle);
+    }
+
+    /**
+     * Sets the name of the currently displayed media app. This is used as the default title for
+     * playback and the root browse menu
+     */
+    public void setMediaAppName(CharSequence appName) {
+        mMediaAppTitle = appName == null ? getResources().getString(R.string.media_app_title)
+                : appName.toString();
     }
 
     /** Controls whether the settings button is visible. */
@@ -350,6 +361,18 @@ public class AppBarView extends RelativeLayout {
         mNavIconContainer.setVisibility(visible ? VISIBLE : INVISIBLE);
     }
 
+    /**
+     * Sets whether to show tabs or not. If there is no tab content, tabs will be hidden regardless
+     * of this setting. By default, tabs will be shown if there is tab content.
+     */
+    public void setShowTabs(boolean visible) {
+        mShowTabs = visible;
+        // Refresh state to adjust for new tab visibility
+        boolean showTabs = mTabsContainer.getChildCount() > 0 && mShowTabs;
+        mTabsContainer.setVisibility(showTabs ? View.VISIBLE : View.GONE);
+        mTitle.setVisibility(showTabs ? View.GONE : View.VISIBLE);
+    }
+
     private void updateTabs() {
         for (int i = 0; i < mTabsContainer.getChildCount(); i++) {
             View child = mTabsContainer.getChildAt(i);
@@ -367,12 +390,12 @@ public class AppBarView extends RelativeLayout {
      * Updates the state of the bar.
      */
     public void setState(State state) {
-        boolean hasItems = mTabsContainer.getChildCount() > 0;
+        boolean showTabs = mTabsContainer.getChildCount() > 0 && mShowTabs;
         mState = state;
 
         Transition transition = new Fade().setDuration(mFadeDuration);
         TransitionManager.beginDelayedTransition(this, transition);
-        Log.d(TAG, "Updating state: " + state + " (has items: " + hasItems + ")");
+        Log.d(TAG, "Updating state: " + state + " (show tabs: " + showTabs + ")");
         switch (state) {
             case EMPTY:
                 mNavIconContainer.setVisibility(View.GONE);
@@ -382,8 +405,8 @@ public class AppBarView extends RelativeLayout {
             case BROWSING:
                 mNavIconContainer.setVisibility(View.INVISIBLE);
                 mNavIcon.setImageDrawable(mArrowBack);
-                mTabsContainer.setVisibility(hasItems ? View.VISIBLE : View.GONE);
-                mTitle.setVisibility(hasItems ? View.GONE : View.VISIBLE);
+                mTabsContainer.setVisibility(showTabs ? View.VISIBLE : View.GONE);
+                mTitle.setVisibility(showTabs ? View.GONE : View.VISIBLE);
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
             case STACKED:
@@ -397,9 +420,10 @@ public class AppBarView extends RelativeLayout {
                 mNavIcon.setImageDrawable(mCollapse);
                 mNavIconContainer.setVisibility(!mContentForwardEnabled ? View.GONE : View.VISIBLE);
                 setActiveItem(null);
-                mTabsContainer.setVisibility(hasItems && mContentForwardEnabled ? View.VISIBLE
+                mTabsContainer.setVisibility(showTabs && mContentForwardEnabled ? View.VISIBLE
                         : View.GONE);
-                mTitle.setVisibility(hasItems || !mContentForwardEnabled ? View.GONE
+                mTitle.setText(mMediaAppTitle);
+                mTitle.setVisibility(showTabs || !mContentForwardEnabled ? View.GONE
                         : View.VISIBLE);
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
