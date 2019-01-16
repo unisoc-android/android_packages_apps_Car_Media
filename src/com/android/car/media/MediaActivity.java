@@ -219,6 +219,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         mediaSourceViewModel.getPrimaryMediaSource().observe(this, source -> {
             if (contentForwardBrowseEnabled) {
                 mAppBarView.setContentForwardEnabled(true);
+                mAppBarView.setMediaAppName(source.getName());
                 updateTabs(null);
                 ActionBar actionBar = requireNonNull(getActionBar());
                 actionBar.hide();
@@ -504,7 +505,15 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         Fragment currentFragment = getCurrentFragment();
         if (currentFragment instanceof BrowseFragment) {
             BrowseFragment fragment = (BrowseFragment) currentFragment;
-            mAppBarView.setNavIconVisible(fragment.isBackEnabled());
+            if (fragment.isBackEnabled()) {
+                mAppBarView.setTitle(fragment.getCurrentMediaItem().getTitle());
+                mAppBarView.setShowTabs(false);
+                mAppBarView.setNavIconVisible(true);
+            } else {
+                mAppBarView.setTitle(null);
+                mAppBarView.setShowTabs(true);
+                mAppBarView.setNavIconVisible(false);
+            }
         }
     }
 

@@ -296,7 +296,7 @@ public class BrowseFragment extends Fragment {
      * @return the current item being displayed
      */
     @Nullable
-    private MediaItemMetadata getCurrentMediaItem() {
+    MediaItemMetadata getCurrentMediaItem() {
         if (mBrowseStack.isEmpty()) {
             return mTopMediaItem;
         } else {
