@@ -28,14 +28,10 @@ import android.app.Application;
 import android.app.PendingIntent;
 import android.car.Car;
 import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.transition.Fade;
 import android.util.Log;
@@ -105,8 +101,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     /** Current state */
     private Intent mCurrentSourcePreferences;
-
-    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     private AppBarView.AppBarListener mAppBarListener = new AppBarView.AppBarListener() {
         @Override
@@ -292,13 +286,10 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                                 mAlbumBackground.getWidth(), mAlbumBackground.getHeight()));
         localViewModel.getAlbumArt().observe(this, this::setBackgroundImage);
 
-        playbackViewModel.getPlaybackState().observe(this, state -> {
-            handlePlaybackState(state);
-        });
+        playbackViewModel.getPlaybackState().observe(this, this::handlePlaybackState);
 
-        localViewModel.getModeAndErrorState().observe(this, pair -> {
-            handleModeAndErrorState(pair.first, pair.second);
-        });
+        localViewModel.getModeAndErrorState().observe(this, pair ->
+                handleModeAndErrorState(pair.first, pair.second));
     }
 
     private void handlePlaybackState(PlaybackStateCompat state) {
@@ -521,6 +512,9 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     public void onPlayableItemClicked(MediaItemMetadata item) {
         mPlaybackController.stop();
         mPlaybackController.playItem(item.getId());
+        if (getInnerViewModel().mMode.getValue() == Mode.SEARCHING) {
+            getInnerViewModel().setMode(Mode.BROWSING);
+        }
         setIntent(null);
     }
 
