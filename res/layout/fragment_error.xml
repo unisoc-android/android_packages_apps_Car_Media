@@ -24,8 +24,10 @@
         android:id="@+id/error_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/fragment_error_message_margin_side"
         android:layout_marginTop="@dimen/fragment_error_margin_top"
         android:textAppearance="?android:attr/textAppearanceMedium"
+        android:ellipsize="end"
         android:gravity="center"/>
 
     <Button
@@ -35,6 +37,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/fragment_error_button_margin_top"
         android:layout_centerHorizontal="true"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_below="@+id/error_message"/>
 
 </RelativeLayout>
