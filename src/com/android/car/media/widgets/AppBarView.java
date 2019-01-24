@@ -231,10 +231,7 @@ public class AppBarView extends RelativeLayout {
                 mListener.onBack();
                 break;
             case SEARCHING:
-                if (mState == State.SEARCHING) {
-                    mSearchText.setVisibility(View.GONE);
-                    mSearchText.getText().clear();
-                }
+                hideSearchBar();
             case PLAYING:
                 mListener.onCollapse();
                 break;
@@ -401,12 +398,13 @@ public class AppBarView extends RelativeLayout {
                 mNavIconContainer.setVisibility(View.GONE);
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(View.GONE);
-                mSearchText.setVisibility(View.GONE);
+                hideSearchBar();
             case BROWSING:
                 mNavIconContainer.setVisibility(View.INVISIBLE);
                 mNavIcon.setImageDrawable(mArrowBack);
                 mTabsContainer.setVisibility(showTabs ? View.VISIBLE : View.GONE);
                 mTitle.setVisibility(showTabs ? View.GONE : View.VISIBLE);
+                hideSearchBar();
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
             case STACKED:
@@ -414,6 +412,7 @@ public class AppBarView extends RelativeLayout {
                 mNavIconContainer.setVisibility(View.VISIBLE);
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(View.VISIBLE);
+                hideSearchBar();
                 mSearchButton.setVisibility(View.GONE);
                 break;
             case PLAYING:
@@ -425,6 +424,7 @@ public class AppBarView extends RelativeLayout {
                 mTitle.setText(mMediaAppTitle);
                 mTitle.setVisibility(showTabs || !mContentForwardEnabled ? View.GONE
                         : View.VISIBLE);
+                hideSearchBar();
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
             case SEARCHING:
@@ -436,5 +436,10 @@ public class AppBarView extends RelativeLayout {
                 mSearchText.requestFocus();
                 break;
         }
+    }
+
+    private void hideSearchBar() {
+        mSearchText.setVisibility(View.GONE);
+        mSearchText.getText().clear();
     }
 }
