@@ -60,7 +60,6 @@ public class AppBarView extends RelativeLayout {
     private float mUnselectedTabAlpha;
     private MediaItemMetadata mSelectedItem;
     private String mMediaAppTitle;
-    private boolean mContentForwardEnabled;
     private boolean mSearchSupported;
     private boolean mShowTabs = true;
 
@@ -329,13 +328,6 @@ public class AppBarView extends RelativeLayout {
     }
 
     /**
-     * Whether content forward browsing is enabled or not
-     */
-    public void setContentForwardEnabled(boolean enabled) {
-        mContentForwardEnabled = enabled;
-    }
-
-    /**
      * Updates the currently active item
      */
     public void setActiveItem(MediaItemMetadata item) {
@@ -417,13 +409,11 @@ public class AppBarView extends RelativeLayout {
                 break;
             case PLAYING:
                 mNavIcon.setImageDrawable(mCollapse);
-                mNavIconContainer.setVisibility(!mContentForwardEnabled ? View.GONE : View.VISIBLE);
+                mNavIconContainer.setVisibility(View.GONE);
                 setActiveItem(null);
-                mTabsContainer.setVisibility(showTabs && mContentForwardEnabled ? View.VISIBLE
-                        : View.GONE);
+                mTabsContainer.setVisibility(showTabs ? View.VISIBLE : View.GONE);
                 mTitle.setText(mMediaAppTitle);
-                mTitle.setVisibility(showTabs || !mContentForwardEnabled ? View.GONE
-                        : View.VISIBLE);
+                mTitle.setVisibility(showTabs ? View.GONE : View.VISIBLE);
                 hideSearchBar();
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
