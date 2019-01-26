@@ -3,7 +3,6 @@ package com.android.car.media.widgets;
 import android.annotation.Nullable;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -409,7 +408,7 @@ public class AppBarView extends RelativeLayout {
                 break;
             case PLAYING:
                 mNavIcon.setImageDrawable(mCollapse);
-                mNavIconContainer.setVisibility(View.GONE);
+                mNavIconContainer.setVisibility(View.VISIBLE);
                 setActiveItem(null);
                 mTabsContainer.setVisibility(showTabs ? View.VISIBLE : View.GONE);
                 mTitle.setText(mMediaAppTitle);
