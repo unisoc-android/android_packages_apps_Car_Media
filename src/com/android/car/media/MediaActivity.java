@@ -173,12 +173,8 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
 
         mAppBarView = findViewById(R.id.app_bar);
         mAppBarView.setListener(mAppBarListener);
-        mediaSourceViewModel.getPrimaryMediaSource().observe(this, source -> {
-            mAppBarView.setMediaAppName(source.getName());
-            updateTabs(null);
-            getInnerViewModel().setMode(Mode.BROWSING);
-            onMediaSourceChanged(source);
-        });
+        mediaSourceViewModel.getPrimaryMediaSource().observe(this,
+                this::onMediaSourceChanged);
 
         MediaAppSelectorWidget appSelector = findViewById(R.id.app_switch_container);
         appSelector.setFragmentActivity(this);
@@ -314,6 +310,10 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
             if (Log.isLoggable(TAG, Log.INFO)) {
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
             }
+            mAppBarView.setMediaAppName(mediaSource.getName());
+            mAppBarView.setTitle(null);
+            updateTabs(null);
+            getInnerViewModel().setMode(Mode.BROWSING);
             String packageName = mediaSource.getPackageName();
             updateSourcePreferences(packageName);
 
