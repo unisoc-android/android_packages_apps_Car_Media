@@ -21,41 +21,31 @@ import static com.android.car.arch.common.LiveDataFunctions.distinct;
 import static com.android.car.arch.common.LiveDataFunctions.nullLiveData;
 import static com.android.car.arch.common.LiveDataFunctions.pair;
 
-import static java.util.Objects.requireNonNull;
-
-import android.app.ActionBar;
 import android.app.Application;
 import android.app.PendingIntent;
 import android.car.Car;
 import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.transition.Fade;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
-import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.car.drawer.CarDrawerController;
 import androidx.core.util.Pair;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProviders;
 
-import com.android.car.apps.common.DrawerActivity;
 import com.android.car.media.common.AppSelectionFragment;
 import com.android.car.media.common.CrossfadeImageView;
 import com.android.car.media.common.MediaAppSelectorWidget;
@@ -66,7 +56,6 @@ import com.android.car.media.common.playback.AlbumArtLiveData;
 import com.android.car.media.common.playback.PlaybackViewModel;
 import com.android.car.media.common.source.MediaSource;
 import com.android.car.media.common.source.MediaSourceViewModel;
-import com.android.car.media.drawer.MediaDrawerController;
 import com.android.car.media.widgets.AppBarView;
 import com.android.car.media.widgets.BrowsePlaybackControlBar;
 import com.android.car.media.widgets.ViewUtils;
@@ -76,9 +65,9 @@ import java.util.stream.Collectors;
 
 /**
  * This activity controls the UI of media. It also updates the connection status for the media app
- * by broadcast. Drawer menu is controlled by {@link MediaDrawerController}.
+ * by broadcast.
  */
-public class MediaActivity extends DrawerActivity implements BrowseFragment.Callbacks,
+public class MediaActivity extends FragmentActivity implements BrowseFragment.Callbacks,
         PlaybackFragment.Callbacks {
     private static final String TAG = "MediaActivity";
 
@@ -86,7 +75,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     private int mFadeDuration;
 
     /** Models */
-    private MediaDrawerController mDrawerController;
     private PlaybackViewModel.PlaybackController mPlaybackController;
 
     /** Layout views */
@@ -105,8 +93,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     /** Current state */
     private Intent mCurrentSourcePreferences;
-
-    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     private AppBarView.AppBarListener mAppBarListener = new AppBarView.AppBarListener() {
         @Override
@@ -159,23 +145,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             mSearchFragment.updateSearchQuery(query);
         }
     };
-    private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {
-        @Override
-        public void onDrawerSlide(@androidx.annotation.NonNull View view, float v) {
-        }
-
-        @Override
-        public void onDrawerOpened(@androidx.annotation.NonNull View view) {
-        }
-
-        @Override
-        public void onDrawerClosed(@androidx.annotation.NonNull View view) {
-        }
-
-        @Override
-        public void onDrawerStateChanged(int i) {
-        }
-    };
 
     /**
      * Possible modes of the application UI
@@ -194,59 +163,34 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         super.onCreate(savedInstanceState);
         setContentView(R.layout.media_activity);
 
-        boolean contentForwardBrowseEnabled = getResources()
-                .getBoolean(R.bool.forward_content_browse_enabled);
-
         MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
         PlaybackViewModel playbackViewModel = getPlaybackViewModel();
         ViewModel localViewModel = ViewModelProviders.of(this).get(ViewModel.class);
         if (savedInstanceState == null) {
             playbackViewModel.setMediaController(mediaSourceViewModel.getMediaController());
-            localViewModel.init(playbackViewModel, contentForwardBrowseEnabled);
-        }
-
-        CarDrawerController drawerController = requireNonNull(getDrawerController());
-        mDrawerController = new MediaDrawerController(this, drawerController);
-        drawerController.setRootAdapter(mDrawerController.getRootAdapter());
-        drawerController.addDrawerListener(mDrawerListener);
-        if (contentForwardBrowseEnabled) {
-            requireNonNull(getActionBar()).hide();
+            localViewModel.init(playbackViewModel);
         }
 
         mAppBarView = findViewById(R.id.app_bar);
         mAppBarView.setListener(mAppBarListener);
-        mAppBarView.setContentForwardEnabled(contentForwardBrowseEnabled);
-        mediaSourceViewModel.getPrimaryMediaSource().observe(this, source -> {
-            if (contentForwardBrowseEnabled) {
-                mAppBarView.setContentForwardEnabled(true);
-                mAppBarView.setMediaAppName(source.getName());
-                updateTabs(null);
-                ActionBar actionBar = requireNonNull(getActionBar());
-                actionBar.hide();
-                getInnerViewModel().setMode(Mode.BROWSING);
-            }
-            onMediaSourceChanged(source);
-        });
+        mediaSourceViewModel.getPrimaryMediaSource().observe(this,
+                this::onMediaSourceChanged);
 
         MediaAppSelectorWidget appSelector = findViewById(R.id.app_switch_container);
         appSelector.setFragmentActivity(this);
 
         mEmptyFragment = new EmptyFragment();
-        if (contentForwardBrowseEnabled) {
-            // If content forward browsing is disabled, then no need to observe browsed items, we
-            // will use the drawer instead.
-            MediaBrowserViewModel mediaBrowserViewModel = getRootBrowserViewModel();
-            mediaBrowserViewModel.getBrowseState().observe(this,
-                    browseState -> mEmptyFragment.setState(browseState,
-                            mediaSourceViewModel.getPrimaryMediaSource().getValue()));
-            mediaBrowserViewModel.getBrowsedMediaItems().observe(this, futureData -> {
-                if (!futureData.isLoading()) {
-                    updateTabs(futureData.getData());
-                }
-            });
-            mediaBrowserViewModel.supportsSearch().observe(this,
-                    mAppBarView::setSearchSupported);
-        }
+        MediaBrowserViewModel mediaBrowserViewModel = getRootBrowserViewModel();
+        mediaBrowserViewModel.getBrowseState().observe(this,
+                browseState -> mEmptyFragment.setState(browseState,
+                        mediaSourceViewModel.getPrimaryMediaSource().getValue()));
+        mediaBrowserViewModel.getBrowsedMediaItems().observe(this, futureData -> {
+            if (!futureData.isLoading()) {
+                updateTabs(futureData.getData());
+            }
+        });
+        mediaBrowserViewModel.supportsSearch().observe(this,
+                mAppBarView::setSearchSupported);
 
         mPlaybackFragment = new PlaybackFragment();
         mSearchFragment = BrowseFragment.newSearchInstance(null);
@@ -292,13 +236,10 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
                                 mAlbumBackground.getWidth(), mAlbumBackground.getHeight()));
         localViewModel.getAlbumArt().observe(this, this::setBackgroundImage);
 
-        playbackViewModel.getPlaybackState().observe(this, state -> {
-            handlePlaybackState(state);
-        });
+        playbackViewModel.getPlaybackState().observe(this, this::handlePlaybackState);
 
-        localViewModel.getModeAndErrorState().observe(this, pair -> {
-            handleModeAndErrorState(pair.first, pair.second);
-        });
+        localViewModel.getModeAndErrorState().observe(this, pair ->
+                handleModeAndErrorState(pair.first, pair.second));
     }
 
     private void handlePlaybackState(PlaybackStateCompat state) {
@@ -353,7 +294,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     }
 
     private void handleIntent() {
-        requireNonNull(getDrawerController()).closeDrawer();
         MediaSource mediaSource = getMediaSourceViewModel().getPrimaryMediaSource().getValue();
         if (mediaSource == null) {
             openAppSelector();
@@ -370,7 +310,10 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             if (Log.isLoggable(TAG, Log.INFO)) {
                 Log.i(TAG, "Browsing: " + mediaSource.getName());
             }
-            // Make the drawer display browse information of the selected source
+            mAppBarView.setMediaAppName(mediaSource.getName());
+            mAppBarView.setTitle(null);
+            updateTabs(null);
+            getInnerViewModel().setMode(Mode.BROWSING);
             String packageName = mediaSource.getPackageName();
             updateSourcePreferences(packageName);
 
@@ -521,6 +464,9 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
     public void onPlayableItemClicked(MediaItemMetadata item) {
         mPlaybackController.stop();
         mPlaybackController.playItem(item.getId());
+        if (getInnerViewModel().mMode.getValue() == Mode.SEARCHING) {
+            getInnerViewModel().setMode(Mode.BROWSING);
+        }
         setIntent(null);
     }
 
@@ -546,11 +492,7 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
 
     @Override
     public void onQueueButtonClicked() {
-        if (getInnerViewModel().useContentForwardBrowse()) {
-            mPlaybackFragment.toggleQueueVisibility();
-        } else {
-            mDrawerController.showPlayQueue();
-        }
+        mPlaybackFragment.toggleQueueVisibility();
     }
 
     public static class ViewModel extends AndroidViewModel {
@@ -558,7 +500,6 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
         private MutableLiveData<Size> mAlbumArtSize = new MutableLiveData<>();
         private PlaybackViewModel mPlaybackViewModel;
 
-        private boolean mContentForwardBrowseEnabled;
         private MutableLiveData<Boolean> mIsErrorState = new MutableLiveData<>();
         private MutableLiveData<Mode> mMode = new MutableLiveData<>();
 
@@ -566,12 +507,11 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             super(application);
         }
 
-        void init(@NonNull PlaybackViewModel playbackViewModel, boolean contentForwardBrowse) {
+        void init(@NonNull PlaybackViewModel playbackViewModel) {
             if (mPlaybackViewModel == playbackViewModel) {
                 return;
             }
             mPlaybackViewModel = playbackViewModel;
-            mContentForwardBrowseEnabled = contentForwardBrowse;
 
             mAlbumArt = switchMap(distinct(mAlbumArtSize), size -> {
                 if (size == null || size.getHeight() == 0 || size.getWidth() == 0) {
@@ -592,14 +532,8 @@ public class MediaActivity extends DrawerActivity implements BrowseFragment.Call
             return mAlbumArt;
         }
 
-        boolean useContentForwardBrowse() {
-            return mContentForwardBrowseEnabled;
-        }
-
         void setMode(Mode mode) {
-            // If content forward is not enabled, then we always show the playback UI
-            // (browse will be done in the drawer)
-            mMode.setValue(mContentForwardBrowseEnabled ? mode : Mode.PLAYBACK);
+            mMode.setValue(mode);
         }
 
         LiveData<Pair<Mode, Boolean>> getModeAndErrorState() {

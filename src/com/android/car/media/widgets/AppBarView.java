@@ -3,7 +3,6 @@ package com.android.car.media.widgets;
 import android.annotation.Nullable;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -60,7 +59,6 @@ public class AppBarView extends RelativeLayout {
     private float mUnselectedTabAlpha;
     private MediaItemMetadata mSelectedItem;
     private String mMediaAppTitle;
-    private boolean mContentForwardEnabled;
     private boolean mSearchSupported;
     private boolean mShowTabs = true;
 
@@ -231,10 +229,7 @@ public class AppBarView extends RelativeLayout {
                 mListener.onBack();
                 break;
             case SEARCHING:
-                if (mState == State.SEARCHING) {
-                    mSearchText.setVisibility(View.GONE);
-                    mSearchText.getText().clear();
-                }
+                hideSearchBar();
             case PLAYING:
                 mListener.onCollapse();
                 break;
@@ -332,13 +327,6 @@ public class AppBarView extends RelativeLayout {
     }
 
     /**
-     * Whether content forward browsing is enabled or not
-     */
-    public void setContentForwardEnabled(boolean enabled) {
-        mContentForwardEnabled = enabled;
-    }
-
-    /**
      * Updates the currently active item
      */
     public void setActiveItem(MediaItemMetadata item) {
@@ -401,12 +389,13 @@ public class AppBarView extends RelativeLayout {
                 mNavIconContainer.setVisibility(View.GONE);
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(View.GONE);
-                mSearchText.setVisibility(View.GONE);
+                hideSearchBar();
             case BROWSING:
                 mNavIconContainer.setVisibility(View.INVISIBLE);
                 mNavIcon.setImageDrawable(mArrowBack);
                 mTabsContainer.setVisibility(showTabs ? View.VISIBLE : View.GONE);
                 mTitle.setVisibility(showTabs ? View.GONE : View.VISIBLE);
+                hideSearchBar();
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
             case STACKED:
@@ -414,17 +403,17 @@ public class AppBarView extends RelativeLayout {
                 mNavIconContainer.setVisibility(View.VISIBLE);
                 mTabsContainer.setVisibility(View.GONE);
                 mTitle.setVisibility(View.VISIBLE);
+                hideSearchBar();
                 mSearchButton.setVisibility(View.GONE);
                 break;
             case PLAYING:
                 mNavIcon.setImageDrawable(mCollapse);
-                mNavIconContainer.setVisibility(!mContentForwardEnabled ? View.GONE : View.VISIBLE);
+                mNavIconContainer.setVisibility(View.VISIBLE);
                 setActiveItem(null);
-                mTabsContainer.setVisibility(showTabs && mContentForwardEnabled ? View.VISIBLE
-                        : View.GONE);
+                mTabsContainer.setVisibility(showTabs ? View.VISIBLE : View.GONE);
                 mTitle.setText(mMediaAppTitle);
-                mTitle.setVisibility(showTabs || !mContentForwardEnabled ? View.GONE
-                        : View.VISIBLE);
+                mTitle.setVisibility(showTabs ? View.GONE : View.VISIBLE);
+                hideSearchBar();
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 break;
             case SEARCHING:
@@ -436,5 +425,10 @@ public class AppBarView extends RelativeLayout {
                 mSearchText.requestFocus();
                 break;
         }
+    }
+
+    private void hideSearchBar() {
+        mSearchText.setVisibility(View.GONE);
+        mSearchText.getText().clear();
     }
 }
