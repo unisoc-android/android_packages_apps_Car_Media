@@ -4,6 +4,7 @@ import static androidx.lifecycle.Transformations.map;
 import static androidx.lifecycle.Transformations.switchMap;
 
 import static com.android.car.arch.common.LiveDataFunctions.combine;
+import static com.android.car.arch.common.LiveDataFunctions.distinct;
 import static com.android.car.arch.common.LiveDataFunctions.falseLiveData;
 import static com.android.car.arch.common.LiveDataFunctions.freezable;
 import static com.android.car.arch.common.LiveDataFunctions.mapNonNull;
@@ -11,11 +12,9 @@ import static com.android.car.arch.common.LiveDataFunctions.mapNonNull;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.ColorDrawable;
 import android.media.session.PlaybackState;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -35,6 +34,29 @@ import java.util.concurrent.TimeUnit;
  * Common controller for displaying current track's metadata.
  */
 public class MetadataController {
+    private PlaybackViewModel.PlaybackController mController;
+
+    private boolean mTrackingTouch;
+    private SeekBar.OnSeekBarChangeListener mOnSeekBarChangeListener =
+            new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    // Do nothing.
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                    mTrackingTouch = true;
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    if (mTrackingTouch && mController != null) {
+                        mController.seekTo(seekBar.getProgress());
+                    }
+                    mTrackingTouch = false;
+                }
+            };
 
     /**
      * Create a new MetadataController that operates on the provided Views
@@ -53,6 +75,9 @@ public class MetadataController {
             @NonNull TextView title, @NonNull TextView subtitle,
             @Nullable TextView time, @NonNull SeekBar seekBar,
             @Nullable ImageView albumArt) {
+        viewModel.getPlaybackController().observe(lifecycleOwner,
+                controller -> mController = controller);
+
         Model model = new Model(viewModel, pauseUpdates);
 
         model.getTitle().observe(lifecycleOwner, title::setText);
@@ -77,13 +102,32 @@ public class MetadataController {
             model.getTimeText().observe(lifecycleOwner, time::setText);
         }
 
-        seekBar.setOnTouchListener((view, event) -> true);
         model.hasTime().observe(lifecycleOwner,
                 visible -> seekBar.setVisibility(visible ? View.VISIBLE : View.INVISIBLE));
         model.getMaxProgress().observe(lifecycleOwner,
                 maxProgress -> seekBar.setMax(maxProgress.intValue()));
         model.getProgress().observe(lifecycleOwner,
-                progress -> seekBar.setProgress(progress.intValue()));
+                progress -> {
+                    if (!mTrackingTouch) {
+                        seekBar.setProgress(progress.intValue());
+                    }
+                });
+
+        model.isSeekToEnabled().observe(lifecycleOwner,
+                enabled -> {
+                    mTrackingTouch = false;
+                    if (seekBar.getThumb() != null) {
+                        seekBar.getThumb().mutate().setAlpha(enabled ? 255 : 0);
+                    }
+                    final boolean shouldHandleTouch = seekBar.getThumb() != null && enabled;
+                    seekBar.setOnTouchListener((v, event) -> !shouldHandleTouch /* consumeEvent */);
+                });
+
+        seekBar.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
+
+        viewModel.getPlaybackStateWrapper().observe(lifecycleOwner, state -> {
+            mTrackingTouch = false;
+        });
     }
 
     static class Model {
@@ -95,6 +139,7 @@ public class MetadataController {
         private final LiveData<Long> mMaxProgress;
         private final LiveData<CharSequence> mTimeText;
         private final LiveData<Boolean> mHasTime;
+        private final LiveData<Boolean> mIsSeekToEnabled;
 
         private final MutableLiveData<Integer> mAlbumArtSize = new MutableLiveData<>();
 
@@ -128,6 +173,10 @@ public class MetadataController {
             mHasTime = combine(mProgress, mMaxProgress,
                     (progress, maxProgress) ->
                             maxProgress > 0 && progress != PlaybackState.PLAYBACK_POSITION_UNKNOWN);
+
+            mIsSeekToEnabled = distinct(freezable(pauseUpdates,
+                    map(playbackViewModel.getPlaybackStateWrapper(),
+                            state -> state != null && state.isSeekToEnabled())));
         }
 
 
@@ -163,6 +212,9 @@ public class MetadataController {
             return mHasTime;
         }
 
+        LiveData<Boolean> isSeekToEnabled() {
+            return mIsSeekToEnabled;
+        }
 
         @SuppressLint("DefaultLocale")
         private static String formatTime(long millis, boolean showHours) {
