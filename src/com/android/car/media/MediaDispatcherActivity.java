@@ -27,7 +27,7 @@ public class MediaDispatcherActivity extends FragmentActivity {
         Intent intent = getIntent();
         String action = intent != null ? intent.getAction() : null;
 
-        MediaSourceViewModel mediaSrcVM = MediaSourceViewModel.get(this);
+        MediaSourceViewModel mediaSrcVM = MediaSourceViewModel.get(getApplication());
         MediaSource mediaSrc = null;
 
         if (Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE.equals(action)) {

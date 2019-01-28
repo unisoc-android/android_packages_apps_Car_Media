@@ -219,6 +219,10 @@ public class AppBarView extends RelativeLayout {
         mAppSelector.open();
     }
 
+    public void closeAppSelector() {
+        mAppSelector.close();
+    }
+
     private void onNavIconClicked() {
         if (mListener == null) {
             return;
