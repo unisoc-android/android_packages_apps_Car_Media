@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
  * by broadcast.
  */
 public class MediaActivity extends FragmentActivity implements BrowseFragment.Callbacks,
-        PlaybackFragment.Callbacks {
+        AppBarView.AppBarProvider {
     private static final String TAG = "MediaActivity";
 
     /** Configuration (controlled from resources) */
@@ -144,6 +144,11 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
             }
             mSearchFragment.updateSearchQuery(query);
         }
+
+        @Override
+        public void onQueueClicked() {
+            mPlaybackFragment.toggleQueueVisibility();
+        }
     };
 
     /**
@@ -167,7 +172,6 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
         PlaybackViewModel playbackViewModel = getPlaybackViewModel();
         ViewModel localViewModel = ViewModelProviders.of(this).get(ViewModel.class);
         if (savedInstanceState == null) {
-            playbackViewModel.setMediaController(mediaSourceViewModel.getMediaController());
             localViewModel.init(playbackViewModel);
         }
 
@@ -235,13 +239,13 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                                 mAlbumBackground.getWidth(), mAlbumBackground.getHeight()));
         localViewModel.getAlbumArt().observe(this, this::setBackgroundImage);
 
-        playbackViewModel.getPlaybackState().observe(this, this::handlePlaybackState);
+        playbackViewModel.getPlaybackStateWrapper().observe(this, this::handlePlaybackState);
 
         localViewModel.getModeAndErrorState().observe(this, pair ->
                 handleModeAndErrorState(pair.first, pair.second));
     }
 
-    private void handlePlaybackState(PlaybackStateCompat state) {
+    private void handlePlaybackState(PlaybackViewModel.PlaybackStateWrapper state) {
         if (state == null) {
             return;
         }
@@ -328,7 +332,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                         .setClassName(info.activityInfo.packageName, info.activityInfo.name);
             }
         }
-        mAppBarView.showSettings(mCurrentSourcePreferences != null);
+        mAppBarView.setHasSettings(mCurrentSourcePreferences != null);
     }
 
     /**
@@ -481,8 +485,8 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
     }
 
     @Override
-    public void onQueueButtonClicked() {
-        mPlaybackFragment.toggleQueueVisibility();
+    public AppBarView getAppBar() {
+        return mAppBarView;
     }
 
     public static class ViewModel extends AndroidViewModel {

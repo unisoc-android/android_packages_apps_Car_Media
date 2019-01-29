@@ -20,7 +20,6 @@ import static com.android.car.arch.common.LiveDataFunctions.dataOf;
 import static com.android.car.arch.common.LiveDataFunctions.freezable;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
@@ -43,15 +42,16 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.playback.PlaybackViewModel;
+import com.android.car.media.widgets.AppBarView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A {@link Fragment} that implements both the playback and the content forward browsing experience.
@@ -61,10 +61,10 @@ import java.util.List;
 public class PlaybackFragment extends Fragment {
     private static final String TAG = "PlaybackFragment";
 
+    private AppBarView mAppBarView;
     private PlaybackControls mPlaybackControls;
     private QueueItemsAdapter mQueueAdapter;
     private PagedListView mQueue;
-    private Callbacks mCallbacks;
 
     private MetadataController mMetadataController;
     private ConstraintLayout mRootView;
@@ -118,25 +118,6 @@ public class PlaybackFragment extends Fragment {
         }
     }
 
-    /**
-     * Callbacks this fragment can trigger
-     */
-    public interface Callbacks {
-        /**
-         * Indicates that the "show queue" button has been clicked
-         */
-        void onQueueButtonClicked();
-    }
-
-    private PlaybackControls.Listener mPlaybackControlsListener = new PlaybackControls.Listener() {
-        @Override
-        public void onToggleQueue() {
-            if (mCallbacks != null) {
-                mCallbacks.onQueueButtonClicked();
-            }
-        }
-    };
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container,
             Bundle savedInstanceState) {
@@ -155,19 +136,17 @@ public class PlaybackFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        mCallbacks = (Callbacks) context;
+        mAppBarView = ((AppBarView.AppBarProvider)context).getAppBar();
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        mCallbacks = null;
     }
 
     private void initPlaybackControls(PlaybackControls playbackControls) {
         mPlaybackControls = playbackControls;
         mPlaybackControls.setModel(getPlaybackViewModel(), getViewLifecycleOwner());
-        mPlaybackControls.setListener(mPlaybackControlsListener);
         mPlaybackControls.setAnimationViewGroup(mRootView);
     }
 
@@ -177,13 +156,25 @@ public class PlaybackFragment extends Fragment {
         recyclerView.setFadingEdgeLength(getResources()
                 .getDimensionPixelSize(R.dimen.car_padding_4));
         mQueueAdapter = new QueueItemsAdapter(getContext(), mQueueItemsProvider);
-        getPlaybackViewModel().getPlaybackInfo().getActiveQueueItemId().observe(
-                getViewLifecycleOwner(), id -> {
-                    mActiveQueueItemId = id;
-                    mQueueAdapter.refresh();
+
+        getPlaybackViewModel().getPlaybackStateWrapper().observe(getViewLifecycleOwner(),
+                state -> {
+                    Long itemId = (state != null) ? state.getActiveQueueItemId() : null;
+                    if (!Objects.equals(mActiveQueueItemId, itemId)) {
+                        mActiveQueueItemId = itemId;
+                        mQueueAdapter.refresh();
+                    }
                 });
         queueList.setAdapter(mQueueAdapter);
         freezable(mUpdatesPaused, getPlaybackViewModel().getQueue()).observe(this, this::setQueue);
+
+        getPlaybackViewModel().hasQueue().observe(getViewLifecycleOwner(), hasQueue -> {
+            boolean enableQueue = (hasQueue != null) && hasQueue;
+            mAppBarView.setHasQueue(enableQueue);
+            if (mQueueIsVisible && !enableQueue) {
+                toggleQueueVisibility();
+            }
+        });
     }
 
     private void setQueue(List<MediaItemMetadata> queueItems) {
@@ -207,7 +198,7 @@ public class PlaybackFragment extends Fragment {
      */
     public void toggleQueueVisibility() {
         mQueueIsVisible = !mQueueIsVisible;
-        mPlaybackControls.setQueueVisible(mQueueIsVisible);
+        mAppBarView.activateQueueButton(mQueueIsVisible);
 
         Transition transition = TransitionInflater.from(getContext()).inflateTransition(
                 mQueueIsVisible ? R.transition.queue_in : R.transition.queue_out);

@@ -78,6 +78,15 @@
         android:layout_centerInParent="true"
         android:src="@drawable/ic_settings" />
 
+    <ImageView
+        android:id="@+id/queue"
+        android:layout_width="@dimen/appbar_view_icon_size"
+        android:layout_height="@dimen/appbar_view_icon_size"
+        android:tint="@color/appbar_view_icon_tint"
+        android:layout_toLeftOf="@id/app_switch_container"
+        android:layout_centerInParent="true"
+        android:src="@drawable/ic_tracklist" />
+
     <com.android.car.media.common.MediaAppSelectorWidget
         android:id="@+id/app_switch_container"
         android:layout_width="@dimen/app_switch_widget_width"
