@@ -247,6 +247,6 @@ public class PlaybackFragment extends Fragment {
     }
 
     private PlaybackViewModel getPlaybackViewModel() {
-        return ViewModelProviders.of(getActivity()).get(PlaybackViewModel.class);
+        return PlaybackViewModel.get(getActivity().getApplication());
     }
 }

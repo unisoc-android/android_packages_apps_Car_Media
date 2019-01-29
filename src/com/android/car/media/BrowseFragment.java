@@ -180,9 +180,8 @@ public class BrowseFragment extends Fragment {
         // (e.g. between different browse tabs, search)
         mMediaBrowserViewModel = MediaBrowserViewModel.Factory.getInstanceWithMediaBrowser(
                 ViewModelProviders.of(this),
-                ViewModelProviders.of(requireActivity()).get(MediaSourceViewModel.class)
-                        .getConnectedMediaBrowser()
-        );
+                MediaSourceViewModel.get(
+                        requireActivity().getApplication()).getConnectedMediaBrowser());
     }
 
     @Override
