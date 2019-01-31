@@ -1,6 +1,5 @@
 package com.android.car.media;
 
-import android.annotation.Nullable;
 import android.app.PendingIntent;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,7 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.android.car.media.common.MediaConstants;
+import com.android.car.apps.common.CarUxRestrictionsUtil;
 
 /**
  * A {@link Fragment} that displays the playback state error.
@@ -64,6 +63,9 @@ public class ErrorFragment extends Fragment {
             return view;
         }
 
+        CarUxRestrictionsUtil carUxRestrictionsUtil = CarUxRestrictionsUtil.getInstance(
+                getActivity().getApplication());
+        mErrorMessageStr = carUxRestrictionsUtil.restrictString(mErrorMessageStr);
         mErrorMessageView.setText(mErrorMessageStr);
 
         // Only an error message is required. Fragments without a provided message and label

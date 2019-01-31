@@ -145,5 +145,6 @@
     <!-- fragment_error.xml -->
     <dimen name="fragment_error_margin_top">@*android:dimen/car_padding_4</dimen>
     <dimen name="fragment_error_button_margin_top">80dp</dimen>
+    <dimen name="fragment_error_message_margin_side">80dp</dimen>
 
 </resources>
