@@ -50,8 +50,7 @@ import java.util.function.Consumer;
  *
  * <p>Consumers of this adapter should use {@link #registerObserver(Observer)} to receive updates.
  */
-public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder> implements
-        PagedListView.DividerVisibilityManager {
+public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder> {
     private static final String TAG = "BrowseAdapter";
     @NonNull
     private final Context mContext;
@@ -283,19 +282,11 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
         return itemsBuilder.build();
     }
 
-    @Override
-    public boolean getShowDivider(int position) {
-        return (position < getItemCount() - 1
-                && position >= 0
-                && getItem(position).mViewType == BrowseItemViewType.PANEL_ITEM
-                && getItem(position + 1).mViewType == BrowseItemViewType.PANEL_ITEM);
-    }
-
     private BrowseItemViewType getBrowsableViewType(@Nullable MediaItemMetadata mediaItem) {
         if (mediaItem == null || !mContentStyleEnabled) {
-            return BrowseItemViewType.PANEL_ITEM;
+            return BrowseItemViewType.LIST_ITEM;
         }
-        if (mediaItem.getPlayableContentStyleHint() == 0) {
+        if (mediaItem.getBrowsableContentStyleHint() == 0) {
             return mRootBrowsableViewType;
         }
         return fromMediaHint(mediaItem.getBrowsableContentStyleHint());

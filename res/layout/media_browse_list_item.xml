@@ -58,4 +58,11 @@
             android:maxLines="1"
             android:textAppearance="?android:attr/textAppearanceMedium"/>
     </LinearLayout>
+    <ImageView
+        android:id="@+id/right_arrow"
+        android:src="@drawable/ic_chevron_right"
+        android:layout_width="@dimen/media_browse_list_item_arrow_size"
+        android:layout_height="@dimen/media_browse_list_item_arrow_size"
+        android:layout_gravity="center_vertical"
+        android:scaleType="centerCrop" />
 </LinearLayout>
