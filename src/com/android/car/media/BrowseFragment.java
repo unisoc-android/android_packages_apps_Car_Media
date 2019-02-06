@@ -211,7 +211,6 @@ public class BrowseFragment extends Fragment {
 
         mBrowseAdapter = new BrowseAdapter(recyclerView.getContext());
         mBrowseList.setAdapter(mBrowseAdapter);
-        mBrowseList.setDividerVisibilityManager(mBrowseAdapter);
         mBrowseAdapter.registerObserver(mBrowseAdapterObserver);
 
         if (savedInstanceState == null) {

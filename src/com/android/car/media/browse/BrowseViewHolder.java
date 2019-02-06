@@ -34,6 +34,7 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
     final TextView mSubtitle;
     final ImageView mAlbumArt;
     final ViewGroup mContainer;
+    final ImageView mRightArrow;
 
     /**
      * Creates a {@link BrowseViewHolder} for the given view.
@@ -44,6 +45,7 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
         mSubtitle = itemView.findViewById(com.android.car.media.R.id.subtitle);
         mAlbumArt = itemView.findViewById(com.android.car.media.R.id.thumbnail);
         mContainer = itemView.findViewById(com.android.car.media.R.id.container);
+        mRightArrow = itemView.findViewById(com.android.car.media.R.id.right_arrow);
     }
 
     /**
@@ -70,6 +72,9 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
         }
         if (mContainer != null && data.mOnClickListener != null) {
             mContainer.setOnClickListener(data.mOnClickListener);
+        }
+        if (mRightArrow != null) {
+            mRightArrow.setVisibility(data.mMediaItem.isBrowsable() ? View.VISIBLE : View.GONE);
         }
     }
 }
