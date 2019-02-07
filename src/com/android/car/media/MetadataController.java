@@ -1,5 +1,6 @@
 package com.android.car.media;
 
+import static androidx.lifecycle.Transformations.map;
 import static androidx.lifecycle.Transformations.switchMap;
 
 import static com.android.car.arch.common.LiveDataFunctions.combine;
@@ -14,6 +15,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.ColorDrawable;
 import android.media.session.PlaybackState;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -111,9 +113,10 @@ public class MetadataController {
                                     playbackViewModel.getApplication(),
                                     size, size, true,
                                     playbackViewModel.getMetadata())));
-            mProgress = freezable(pauseUpdates, playbackViewModel.getPlaybackInfo().getProgress());
+            mProgress = freezable(pauseUpdates, playbackViewModel.getProgress());
             mMaxProgress = freezable(pauseUpdates,
-                    playbackViewModel.getPlaybackInfo().getMaxProgress());
+                    map(playbackViewModel.getPlaybackStateWrapper(),
+                            state -> state != null ? state.getMaxProgress() : 0L));
 
             mTimeText = combine(mProgress, mMaxProgress, (progress, maxProgress) -> {
                 boolean showHours = TimeUnit.MILLISECONDS.toHours(maxProgress) > 0;
@@ -124,8 +127,7 @@ public class MetadataController {
 
             mHasTime = combine(mProgress, mMaxProgress,
                     (progress, maxProgress) ->
-                            maxProgress > 0 && progress != PlaybackState.PLAYBACK_POSITION_UNKNOWN
-            );
+                            maxProgress > 0 && progress != PlaybackState.PLAYBACK_POSITION_UNKNOWN);
         }
 
 
