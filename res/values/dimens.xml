@@ -33,10 +33,14 @@
     <dimen name="controls_spacing_inner">16dp</dimen>
     <dimen name="controls_spacing_outer">81dp</dimen>
 
-    <!-- Playback seekbar height -->
-    <dimen name="playback_seekbar_height">8dp</dimen>
+    <!-- Playback seekbar track height -->
+    <dimen name="playback_seekbar_track_height">8dp</dimen>
     <!-- Size of the thumb in the playback seekbar -->
-    <dimen name="playback_seekbar_thumb_width">6dp</dimen>
+    <dimen name="playback_seekbar_thumb_height">20dp</dimen>
+    <dimen name="playback_seekbar_thumb_width">20dp</dimen>
+    <!-- Paddings of playback seekbar -->
+    <dimen name="playback_seekbar_padding_start">10dp</dimen>
+    <dimen name="playback_seekbar_padding_end">10dp</dimen>
     <!-- Image size used to generate the background -->
     <dimen name="playback_background_raw_image_size">300px</dimen>
     <!-- Blurring radius used to blur background images -->
