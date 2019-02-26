@@ -32,4 +32,10 @@
 
     <!-- Time allowed for a process to complete before we show a progress indicator -->
     <integer name="progress_indicator_delay">1000</integer>
+
+    <!-- Maximum number of tabs to show on the app bar -->
+    <integer name="max_tabs">4</integer>
+
+    <!-- Number of rows in the app bar view -->
+    <integer name="num_app_bar_view_rows">1</integer>
 </resources>

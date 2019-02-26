@@ -15,8 +15,6 @@
   limitations under the License.
 -->
 <resources>
-    <declare-styleable name="AppBarView">
-        <!-- Maximum number of tabs to show on the app bar -->
-        <attr name="max_tabs" format="integer"/>
-    </declare-styleable>
+    <!-- Number of rows in the app bar view -->
+    <integer name="num_app_bar_view_rows">2</integer>
 </resources>
