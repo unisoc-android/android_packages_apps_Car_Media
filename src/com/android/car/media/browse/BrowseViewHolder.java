@@ -17,6 +17,7 @@
 package com.android.car.media.browse;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -35,6 +36,10 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
     final ImageView mAlbumArt;
     final ViewGroup mContainer;
     final ImageView mRightArrow;
+    final ImageView mTitleDownloadIcon;
+    final ImageView mTitleExplicitIcon;
+    final ImageView mSubTitleDownloadIcon;
+    final ImageView mSubTitleExplicitIcon;
 
     /**
      * Creates a {@link BrowseViewHolder} for the given view.
@@ -46,12 +51,23 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
         mAlbumArt = itemView.findViewById(com.android.car.media.R.id.thumbnail);
         mContainer = itemView.findViewById(com.android.car.media.R.id.container);
         mRightArrow = itemView.findViewById(com.android.car.media.R.id.right_arrow);
+        mTitleDownloadIcon = itemView.findViewById(
+                com.android.car.media.R.id.download_icon_with_title);
+        mTitleExplicitIcon = itemView.findViewById(
+                com.android.car.media.R.id.explicit_icon_with_title);
+        mSubTitleDownloadIcon = itemView.findViewById(
+                com.android.car.media.R.id.download_icon_with_subtitle);
+        mSubTitleExplicitIcon = itemView.findViewById(
+                com.android.car.media.R.id.explicit_icon_with_subtitle);
     }
 
     /**
      * Updates this {@link BrowseViewHolder} with the given data
      */
     public void bind(Context context, BrowseViewData data) {
+
+        boolean showSubtitle = hasSubtitle(data);
+
         if (mTitle != null) {
             mTitle.setText(data.mText != null
                     ? data.mText : data.mMediaItem != null
@@ -62,10 +78,7 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
             mSubtitle.setText(data.mMediaItem != null
                     ? data.mMediaItem.getSubtitle()
                     : null);
-            mSubtitle.setVisibility(data.mMediaItem != null && data.mMediaItem.getSubtitle() != null
-                    && !data.mMediaItem.getSubtitle().toString().isEmpty()
-                    ? View.VISIBLE
-                    : View.GONE);
+            mSubtitle.setVisibility(showSubtitle ? View.VISIBLE : View.GONE);
         }
         if (mAlbumArt != null) {
             MediaItemMetadata.updateImageView(context, data.mMediaItem, mAlbumArt, 0);
@@ -76,5 +89,29 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
         if (mRightArrow != null) {
             mRightArrow.setVisibility(data.mMediaItem.isBrowsable() ? View.VISIBLE : View.GONE);
         }
+
+        // Adjust the positioning of the explicit and downloaded icons. If there is a subtitle, then
+        // the icons should show on the subtitle row, otherwise they should show on the title row.
+        mTitleDownloadIcon.setVisibility(!showSubtitle && data.mMediaItem.isDownloaded()
+                ? View.VISIBLE
+                : View.GONE);
+
+        mTitleExplicitIcon.setVisibility(!showSubtitle && data.mMediaItem.isExplicit()
+                ? View.VISIBLE
+                : View.GONE);
+
+        mSubTitleDownloadIcon.setVisibility(showSubtitle && data.mMediaItem.isDownloaded()
+                ? View.VISIBLE
+                : View.GONE);
+
+        mSubTitleExplicitIcon.setVisibility(showSubtitle && data.mMediaItem.isExplicit()
+                ? View.VISIBLE
+                : View.GONE);
+
+    }
+
+    private boolean hasSubtitle(BrowseViewData data) {
+        return data.mMediaItem != null
+                && !TextUtils.isEmpty(data.mMediaItem.getSubtitle());
     }
 }
