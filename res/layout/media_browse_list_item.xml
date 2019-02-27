@@ -14,8 +14,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -24,45 +25,95 @@
     android:layout_marginStart="@dimen/media_browse_list_item_margin_x"
     android:layout_marginEnd="@dimen/media_browse_list_item_margin_x"
     android:focusable="true"
-    android:foreground="?android:attr/selectableItemBackground"
-    android:orientation="horizontal">
+    android:foreground="?android:attr/selectableItemBackground">
     <ImageView
         android:id="@+id/thumbnail"
         android:layout_width="@dimen/media_browse_list_item_icon_size"
         android:layout_height="@dimen/media_browse_list_item_icon_size"
         android:layout_marginEnd="@dimen/media_browse_list_item_icon_margin_end"
         android:layout_gravity="center_vertical"
-        android:scaleType="centerCrop" />
-    <LinearLayout
-        android:id="@+id/text_container"
+        android:scaleType="centerCrop"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <ImageView
+        android:id="@+id/download_icon_with_title"
+        android:layout_width="@dimen/media_browse_indicator_size"
+        android:layout_height="@dimen/media_browse_indicator_size"
+        android:layout_marginTop="@dimen/media_browse_indicator_margin_y"
+        android:src="@drawable/ic_file_download_done_black"
+        android:tint="@color/car_body2_light"
+        app:layout_constraintLeft_toRightOf="@id/thumbnail"
+        app:layout_constraintRight_toLeftOf="@id/explicit_icon_with_title"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <ImageView
+        android:id="@+id/explicit_icon_with_title"
+        android:layout_width="@dimen/media_browse_indicator_size"
+        android:layout_height="@dimen/media_browse_indicator_size"
+        android:layout_marginTop="@dimen/media_browse_indicator_margin_y"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/download_icon_with_title"
+        app:layout_constraintRight_toLeftOf="@id/title"
+        android:src="@drawable/ic_explicit_black"
+        android:tint="@color/car_body2_light"/>
+
+    <TextView
+        android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_gravity="center_vertical"
-        android:orientation="vertical" >
-        <TextView
-            android:id="@+id/title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/media_browse_list_item_title_margin_bottom"
-            android:includeFontPadding="false"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textAppearance="?android:attr/textAppearanceListItem"/>
-        <TextView
-            android:id="@+id/subtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:includeFontPadding="false"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textAppearance="?android:attr/textAppearanceListItemSecondary"/>
-    </LinearLayout>
+        android:layout_marginBottom="@dimen/media_browse_list_item_title_margin_bottom"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/download_icon_with_title"
+        app:layout_constraintRight_toLeftOf="@id/right_arrow"
+        android:includeFontPadding="false"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textAppearance="?android:attr/textAppearanceListItem"/>
+
+    <ImageView
+        android:id="@+id/download_icon_with_subtitle"
+        android:layout_width="@dimen/media_browse_indicator_size"
+        android:layout_height="@dimen/media_browse_indicator_size"
+        android:src="@drawable/ic_file_download_done_black"
+        android:tint="@color/car_body2_light"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        app:layout_constraintLeft_toRightOf="@id/thumbnail"
+        app:layout_constraintRight_toLeftOf="@id/explicit_icon_with_subtitle"/>
+
+    <ImageView
+        android:id="@+id/explicit_icon_with_subtitle"
+        android:layout_width="@dimen/media_browse_indicator_size"
+        android:layout_height="@dimen/media_browse_indicator_size"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        app:layout_constraintLeft_toRightOf="@+id/download_icon_with_subtitle"
+        app:layout_constraintRight_toLeftOf="@id/subtitle"
+        android:src="@drawable/ic_explicit_black"
+        android:tint="@color/car_body2_light"/>
+
+    <TextView
+        android:id="@+id/subtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:includeFontPadding="false"
+        android:ellipsize="end"
+        android:maxLines="1"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        app:layout_constraintLeft_toRightOf="@id/explicit_icon_with_subtitle"
+        app:layout_constraintRight_toLeftOf="@id/right_arrow"
+        android:textAppearance="?android:attr/textAppearanceListItemSecondary"/>
+
     <ImageView
         android:id="@+id/right_arrow"
         android:src="@drawable/ic_chevron_right"
         android:layout_width="@dimen/media_browse_list_item_arrow_size"
         android:layout_height="@dimen/media_browse_list_item_arrow_size"
         android:layout_gravity="center_vertical"
-        android:scaleType="centerCrop" />
-</LinearLayout>
+        android:scaleType="centerCrop"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/title"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
