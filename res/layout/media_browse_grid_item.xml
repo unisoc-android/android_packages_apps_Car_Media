@@ -69,7 +69,7 @@
         android:maxLines="1"
         android:ellipsize="end"
         android:duplicateParentState="true"
-        android:textAppearance="?android:attr/textAppearanceMedium"/>
+        android:textAppearance="?attr/textAppearanceGridItem"/>
 
     <ImageView
         android:id="@+id/download_icon_with_subtitle"
@@ -102,6 +102,6 @@
         app:layout_constraintTop_toBottomOf="@id/title"
         app:layout_constraintLeft_toRightOf="@id/explicit_icon_with_subtitle"
         app:layout_constraintRight_toRightOf="parent"
-        android:textAppearance="?android:attr/textAppearanceMedium"/>
+        android:textAppearance="?attr/textAppearanceGridItemSecondary"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

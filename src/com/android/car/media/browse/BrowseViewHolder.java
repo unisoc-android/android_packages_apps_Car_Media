@@ -25,6 +25,7 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.car.apps.common.util.ViewHelper;
 import com.android.car.media.common.MediaItemMetadata;
 
 /**
@@ -66,19 +67,16 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
      */
     public void bind(Context context, BrowseViewData data) {
 
-        boolean showSubtitle = hasSubtitle(data);
+        boolean hasMediaItem = data.mMediaItem != null;
+        boolean showSubtitle = hasMediaItem && !TextUtils.isEmpty(data.mMediaItem.getSubtitle());
 
         if (mTitle != null) {
-            mTitle.setText(data.mText != null
-                    ? data.mText : data.mMediaItem != null
-                    ? data.mMediaItem.getTitle()
-                    : null);
+            mTitle.setText(data.mText != null ? data.mText :
+                    hasMediaItem ? data.mMediaItem.getTitle() : null);
         }
         if (mSubtitle != null) {
-            mSubtitle.setText(data.mMediaItem != null
-                    ? data.mMediaItem.getSubtitle()
-                    : null);
-            mSubtitle.setVisibility(showSubtitle ? View.VISIBLE : View.GONE);
+            mSubtitle.setText(hasMediaItem ? data.mMediaItem.getSubtitle() : null);
+            ViewHelper.setVisible(mSubtitle, showSubtitle);
         }
         if (mAlbumArt != null) {
             MediaItemMetadata.updateImageView(context, data.mMediaItem, mAlbumArt, 0);
@@ -86,32 +84,15 @@ class BrowseViewHolder extends RecyclerView.ViewHolder {
         if (mContainer != null && data.mOnClickListener != null) {
             mContainer.setOnClickListener(data.mOnClickListener);
         }
-        if (mRightArrow != null) {
-            mRightArrow.setVisibility(data.mMediaItem.isBrowsable() ? View.VISIBLE : View.GONE);
-        }
+        ViewHelper.setVisible(mRightArrow, hasMediaItem && data.mMediaItem.isBrowsable());
 
         // Adjust the positioning of the explicit and downloaded icons. If there is a subtitle, then
         // the icons should show on the subtitle row, otherwise they should show on the title row.
-        mTitleDownloadIcon.setVisibility(!showSubtitle && data.mMediaItem.isDownloaded()
-                ? View.VISIBLE
-                : View.GONE);
-
-        mTitleExplicitIcon.setVisibility(!showSubtitle && data.mMediaItem.isExplicit()
-                ? View.VISIBLE
-                : View.GONE);
-
-        mSubTitleDownloadIcon.setVisibility(showSubtitle && data.mMediaItem.isDownloaded()
-                ? View.VISIBLE
-                : View.GONE);
-
-        mSubTitleExplicitIcon.setVisibility(showSubtitle && data.mMediaItem.isExplicit()
-                ? View.VISIBLE
-                : View.GONE);
-
-    }
-
-    private boolean hasSubtitle(BrowseViewData data) {
-        return data.mMediaItem != null
-                && !TextUtils.isEmpty(data.mMediaItem.getSubtitle());
+        boolean downloaded = hasMediaItem && data.mMediaItem.isDownloaded();
+        boolean explicit = hasMediaItem && data.mMediaItem.isExplicit();
+        ViewHelper.setVisible(mTitleDownloadIcon, !showSubtitle && downloaded);
+        ViewHelper.setVisible(mTitleExplicitIcon, !showSubtitle && explicit);
+        ViewHelper.setVisible(mSubTitleDownloadIcon, showSubtitle && downloaded);
+        ViewHelper.setVisible(mSubTitleExplicitIcon, showSubtitle && explicit);
     }
 }
