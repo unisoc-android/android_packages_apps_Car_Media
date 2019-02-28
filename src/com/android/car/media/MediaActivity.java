@@ -317,6 +317,9 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
             // Always go through the trampoline activity to keep all the dispatching logic there.
             startActivity(new Intent(Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE));
         } else {
+            mAppBarView.setMediaAppName("");
+            mAppBarView.setTitle(null);
+            updateTabs(null);
             updateSourcePreferences(null);
         }
     }
