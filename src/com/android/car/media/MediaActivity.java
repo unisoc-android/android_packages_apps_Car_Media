@@ -113,7 +113,6 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
         @Override
         public void onCollapse() {
             getInnerViewModel().setMode(Mode.BROWSING);
-            onBackStackChanged();
         }
 
         @Override
@@ -309,6 +308,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
             }
             mAppBarView.setMediaAppName(mediaSource.getName());
             mAppBarView.setTitle(null);
+            mAppBarView.setBackArrowVisible(false);
             updateTabs(null);
             getInnerViewModel().setMode(Mode.BROWSING);
             String packageName = mediaSource.getPackageName();
@@ -451,11 +451,11 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
             if (fragment.isBackEnabled()) {
                 mAppBarView.setTitle(fragment.getCurrentMediaItem().getTitle());
                 mAppBarView.setShowTabs(false);
-                mAppBarView.setNavIconVisible(true);
+                mAppBarView.setBackArrowVisible(true);
             } else {
                 mAppBarView.setTitle(null);
                 mAppBarView.setShowTabs(true);
-                mAppBarView.setNavIconVisible(false);
+                mAppBarView.setBackArrowVisible(false);
             }
         }
     }
