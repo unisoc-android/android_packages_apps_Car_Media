@@ -67,6 +67,7 @@ public class AppBarView extends RelativeLayout {
     private String mMediaAppTitle;
     private boolean mSearchSupported;
     private boolean mShowTabs = true;
+    private boolean mBackArrowVisible = false;
 
     public interface AppBarProvider {
         AppBarView getAppBar();
@@ -401,9 +402,10 @@ public class AppBarView extends RelativeLayout {
     }
 
     /**
-     * Sets whether the nav icon should be shown
+     * Sets whether the back arrow should be shown
      */
-    public void setNavIconVisible(boolean visible) {
+    public void setBackArrowVisible(boolean visible) {
+        mBackArrowVisible = visible;
         mNavIconContainer.setVisibility(visible ? VISIBLE : INVISIBLE);
     }
 
@@ -451,7 +453,7 @@ public class AppBarView extends RelativeLayout {
                 showQueue(false);
                 showSettings(true);
             case BROWSING:
-                mNavIconContainer.setVisibility(View.INVISIBLE);
+                mNavIconContainer.setVisibility(mBackArrowVisible ? View.VISIBLE : View.INVISIBLE);
                 mNavIcon.setImageDrawable(mArrowBack);
                 mTabsContainer.setVisibility(showTabs ? View.VISIBLE : View.GONE);
                 mTitle.setVisibility(showTabs ? View.GONE : View.VISIBLE);
