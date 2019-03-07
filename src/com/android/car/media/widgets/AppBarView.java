@@ -316,7 +316,7 @@ public class AppBarView extends ConstraintLayout {
 
         if (items != null && !items.isEmpty()) {
             int count = 0;
-            int padding = mContext.getResources().getDimensionPixelSize(R.dimen.car_padding_4);
+            int padding = mContext.getResources().getDimensionPixelSize(R.dimen.browse_tab_padding);
             int tabWidth = mContext.getResources().getDimensionPixelSize(R.dimen.browse_tab_width) +
                     2 * padding;
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(

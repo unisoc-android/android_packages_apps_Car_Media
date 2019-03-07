@@ -58,6 +58,8 @@
     <dimen name="browse_tab_height">76dp</dimen>
     <!-- Tab max width -->
     <dimen name="browse_tab_width">134dp</dimen>
+    <!-- Tab Padding -->
+    <dimen name="browse_tab_padding">@*android:dimen/car_padding_4</dimen>
     <!-- Browse playback controls size -->
     <dimen name="browse_playback_controls_height">192dp</dimen>
     <!-- Selected tab alpha -->
@@ -99,6 +101,10 @@
     <!-- media_activity.xml -->
     <dimen name="media_activity_controls_container_padding">@*android:dimen/car_padding_4</dimen>
     <dimen name="media_activity_controls_margin_start">@*android:dimen/car_padding_4</dimen>
+
+    <!-- BrowseFragment.java -->
+    <dimen name="grid_item_spacing">@*android:dimen/car_padding_4</dimen>
+    <dimen name="grid_item_margin_x">@*android:dimen/car_keyline_1</dimen>
 
     <!-- media_browse_grid_item.xml -->
     <dimen name="media_browse_grid_item_margin_top">@*android:dimen/car_padding_4</dimen>
@@ -160,5 +166,11 @@
     <!-- browse_playback_controls.xml.xml -->
     <item name="title_horizontal_weight" type="dimen" format="float">1.0</item>
     <item name="playback_controls_horizontal_weight" type="dimen" format="float">1.0</item>
+
+    <!-- PlaybackFragment.xml -->
+    <dimen name="queue_fading_edge_length">@*android:dimen/car_padding_4</dimen>
+
+    <!-- BrowseFragment.xml -->
+    <dimen name="browse_grid_fading_edge_length">@*android:dimen/car_padding_5</dimen>
 
 </resources>
