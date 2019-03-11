@@ -88,7 +88,7 @@
 
     <com.android.car.media.widgets.AppBarView
         android:id="@+id/app_bar"
-        android:layout_height="@dimen/appbar_height"
+        android:layout_height="@dimen/appbar_first_row_height"
         android:layout_width="match_parent"
         app:layout_constraintTop_toTopOf="parent"/>
 

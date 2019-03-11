@@ -68,6 +68,7 @@
     <!-- appbar_view.xml -->
     <dimen name="appbar_view_icon_size">@*android:dimen/car_primary_icon_size</dimen>
     <dimen name="appbar_view_nav_button_width">@*android:dimen/car_margin</dimen>
+    <dimen name="appbar_view_tabs_margin_left">@*android:dimen/car_margin</dimen>
 
     <!-- browse_state.xml -->
     <dimen name="browse_state_progress_height">@*android:dimen/car_double_line_list_item_height

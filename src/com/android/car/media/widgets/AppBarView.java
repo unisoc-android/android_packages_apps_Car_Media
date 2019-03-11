@@ -21,8 +21,10 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 
 import com.android.car.media.R;
 import com.android.car.media.common.MediaAppSelectorWidget;
@@ -32,13 +34,13 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Media template application bar. A detailed explanation of all possible states of this
- * application bar can be seen at {@link AppBarView.State}.
+ * Media template application bar. The callers should set properties via the public methods (e.g.,
+ * {@link setItems()}, {@link setTitle()}, {@link setHasSettings()}), and set the visibility of the
+ * views via {@link setState()}. A detailed explanation of all possible states of this application
+ * bar can be seen at {@link AppBarView.State}.
  */
-public class AppBarView extends RelativeLayout {
+public class AppBarView extends ConstraintLayout {
     private static final String TAG = "AppBarView";
-    /** Default number of tabs to show on this app bar */
-    private static int DEFAULT_MAX_TABS = 4;
 
     private LinearLayout mTabsContainer;
     private ImageView mNavIcon;
@@ -66,8 +68,10 @@ public class AppBarView extends RelativeLayout {
     private MediaItemMetadata mSelectedItem;
     private String mMediaAppTitle;
     private boolean mSearchSupported;
-    private boolean mShowTabs = true;
-    private boolean mBackArrowVisible = false;
+    private boolean mTabsVisible = true;
+    private int mHeight;
+    private int mFirstRowHeight;
+    private int mMaxRows;
 
     public interface AppBarProvider {
         AppBarView getAppBar();
@@ -151,19 +155,12 @@ public class AppBarView extends RelativeLayout {
     }
 
     public AppBarView(Context context, AttributeSet attrs, int defStyleAttr) {
-        this(context, attrs, defStyleAttr, 0);
+        super(context, attrs, defStyleAttr);
+        init(context, attrs, defStyleAttr);
     }
 
-    public AppBarView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        init(context, attrs, defStyleAttr, defStyleRes);
-    }
-
-    private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        TypedArray ta = context.obtainStyledAttributes(
-                attrs, R.styleable.AppBarView, defStyleAttr, defStyleRes);
-        mMaxTabs = ta.getInteger(R.styleable.AppBarView_max_tabs, DEFAULT_MAX_TABS);
-        ta.recycle();
+    private void init(Context context, AttributeSet attrs, int defStyleAttr) {
+        mMaxTabs = context.getResources().getInteger(R.integer.max_tabs);
 
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -171,6 +168,21 @@ public class AppBarView extends RelativeLayout {
 
         mContext = context;
         mTabsContainer = findViewById(R.id.tabs);
+        mMaxRows = mContext.getResources().getInteger(R.integer.num_app_bar_view_rows);
+        mFirstRowHeight = mContext.getResources().getDimensionPixelSize(
+                R.dimen.appbar_first_row_height);
+        mHeight = mFirstRowHeight + mContext.getResources().getDimensionPixelSize(
+                R.dimen.appbar_second_row_height);
+        if (mMaxRows == 2) {
+            ConstraintSet set = new ConstraintSet();
+            set.clone(this);
+            set.connect(R.id.tabs, ConstraintSet.LEFT, ConstraintSet.PARENT_ID, ConstraintSet.LEFT);
+            set.connect(R.id.tabs, ConstraintSet.TOP, R.id.row_separator, ConstraintSet.BOTTOM);
+            set.connect(R.id.tabs, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID,
+                    ConstraintSet.BOTTOM);
+            set.applyTo(this);
+        }
+
         mNavIcon = findViewById(R.id.nav_icon);
         mNavIconContainer = findViewById(R.id.nav_icon_container);
         mNavIconContainer.setOnClickListener(view -> onNavIconClicked());
@@ -402,23 +414,25 @@ public class AppBarView extends RelativeLayout {
     }
 
     /**
-     * Sets whether the back arrow should be shown
+     * Sets whether to show tabs or not. The caller should make sure tabs has at least 1 item before
+     * showing tabs.
      */
-    public void setBackArrowVisible(boolean visible) {
-        mBackArrowVisible = visible;
-        mNavIconContainer.setVisibility(visible ? VISIBLE : INVISIBLE);
-    }
-
-    /**
-     * Sets whether to show tabs or not. If there is no tab content, tabs will be hidden regardless
-     * of this setting. By default, tabs will be shown if there is tab content.
-     */
-    public void setShowTabs(boolean visible) {
-        mShowTabs = visible;
+    private void setShowTabs(boolean visible) {
         // Refresh state to adjust for new tab visibility
-        boolean showTabs = mTabsContainer.getChildCount() > 0 && mShowTabs;
-        mTabsContainer.setVisibility(showTabs ? View.VISIBLE : View.GONE);
-        mTitle.setVisibility(showTabs ? View.GONE : View.VISIBLE);
+        mTabsContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
+
+        // If the app bar has 2 rows, expand to 2 rows if tabs is visible, and collapse to 1
+        // row if tabs is invisible.
+        if (mMaxRows == 2 && mTabsVisible != visible) {
+            ConstraintLayout.LayoutParams layoutParams =
+                    (ConstraintLayout.LayoutParams) getLayoutParams();
+            if (layoutParams != null) {
+                layoutParams.height = visible ? mHeight : mFirstRowHeight;
+                setLayoutParams(layoutParams);
+            }
+        }
+
+        mTabsVisible = visible;
     }
 
     private void updateTabs() {
@@ -438,25 +452,25 @@ public class AppBarView extends RelativeLayout {
      * Updates the state of the bar.
      */
     public void setState(State state) {
-        boolean showTabs = mTabsContainer.getChildCount() > 0 && mShowTabs;
         mState = state;
+        final boolean hasTabs = mTabsContainer.getChildCount() > 0;
 
         Transition transition = new Fade().setDuration(mFadeDuration);
         TransitionManager.beginDelayedTransition(this, transition);
-        Log.d(TAG, "Updating state: " + state + " (show tabs: " + showTabs + ")");
+        Log.d(TAG, "Updating state: " + state + " (has tabs: " + hasTabs + ")");
         switch (state) {
             case EMPTY:
                 mNavIconContainer.setVisibility(View.GONE);
-                mTabsContainer.setVisibility(View.GONE);
+                setShowTabs(false);
                 mTitle.setVisibility(View.GONE);
                 hideSearchBar();
                 showQueue(false);
                 showSettings(true);
             case BROWSING:
-                mNavIconContainer.setVisibility(mBackArrowVisible ? View.VISIBLE : View.INVISIBLE);
                 mNavIcon.setImageDrawable(mArrowBack);
-                mTabsContainer.setVisibility(showTabs ? View.VISIBLE : View.GONE);
-                mTitle.setVisibility(showTabs ? View.GONE : View.VISIBLE);
+                mNavIconContainer.setVisibility(View.INVISIBLE);
+                setShowTabs(hasTabs);
+                mTitle.setVisibility(hasTabs ? View.GONE : View.VISIBLE);
                 hideSearchBar();
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 showQueue(false);
@@ -465,7 +479,7 @@ public class AppBarView extends RelativeLayout {
             case STACKED:
                 mNavIcon.setImageDrawable(mArrowBack);
                 mNavIconContainer.setVisibility(View.VISIBLE);
-                mTabsContainer.setVisibility(View.GONE);
+                setShowTabs(false);
                 mTitle.setVisibility(View.VISIBLE);
                 hideSearchBar();
                 mSearchButton.setVisibility(View.GONE);
@@ -476,8 +490,8 @@ public class AppBarView extends RelativeLayout {
                 mNavIcon.setImageDrawable(mCollapse);
                 mNavIconContainer.setVisibility(View.VISIBLE);
                 setActiveItem(null);
-                mTabsContainer.setVisibility(View.GONE);
                 mTitle.setText(mMediaAppTitle);
+                setShowTabs(false);
                 mTitle.setVisibility(View.VISIBLE);
                 hideSearchBar();
                 mSearchButton.setVisibility(View.GONE);
@@ -487,7 +501,7 @@ public class AppBarView extends RelativeLayout {
             case SEARCHING:
                 mNavIcon.setImageDrawable(mCollapse);
                 mNavIconContainer.setVisibility(View.VISIBLE);
-                mTabsContainer.setVisibility(View.GONE);
+                setShowTabs(false);
                 mTitle.setVisibility(View.GONE);
                 mSearchText.setVisibility(View.VISIBLE);
                 mSearchText.requestFocus();
