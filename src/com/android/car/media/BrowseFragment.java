@@ -118,10 +118,10 @@ public class BrowseFragment extends Fragment {
     }
 
     /**
-     * @return whether the user is in a level other than the top.
+     * @return whether the user is at the top of the browsing stack.
      */
-    public boolean isBackEnabled() {
-        return !mBrowseStack.isEmpty();
+    public boolean isAtTopStack() {
+        return mBrowseStack.isEmpty();
     }
 
     /**

@@ -308,7 +308,6 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
             }
             mAppBarView.setMediaAppName(mediaSource.getName());
             mAppBarView.setTitle(null);
-            mAppBarView.setBackArrowVisible(false);
             updateTabs(null);
             getInnerViewModel().setMode(Mode.BROWSING);
             String packageName = mediaSource.getPackageName();
@@ -413,7 +412,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                 ViewUtils.hideViewAnimated(mPlaybackContainer, mFadeDuration);
                 ViewUtils.showViewAnimated(mBrowseContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mSearchContainer, mFadeDuration);
-                mAppBarView.setState(AppBarView.State.BROWSING);
+                updateBrowsingState();
                 break;
             case SEARCHING:
                 ViewUtils.hideViewAnimated(mErrorContainer, mFadeDuration);
@@ -423,6 +422,20 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                 mAppBarView.setState(AppBarView.State.SEARCHING);
                 break;
         }
+    }
+
+    private void updateBrowsingState() {
+        Fragment currentFragment = getCurrentFragment();
+        if (currentFragment instanceof BrowseFragment) {
+            BrowseFragment fragment = (BrowseFragment) currentFragment;
+            if (!fragment.isAtTopStack()) {
+                mAppBarView.setTitle(fragment.getCurrentMediaItem().getTitle());
+                mAppBarView.setState(AppBarView.State.STACKED);
+                return;
+            }
+        }
+        mAppBarView.setTitle(null);
+        mAppBarView.setState(AppBarView.State.BROWSING);
     }
 
     private void updateMetadata(Mode mode) {
@@ -445,19 +458,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
 
     @Override
     public void onBackStackChanged() {
-        Fragment currentFragment = getCurrentFragment();
-        if (currentFragment instanceof BrowseFragment) {
-            BrowseFragment fragment = (BrowseFragment) currentFragment;
-            if (fragment.isBackEnabled()) {
-                mAppBarView.setTitle(fragment.getCurrentMediaItem().getTitle());
-                mAppBarView.setShowTabs(false);
-                mAppBarView.setBackArrowVisible(true);
-            } else {
-                mAppBarView.setTitle(null);
-                mAppBarView.setShowTabs(true);
-                mAppBarView.setBackArrowVisible(false);
-            }
-        }
+        updateBrowsingState();
     }
 
     @Override
