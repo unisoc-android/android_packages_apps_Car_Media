@@ -35,12 +35,15 @@
 
     <!-- Playback seekbar track height -->
     <dimen name="playback_seekbar_track_height">8dp</dimen>
+    <!-- Playback seekbar track width. The seekbar is aligned with the control bar.-->
+    <dimen name="playback_seekbar_track_width">@dimen/control_bar_width</dimen>
     <!-- Size of the thumb in the playback seekbar -->
     <dimen name="playback_seekbar_thumb_height">20dp</dimen>
     <dimen name="playback_seekbar_thumb_width">20dp</dimen>
     <!-- Paddings of playback seekbar -->
-    <dimen name="playback_seekbar_padding_start">10dp</dimen>
-    <dimen name="playback_seekbar_padding_end">10dp</dimen>
+    <dimen name="playback_seekbar_padding_x">10dp</dimen>
+    <!-- x-axis margin of playback seekbar, equals the car_margin minus seekbar padding. -->
+    <dimen name="playback_seekbar_margin_x">182dp</dimen>
     <!-- Image size used to generate the background -->
     <dimen name="playback_background_raw_image_size">300px</dimen>
     <!-- Scale factor for the background image -->
@@ -50,9 +53,7 @@
     <!-- Scale to apply to images before blurring them to create the playback background -->
     <item name="playback_background_blur_scale" format="float" type="dimen">.5</item>
     <!-- Size of the album art thumbnail -->
-    <dimen name="playback_album_art_size_normal">156dp</dimen>
-    <!-- Size of the album art thumbnail when large -->
-    <dimen name="playback_album_art_size_large">574dp</dimen>
+    <dimen name="playback_album_art_size">226dp</dimen>
     <!-- Bottom marging for the playback queue -->
     <dimen name="playback_controls_margin">192dp</dimen>
 
@@ -79,30 +80,10 @@
     </dimen>
     <dimen name="browse_state_error_margin_top">@*android:dimen/car_padding_4</dimen>
 
-    <!-- fragment_metadata.xml -->
-    <dimen name="fragment_metadata_queue_divider_margin">@*android:dimen/car_keyline_1</dimen>
-    <dimen name="fragment_metadata_queue_margin_top">@*android:dimen/car_padding_4</dimen>
-    <dimen name="fragment_metadata_metadata_margin_start">@*android:dimen/car_padding_5</dimen>
-    <dimen name="fragment_metadata_metadata_margin_end">@*android:dimen/car_keyline_2</dimen>
-    <dimen name="fragment_metadata_art_margin_start">@*android:dimen/car_keyline_2</dimen>
-    <dimen name="fragment_metadata_art_margin_end">@*android:dimen/car_padding_4</dimen>
-
-    <!-- fragment_metadata_with_queue.xml -->
-    <dimen name="fragment_metadata_with_queue_art_margin_top">@*android:dimen/car_padding_4</dimen>
-    <dimen name="fragment_metadata_with_queue_art_margin_start">@*android:dimen/car_keyline_1
-    </dimen>
-    <dimen name="fragment_metadata_with_queue_metadata_margin_start">@*android:dimen/car_padding_4
-    </dimen>
-    <dimen name="fragment_metadata_with_queue_metadata_margin_end">@*android:dimen/car_keyline_1
-    </dimen>
-
-    <!-- fragment_playback.xml and fragment_playback_with_queue.xml -->
-    <dimen name="fragment_playback_guide_margin_x">@*android:dimen/car_margin</dimen>
-    <dimen name="fragment_playback_guide_margin_top">@*android:dimen/car_padding_4</dimen>
-
     <!-- media_activity.xml -->
     <dimen name="media_activity_controls_container_padding">@*android:dimen/car_padding_4</dimen>
     <dimen name="media_activity_controls_margin_start">@*android:dimen/car_padding_4</dimen>
+    <dimen name="playback_controls_margin_x">@*android:dimen/car_margin</dimen>
 
     <!-- BrowseFragment.java -->
     <dimen name="grid_item_spacing">@*android:dimen/car_padding_4</dimen>
@@ -140,14 +121,9 @@
     <dimen name="media_browse_indicator_margin_y">8dp</dimen>
 
     <!-- metadata_normal.xml -->
-    <dimen name="metadata_normal_subtitle_margin_top">@*android:dimen/car_padding_1</dimen>
-    <dimen name="metadata_normal_time_margin_top">@*android:dimen/car_padding_1</dimen>
-    <dimen name="metadata_normal_seek_margin_top">@*android:dimen/car_padding_4</dimen>
-    <dimen name="metadata_normal_subtitle_margin_end">@*android:dimen/car_padding_5</dimen>
-
-    <!-- playback_controls.xml -->
-    <dimen name="playback_controls_margin_x">@*android:dimen/car_margin</dimen>
-    <dimen name="playback_controls_margin_bottom">@*android:dimen/car_padding_2</dimen>
+    <dimen name="metadata_normal_album_title_margin_top">@dimen/padding_3</dimen>
+    <dimen name="metadata_normal_artist_margin_top">@dimen/padding_3</dimen>
+    <dimen name="art_metadata_metadata_margin_start">@dimen/padding_4</dimen>
 
     <!-- browse_playback_background.xml -->
     <dimen name="browse_playback_background_radius">@*android:dimen/car_radius_2</dimen>
@@ -169,8 +145,12 @@
     <item name="title_horizontal_weight" type="dimen" format="float">1.0</item>
     <item name="playback_controls_horizontal_weight" type="dimen" format="float">1.0</item>
 
-    <!-- PlaybackFragment.xml -->
+    <!-- fragment_playback.xml -->
     <dimen name="queue_fading_edge_length">@*android:dimen/car_padding_4</dimen>
+    <dimen name="fragment_metadata_queue_divider_margin">@*android:dimen/car_keyline_1</dimen>
+    <dimen name="fragment_metadata_queue_margin_top">@*android:dimen/car_padding_4</dimen>
+    <dimen name="fragment_metadata_width">@dimen/control_bar_width</dimen>
+    <dimen name="fragment_metadata_margin_x">@*android:dimen/car_margin</dimen>
 
     <!-- BrowseFragment.xml -->
     <dimen name="browse_grid_fading_edge_length">@*android:dimen/car_padding_5</dimen>
