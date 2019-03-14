@@ -43,7 +43,7 @@
         android:visibility="visible"
         android:layout_marginHorizontal="@dimen/playback_controls_margin_x"
         app:layout_constraintTop_toBottomOf="@+id/app_bar"
-        app:layout_constraintBottom_toTopOf="@+id/browse_controls_container"/>
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
     <FrameLayout
         android:id="@+id/search_container"
@@ -51,7 +51,7 @@
         android:layout_height="0dp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/app_bar"
-        app:layout_constraintBottom_toTopOf="@+id/browse_controls_container"/>
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
     <FrameLayout
         android:id="@+id/playback_container"
@@ -61,17 +61,15 @@
         app:layout_constraintTop_toBottomOf="@+id/app_bar"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
-    <com.android.car.media.widgets.BrowsePlaybackControlBar
-        android:id="@+id/browse_controls_container"
-        android:layout_width="match_parent"
+    <com.android.car.media.common.MinimizedPlaybackControlBar
+        android:id="@+id/minimized_playback_controls"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/playback_controls_margin_x"
-        android:layout_marginBottom="@dimen/playback_controls_margin_bottom"
-        android:background="@drawable/browse_playback_background"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        app:layout_constraintBottom_toBottomOf="parent">
-    </com.android.car.media.widgets.BrowsePlaybackControlBar>
+        android:layout_marginHorizontal="@dimen/minimized_control_bar_margin_x"
+        android:layout_marginBottom="@dimen/minimized_control_bar_margin_bottom"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
     <FrameLayout
         android:id="@+id/error_container"

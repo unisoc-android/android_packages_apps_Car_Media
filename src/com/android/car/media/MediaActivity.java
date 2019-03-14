@@ -51,13 +51,13 @@ import com.android.car.media.common.CrossfadeImageView;
 import com.android.car.media.common.MediaAppSelectorWidget;
 import com.android.car.media.common.MediaConstants;
 import com.android.car.media.common.MediaItemMetadata;
+import com.android.car.media.common.MinimizedPlaybackControlBar;
 import com.android.car.media.common.browse.MediaBrowserViewModel;
 import com.android.car.media.common.playback.AlbumArtLiveData;
 import com.android.car.media.common.playback.PlaybackViewModel;
 import com.android.car.media.common.source.MediaSource;
 import com.android.car.media.common.source.MediaSourceViewModel;
 import com.android.car.media.widgets.AppBarView;
-import com.android.car.media.widgets.BrowsePlaybackControlBar;
 import com.android.car.media.widgets.ViewUtils;
 
 import java.util.List;
@@ -203,11 +203,11 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
         mAppSelectionFragment.setExitTransition(new Fade().setDuration(fadeDuration));
         mAlbumBackground = findViewById(R.id.media_background);
 
-        BrowsePlaybackControlBar browsePlaybackControls =
-                findViewById(R.id.browse_controls_container);
+        MinimizedPlaybackControlBar browsePlaybackControls =
+                findViewById(R.id.minimized_playback_controls);
         browsePlaybackControls.setModel(playbackViewModel, this);
 
-        mBrowseControlsContainer = findViewById(R.id.browse_controls_container);
+        mBrowseControlsContainer = findViewById(R.id.minimized_playback_controls);
         mBrowseControlsContainer.setOnClickListener(
                 view -> getInnerViewModel().setMode(Mode.PLAYBACK));
         TypedValue outValue = new TypedValue();

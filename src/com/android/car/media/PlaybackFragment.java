@@ -44,7 +44,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.apps.common.util.ViewHelper;
 import com.android.car.media.common.MediaItemMetadata;
+import com.android.car.media.common.MetadataController;
 import com.android.car.media.common.PlaybackControls;
+import com.android.car.media.common.PlaybackControlsActionBar;
 import com.android.car.media.common.playback.PlaybackViewModel;
 import com.android.car.media.widgets.AppBarView;
 
@@ -62,7 +64,7 @@ public class PlaybackFragment extends Fragment {
     private static final String TAG = "PlaybackFragment";
 
     private AppBarView mAppBarView;
-    private PlaybackControls mPlaybackControls;
+    private PlaybackControlsActionBar mPlaybackControls;
     private QueueItemsAdapter mQueueAdapter;
     private RecyclerView mQueue;
 
@@ -168,7 +170,7 @@ public class PlaybackFragment extends Fragment {
         super.onDetach();
     }
 
-    private void initPlaybackControls(PlaybackControls playbackControls) {
+    private void initPlaybackControls(PlaybackControlsActionBar playbackControls) {
         mPlaybackControls = playbackControls;
         mPlaybackControls.setModel(getPlaybackViewModel(), getViewLifecycleOwner());
         mPlaybackControls.setAnimationViewGroup(mRootView);
@@ -215,7 +217,8 @@ public class PlaybackFragment extends Fragment {
         TextView time = view.findViewById(R.id.time);
         mMetadataController = new MetadataController(getViewLifecycleOwner(),
                 getPlaybackViewModel(), mUpdatesPaused,
-                title, subtitle, time, seekbar, albumArt);
+                title, subtitle, time, seekbar, albumArt, getResources()
+                .getDimensionPixelSize(R.dimen.playback_album_art_size_large));
     }
 
     /**
