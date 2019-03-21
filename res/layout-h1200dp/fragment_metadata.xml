@@ -49,18 +49,15 @@
         app:layout_constraintStart_toStartOf="@+id/album_art"
         app:layout_constraintTop_toBottomOf="@+id/album_art"/>
 
-    <androidx.car.widget.PagedListView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/queue_list"
-        android:theme="@style/PagedListTheme"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="@dimen/playback_album_art_size_normal"
         android:layout_marginBottom="@dimen/playback_controls_margin"
         android:visibility="gone"
-        app:dividerEndMargin="@dimen/fragment_metadata_queue_divider_margin"
-        app:dividerStartMargin="@dimen/fragment_metadata_queue_divider_margin"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:fadingEdgeLength="@dimen/queue_fading_edge_length"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/margin_top"
-        app:listDividerColor="@color/fragment_metadata_queue_divider_color"/>
+    />
 </merge>
