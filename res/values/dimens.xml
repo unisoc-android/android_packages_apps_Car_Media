@@ -145,7 +145,7 @@
 
     <!-- playback_controls.xml -->
     <dimen name="playback_controls_margin_x">@*android:dimen/car_margin</dimen>
-    <dimen name="playback_controls_margin_bottom">@*android:dimen/car_padding_1</dimen>
+    <dimen name="playback_controls_margin_bottom">@*android:dimen/car_padding_2</dimen>
 
     <!-- browse_playback_background.xml -->
     <dimen name="browse_playback_background_radius">@*android:dimen/car_radius_2</dimen>
