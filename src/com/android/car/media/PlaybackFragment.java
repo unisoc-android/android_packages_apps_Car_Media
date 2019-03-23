@@ -19,12 +19,14 @@ package com.android.car.media;
 import static com.android.car.arch.common.LiveDataFunctions.dataOf;
 import static com.android.car.arch.common.LiveDataFunctions.freezable;
 
+import android.annotation.Nullable;
 import android.content.Context;
 import android.os.Bundle;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
 import android.transition.TransitionListenerAdapter;
 import android.transition.TransitionManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,23 +35,23 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.car.widget.ListItem;
-import androidx.car.widget.ListItemAdapter;
-import androidx.car.widget.ListItemProvider;
-import androidx.car.widget.PagedListView;
-import androidx.car.widget.TextListItem;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.car.apps.common.util.ViewHelper;
 import com.android.car.media.common.MediaItemMetadata;
+import com.android.car.media.common.MetadataController;
 import com.android.car.media.common.PlaybackControls;
+import com.android.car.media.common.PlaybackControlsActionBar;
 import com.android.car.media.common.playback.PlaybackViewModel;
 import com.android.car.media.widgets.AppBarView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -62,9 +64,9 @@ public class PlaybackFragment extends Fragment {
     private static final String TAG = "PlaybackFragment";
 
     private AppBarView mAppBarView;
-    private PlaybackControls mPlaybackControls;
+    private PlaybackControlsActionBar mPlaybackControls;
     private QueueItemsAdapter mQueueAdapter;
-    private PagedListView mQueue;
+    private RecyclerView mQueue;
 
     private MetadataController mMetadataController;
     private ConstraintLayout mRootView;
@@ -75,35 +77,59 @@ public class PlaybackFragment extends Fragment {
     private MutableLiveData<Boolean> mUpdatesPaused = dataOf(false);
 
     private boolean mQueueIsVisible;
-    private List<MediaItemMetadata> mQueueItems = new ArrayList<>();
-    private ListItemProvider mQueueItemsProvider = new ListItemProvider() {
-        @Override
-        public ListItem get(int position) {
-            if (position < 0 || position >= mQueueItems.size()) {
-                return null;
-            }
-            MediaItemMetadata item = mQueueItems.get(position);
-            TextListItem textListItem = new TextListItem(getContext());
-            textListItem.setTitle(item.getTitle() != null ? item.getTitle().toString() : null);
-            textListItem.setBody(item.getSubtitle() != null ? item.getSubtitle().toString() : null);
-            textListItem.setOnClickListener(v -> onQueueItemClicked(item));
-            if (mActiveQueueItemId != null && mActiveQueueItemId == item.getQueueId()) {
-                textListItem.setSupplementalIcon(R.drawable.ic_equalizer, false);
-            }
 
-            return textListItem;
+
+    public class QueueViewHolder extends RecyclerView.ViewHolder {
+
+        private final View mView;
+        private final TextView mTitle;
+        private final View mActiveIcon;
+
+        QueueViewHolder(View itemView) {
+            super(itemView);
+            mView = itemView;
+            mTitle = itemView.findViewById(R.id.title);
+            mActiveIcon = itemView.findViewById(R.id.now_playing);
         }
 
-        @Override
-        public int size() {
-            return mQueueItems.size();
-        }
-    };
+        void bind(MediaItemMetadata item) {
+            mView.setOnClickListener(v -> onQueueItemClicked(item));
 
-    private class QueueItemsAdapter extends ListItemAdapter {
-        QueueItemsAdapter(Context context, ListItemProvider itemProvider) {
-            super(context, itemProvider, BackgroundStyle.SOLID);
+            mTitle.setText(item.getTitle());
+            boolean active = mActiveQueueItemId != null && mActiveQueueItemId == item.getQueueId();
+            ViewHelper.setVisible(mActiveIcon, active);
+        }
+    }
+
+
+    private class QueueItemsAdapter extends RecyclerView.Adapter<QueueViewHolder> {
+
+        private final List<MediaItemMetadata> mQueueItems;
+
+        QueueItemsAdapter(@Nullable List<MediaItemMetadata> items) {
+            mQueueItems = new ArrayList<>(items != null ? items : Collections.emptyList());
             setHasStableIds(true);
+        }
+
+        @Override
+        public QueueViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            return new QueueViewHolder(inflater.inflate(R.layout.queue_list_item, parent, false));
+        }
+
+        @Override
+        public void onBindViewHolder(QueueViewHolder holder, int position) {
+            int size = mQueueItems.size();
+            if (0 <= position && position < size) {
+                holder.bind(mQueueItems.get(position));
+            } else {
+                Log.e(TAG, "onBindViewHolder invalid position " + position + " of " + size);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return mQueueItems.size();
         }
 
         void refresh() {
@@ -128,7 +154,7 @@ public class PlaybackFragment extends Fragment {
         getPlaybackViewModel().getPlaybackController().observe(getViewLifecycleOwner(),
                 controller -> mController = controller);
         initPlaybackControls(view.findViewById(R.id.playback_controls));
-        initQueue(mQueue);
+        initQueue();
         initMetadataController(view);
         return view;
     }
@@ -144,18 +170,16 @@ public class PlaybackFragment extends Fragment {
         super.onDetach();
     }
 
-    private void initPlaybackControls(PlaybackControls playbackControls) {
+    private void initPlaybackControls(PlaybackControlsActionBar playbackControls) {
         mPlaybackControls = playbackControls;
         mPlaybackControls.setModel(getPlaybackViewModel(), getViewLifecycleOwner());
         mPlaybackControls.setAnimationViewGroup(mRootView);
     }
 
-    private void initQueue(PagedListView queueList) {
-        RecyclerView recyclerView = queueList.getRecyclerView();
-        recyclerView.setVerticalFadingEdgeEnabled(true);
-        recyclerView.setFadingEdgeLength(getResources()
-                .getDimensionPixelSize(R.dimen.car_padding_4));
-        mQueueAdapter = new QueueItemsAdapter(getContext(), mQueueItemsProvider);
+    private void initQueue() {
+        mQueue.setVerticalFadingEdgeEnabled(
+                getResources().getBoolean(R.bool.queue_fading_edge_length_enabled));
+        mQueueAdapter = new QueueItemsAdapter(null);
 
         getPlaybackViewModel().getPlaybackStateWrapper().observe(getViewLifecycleOwner(),
                 state -> {
@@ -165,7 +189,9 @@ public class PlaybackFragment extends Fragment {
                         mQueueAdapter.refresh();
                     }
                 });
-        queueList.setAdapter(mQueueAdapter);
+        mQueue.setAdapter(mQueueAdapter);
+        mQueue.setLayoutManager(new LinearLayoutManager(getContext()));
+
         freezable(mUpdatesPaused, getPlaybackViewModel().getQueue()).observe(this, this::setQueue);
 
         getPlaybackViewModel().hasQueue().observe(getViewLifecycleOwner(), hasQueue -> {
@@ -178,7 +204,8 @@ public class PlaybackFragment extends Fragment {
     }
 
     private void setQueue(List<MediaItemMetadata> queueItems) {
-        mQueueItems = queueItems;
+        mQueueAdapter = new QueueItemsAdapter(queueItems);
+        mQueue.swapAdapter(mQueueAdapter, false);
         mQueueAdapter.refresh();
     }
 
@@ -190,7 +217,8 @@ public class PlaybackFragment extends Fragment {
         TextView time = view.findViewById(R.id.time);
         mMetadataController = new MetadataController(getViewLifecycleOwner(),
                 getPlaybackViewModel(), mUpdatesPaused,
-                title, subtitle, time, seekbar, albumArt);
+                title, subtitle, time, seekbar, albumArt, getResources()
+                .getDimensionPixelSize(R.dimen.playback_album_art_size_large));
     }
 
     /**
@@ -213,7 +241,7 @@ public class PlaybackFragment extends Fragment {
             @Override
             public void onTransitionEnd(Transition transition) {
                 mUpdatesPaused.setValue(false);
-                mQueue.getRecyclerView().scrollToPosition(0);
+                mQueue.scrollToPosition(0);
             }
         });
         TransitionManager.beginDelayedTransition(mRootView, transition);
