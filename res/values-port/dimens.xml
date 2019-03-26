@@ -16,9 +16,6 @@
 -->
 <resources>
     <!-- media_activity.xml -->
-    <dimen name="media_activity_controls_margin_start">0dp</dimen>
-
-    <!-- playback_controls.xml -->
     <dimen name="playback_controls_margin_x">0dp</dimen>
 
     <!-- browse_playback_background.xml -->
@@ -29,8 +26,14 @@
 
     <!-- browse_playback_controls.xml.xml -->
     <item name="playback_controls_horizontal_weight" type="dimen" format="float">2.0</item>
+    <dimen name="media_activity_controls_margin_start">0dp</dimen>
 
     <!-- appbar_view.xml -->
     <dimen name="appbar_view_tabs_margin_left">0dp</dimen>
 
+    <!-- metadata_normal.xml -->
+    <dimen name="art_metadata_metadata_margin_start">48dp</dimen>
+
+    <!-- x-axis margin of playback seekbar, equals the car_margin minus seekbar padding. -->
+    <dimen name="playback_seekbar_margin_x">102dp</dimen>
 </resources>

@@ -21,4 +21,15 @@
         <item name="android:textColor">@color/no_content_text_color</item>
     </style>
 
+    <style name="PlaybackTitleStyle" parent="TextAppearance.Display2"></style>
+
+    <style name="PlaybackSubtitleStyle" parent="TextAppearance.Body1">
+        <item name="android:textColor">@color/secondary_text_color</item>
+    </style>
+
+    <style name="SeekBarStyle">
+        <!-- layout_width equals control bar width + 2 * seek bar padding. -->
+        <item name="android:layout_width">1048dp</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
 </resources>
