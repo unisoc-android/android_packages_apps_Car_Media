@@ -15,8 +15,15 @@
   limitations under the License.
 -->
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <style name="MetadataContainerStyle">
+        <item name="android:layout_width">1028dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginHorizontal">@dimen/fragment_metadata_margin_x</item>
+    </style>
+
     <style name="SeekBarStyle">
-        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_width">1028dp</item>
         <item name="android:layout_height">wrap_content</item>
     </style>
 </resources>
