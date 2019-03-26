@@ -22,10 +22,6 @@ import static com.android.car.arch.common.LiveDataFunctions.freezable;
 import android.annotation.Nullable;
 import android.content.Context;
 import android.os.Bundle;
-import android.transition.Transition;
-import android.transition.TransitionInflater;
-import android.transition.TransitionListenerAdapter;
-import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,7 +32,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -45,10 +40,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.android.car.apps.common.util.ViewHelper;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.MetadataController;
-import com.android.car.media.common.PlaybackControls;
 import com.android.car.media.common.PlaybackControlsActionBar;
 import com.android.car.media.common.playback.PlaybackViewModel;
 import com.android.car.media.widgets.AppBarView;
+import com.android.car.media.widgets.ViewUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,6 +62,8 @@ public class PlaybackFragment extends Fragment {
     private PlaybackControlsActionBar mPlaybackControls;
     private QueueItemsAdapter mQueueAdapter;
     private RecyclerView mQueue;
+    private ConstraintLayout mMetadataContainer;
+    private SeekBar mSeekBar;
 
     private MetadataController mMetadataController;
     private ConstraintLayout mRootView;
@@ -78,6 +75,7 @@ public class PlaybackFragment extends Fragment {
 
     private boolean mQueueIsVisible;
 
+    private int mFadeDuration;
 
     public class QueueViewHolder extends RecyclerView.ViewHolder {
 
@@ -150,6 +148,8 @@ public class PlaybackFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_playback, container, false);
         mRootView = view.findViewById(R.id.playback_container);
         mQueue = view.findViewById(R.id.queue_list);
+        mMetadataContainer = view.findViewById(R.id.metadata_container);
+        mSeekBar = view.findViewById(R.id.seek_bar);
 
         getPlaybackViewModel().getPlaybackController().observe(getViewLifecycleOwner(),
                 controller -> mController = controller);
@@ -162,7 +162,7 @@ public class PlaybackFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        mAppBarView = ((AppBarView.AppBarProvider)context).getAppBar();
+        mAppBarView = ((AppBarView.AppBarProvider) context).getAppBar();
     }
 
     @Override
@@ -177,6 +177,9 @@ public class PlaybackFragment extends Fragment {
     }
 
     private void initQueue() {
+        mFadeDuration = getResources().getInteger(
+                R.integer.fragment_playback_queue_fade_duration_ms);
+
         mQueue.setVerticalFadingEdgeEnabled(
                 getResources().getBoolean(R.bool.queue_fading_edge_length_enabled));
         mQueueAdapter = new QueueItemsAdapter(null);
@@ -212,13 +215,14 @@ public class PlaybackFragment extends Fragment {
     private void initMetadataController(View view) {
         ImageView albumArt = view.findViewById(R.id.album_art);
         TextView title = view.findViewById(R.id.title);
-        TextView subtitle = view.findViewById(R.id.subtitle);
+        TextView albumTitle = view.findViewById(R.id.album_title);
+        TextView artist = view.findViewById(R.id.artist);
         SeekBar seekbar = view.findViewById(R.id.seek_bar);
         TextView time = view.findViewById(R.id.time);
         mMetadataController = new MetadataController(getViewLifecycleOwner(),
                 getPlaybackViewModel(), mUpdatesPaused,
-                title, subtitle, time, seekbar, albumArt, getResources()
-                .getDimensionPixelSize(R.dimen.playback_album_art_size_large));
+                title, albumTitle, artist, time, seekbar, albumArt, getResources()
+                .getDimensionPixelSize(R.dimen.playback_album_art_size));
     }
 
     /**
@@ -227,29 +231,15 @@ public class PlaybackFragment extends Fragment {
     public void toggleQueueVisibility() {
         mQueueIsVisible = !mQueueIsVisible;
         mAppBarView.activateQueueButton(mQueueIsVisible);
-
-        Transition transition = TransitionInflater.from(getContext()).inflateTransition(
-                mQueueIsVisible ? R.transition.queue_in : R.transition.queue_out);
-        transition.addListener(new TransitionListenerAdapter() {
-
-            @Override
-            public void onTransitionStart(Transition transition) {
-                super.onTransitionStart(transition);
-                mUpdatesPaused.setValue(true);
-            }
-
-            @Override
-            public void onTransitionEnd(Transition transition) {
-                mUpdatesPaused.setValue(false);
-                mQueue.scrollToPosition(0);
-            }
-        });
-        TransitionManager.beginDelayedTransition(mRootView, transition);
-        ConstraintSet constraintSet = new ConstraintSet();
-        constraintSet.clone(mRootView.getContext(),
-                mQueueIsVisible ? R.layout.fragment_playback_with_queue
-                        : R.layout.fragment_playback);
-        constraintSet.applyTo(mRootView);
+        if (mQueueIsVisible) {
+            ViewUtils.hideViewAnimated(mMetadataContainer, mFadeDuration);
+            ViewUtils.hideViewAnimated(mSeekBar, mFadeDuration);
+            ViewUtils.showViewAnimated(mQueue, mFadeDuration);
+        } else {
+            ViewUtils.hideViewAnimated(mQueue, mFadeDuration);
+            ViewUtils.showViewAnimated(mMetadataContainer, mFadeDuration);
+            ViewUtils.showViewAnimated(mSeekBar, mFadeDuration);
+        }
     }
 
     private void onQueueItemClicked(MediaItemMetadata item) {
