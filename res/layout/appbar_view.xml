@@ -43,11 +43,10 @@
             android:tint="@color/appbar_view_icon_tint"/>
     </FrameLayout>
 
-    <LinearLayout
+    <com.android.car.apps.common.widget.CarTabLayout
         android:id="@+id/tabs"
         android:layout_width="wrap_content"
         android:layout_height="@dimen/appbar_first_row_height"
-        android:orientation="horizontal"
         android:layout_marginLeft="@dimen/appbar_view_tabs_margin_left"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/row_separator"

@@ -2,7 +2,6 @@ package com.android.car.media.widgets;
 
 import android.annotation.Nullable;
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -12,7 +11,6 @@ import android.transition.Transition;
 import android.transition.TransitionManager;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,12 +18,12 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 
+import com.android.car.apps.common.widget.CarTabLayout;
 import com.android.car.media.R;
 import com.android.car.media.common.MediaAppSelectorWidget;
 import com.android.car.media.common.MediaItemMetadata;
@@ -42,7 +40,7 @@ import java.util.Objects;
 public class AppBarView extends ConstraintLayout {
     private static final String TAG = "AppBarView";
 
-    private LinearLayout mTabsContainer;
+    private CarTabLayout<MediaItemTab> mTabsContainer;
     private ImageView mNavIcon;
     private ViewGroup mNavIconContainer;
     private TextView mTitle;
@@ -63,9 +61,6 @@ public class AppBarView extends ConstraintLayout {
     private State mState = State.BROWSING;
     private AppBarListener mListener;
     private int mFadeDuration;
-    private float mSelectedTabAlpha;
-    private float mUnselectedTabAlpha;
-    private MediaItemMetadata mSelectedItem;
     private String mMediaAppTitle;
     private boolean mSearchSupported;
     private boolean mTabsVisible = true;
@@ -167,7 +162,6 @@ public class AppBarView extends ConstraintLayout {
         inflater.inflate(R.layout.appbar_view, this, true);
 
         mContext = context;
-        mTabsContainer = findViewById(R.id.tabs);
         mMaxRows = mContext.getResources().getInteger(R.integer.num_app_bar_view_rows);
         mFirstRowHeight = mContext.getResources().getDimensionPixelSize(
                 R.dimen.appbar_first_row_height);
@@ -183,6 +177,16 @@ public class AppBarView extends ConstraintLayout {
             set.applyTo(this);
         }
 
+        mTabsContainer = findViewById(R.id.tabs);
+        mTabsContainer.addOnCarTabSelectedListener(
+                new CarTabLayout.SimpleOnCarTabSelectedListener<MediaItemTab>() {
+                    @Override
+                    public void onCarTabSelected(MediaItemTab mediaItemTab) {
+                        if (mListener != null) {
+                            mListener.onTabSelected(mediaItemTab.getItem());
+                        }
+                    }
+                });
         mNavIcon = findViewById(R.id.nav_icon);
         mNavIconContainer = findViewById(R.id.nav_icon_container);
         mNavIconContainer.setOnClickListener(view -> onNavIconClicked());
@@ -235,11 +239,6 @@ public class AppBarView extends ConstraintLayout {
         mArrowBack = getResources().getDrawable(R.drawable.ic_arrow_back, null);
         mCollapse = getResources().getDrawable(R.drawable.ic_expand_more, null);
         mFadeDuration = getResources().getInteger(R.integer.app_selector_fade_duration);
-        TypedValue outValue = new TypedValue();
-        getResources().getValue(R.dimen.browse_tab_alpha_selected, outValue, true);
-        mSelectedTabAlpha = outValue.getFloat();
-        getResources().getValue(R.dimen.browse_tab_alpha_unselected, outValue, true);
-        mUnselectedTabAlpha = outValue.getFloat();
         mMediaAppTitle = getResources().getString(R.string.media_app_title);
 
         setState(State.BROWSING);
@@ -312,27 +311,13 @@ public class AppBarView extends ConstraintLayout {
      * @param items list of tabs to show, or null if no tabs should be shown.
      */
     public void setItems(@Nullable List<MediaItemMetadata> items) {
-        mTabsContainer.removeAllViews();
+        mTabsContainer.clearAllCarTabs();
 
         if (items != null && !items.isEmpty()) {
             int count = 0;
-            int padding = mContext.getResources().getDimensionPixelSize(R.dimen.browse_tab_padding);
-            int tabWidth = mContext.getResources().getDimensionPixelSize(R.dimen.browse_tab_width) +
-                    2 * padding;
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    tabWidth, ViewGroup.LayoutParams.MATCH_PARENT);
             for (MediaItemMetadata item : items) {
-                MediaItemTabView tab = new MediaItemTabView(mContext, item);
-                mTabsContainer.addView(tab);
-                tab.setLayoutParams(layoutParams);
-                tab.setOnClickListener(view -> {
-                    if (mListener != null) {
-                        mListener.onTabSelected(item);
-                    }
-                });
-                tab.setPadding(padding, 0, padding, 0);
-                tab.requestLayout();
-                tab.setTag(item);
+                MediaItemTab tab = new MediaItemTab(mContext, item);
+                mTabsContainer.addCarTab(tab);
 
                 count++;
                 if (count >= mMaxTabs) {
@@ -401,8 +386,16 @@ public class AppBarView extends ConstraintLayout {
      * Updates the currently active item
      */
     public void setActiveItem(MediaItemMetadata item) {
-        mSelectedItem = item;
-        updateTabs();
+        for (int i = 0; i < mTabsContainer.getCarTabCount(); i++) {
+            MediaItemTab mediaItemTab = mTabsContainer.get(i);
+            boolean match = item != null && Objects.equals(
+                    item.getId(),
+                    mediaItemTab.getItem().getId());
+            if (match) {
+                mTabsContainer.selectCarTab(mediaItemTab);
+                return;
+            }
+        }
     }
 
     /**
@@ -433,19 +426,6 @@ public class AppBarView extends ConstraintLayout {
         }
 
         mTabsVisible = visible;
-    }
-
-    private void updateTabs() {
-        for (int i = 0; i < mTabsContainer.getChildCount(); i++) {
-            View child = mTabsContainer.getChildAt(i);
-            if (child instanceof MediaItemTabView) {
-                MediaItemTabView tabView = (MediaItemTabView) child;
-                boolean match = mSelectedItem != null && Objects.equals(
-                        mSelectedItem.getId(),
-                        ((MediaItemMetadata) tabView.getTag()).getId());
-                tabView.setAlpha(match ? mSelectedTabAlpha : mUnselectedTabAlpha);
-            }
-        }
     }
 
     /**
