@@ -49,9 +49,6 @@ public class AppBarView extends ConstraintLayout {
     private boolean mHasSettings;
     private boolean mShowSettings;
     private View mSearchButton;
-    private View mQueueButton;
-    private boolean mHasQueue;
-    private boolean mShowQueue;
     private EditText mSearchText;
     private MediaAppSelectorWidget mAppSelector;
     private Context mContext;
@@ -105,9 +102,6 @@ public class AppBarView extends ConstraintLayout {
          * Invoked when the user clicks on the search button
          */
         void onSearchSelection();
-
-        /** Invoked when the user clicks on the queue button. */
-        void onQueueClicked();
     }
 
     /**
@@ -196,9 +190,6 @@ public class AppBarView extends ConstraintLayout {
         mSearchButton = findViewById(R.id.search);
         mSearchButton.setOnClickListener(view -> onSearchClicked());
 
-        mQueueButton = findViewById(R.id.queue);
-        mQueueButton.setOnClickListener(view -> onQueueClicked());
-
         mSearchText = findViewById(R.id.search_bar);
         mSearchText.setOnFocusChangeListener(
                 (view, hasFocus) -> {
@@ -283,13 +274,6 @@ public class AppBarView extends ConstraintLayout {
         mListener.onSearchSelection();
     }
 
-    private void onQueueClicked() {
-        if (mListener == null) {
-            return;
-        }
-        mListener.onQueueClicked();
-    }
-
     private void onSearch(String query) {
         if (mListener == null || TextUtils.isEmpty(query)) {
             return;
@@ -362,26 +346,6 @@ public class AppBarView extends ConstraintLayout {
         mSettingsButton.setVisibility(mHasSettings && mShowSettings ? VISIBLE : GONE);
     }
 
-    /** Sets the active state on the queue button. */
-    public void activateQueueButton(boolean active) {
-        mQueueButton.setActivated(active);
-    }
-
-    /** Sets whether the source has a queue (not all screens show it). */
-    public void setHasQueue(boolean hasQueue) {
-        mHasQueue = hasQueue;
-        updateQueueVisibility();
-    }
-
-    private void showQueue(boolean showQueue) {
-        mShowQueue = showQueue;
-        updateQueueVisibility();
-    }
-
-    private void updateQueueVisibility() {
-        mQueueButton.setVisibility(mHasQueue && mShowQueue ? VISIBLE : GONE);
-    }
-
     /**
      * Updates the currently active item
      */
@@ -444,8 +408,8 @@ public class AppBarView extends ConstraintLayout {
                 setShowTabs(false);
                 mTitle.setVisibility(View.GONE);
                 hideSearchBar();
-                showQueue(false);
                 showSettings(true);
+                break;
             case BROWSING:
                 mNavIcon.setImageDrawable(mArrowBack);
                 mNavIconContainer.setVisibility(View.INVISIBLE);
@@ -453,7 +417,6 @@ public class AppBarView extends ConstraintLayout {
                 mTitle.setVisibility(hasTabs ? View.GONE : View.VISIBLE);
                 hideSearchBar();
                 mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
-                showQueue(false);
                 showSettings(true);
                 break;
             case STACKED:
@@ -463,20 +426,9 @@ public class AppBarView extends ConstraintLayout {
                 mTitle.setVisibility(View.VISIBLE);
                 hideSearchBar();
                 mSearchButton.setVisibility(View.GONE);
-                showQueue(false);
                 showSettings(true);
                 break;
             case PLAYING:
-                mNavIcon.setImageDrawable(mCollapse);
-                mNavIconContainer.setVisibility(View.VISIBLE);
-                setActiveItem(null);
-                mTitle.setText(mMediaAppTitle);
-                setShowTabs(false);
-                mTitle.setVisibility(View.VISIBLE);
-                hideSearchBar();
-                mSearchButton.setVisibility(View.GONE);
-                showQueue(true);
-                showSettings(false);
                 break;
             case SEARCHING:
                 mNavIcon.setImageDrawable(mCollapse);
@@ -485,7 +437,6 @@ public class AppBarView extends ConstraintLayout {
                 mTitle.setVisibility(View.GONE);
                 mSearchText.setVisibility(View.VISIBLE);
                 mSearchText.requestFocus();
-                showQueue(false);
                 showSettings(true);
                 break;
         }
