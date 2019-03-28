@@ -20,7 +20,7 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="@dimen/playback_controls_margin_x"
+    android:layout_marginHorizontal="@dimen/media_activity_margin_x"
     android:background="?android:attr/selectableItemBackground"
     >
 
@@ -29,9 +29,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginBottom="@dimen/media_browse_list_item_title_margin_bottom"
-        android:paddingTop="@dimen/media_browse_list_item_padding_y"
-        android:paddingBottom="@dimen/media_browse_list_item_padding_y"
+        android:layout_marginVertical="@dimen/media_browse_list_item_text_margin_y"
         android:includeFontPadding="false"
         android:ellipsize="end"
         android:maxLines="1"
