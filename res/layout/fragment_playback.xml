@@ -17,52 +17,40 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/playback_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <include
+        style="@style/MetadataContainerStyle"
         android:id="@+id/metadata_container"
         layout="@layout/metadata_normal"
-        android:layout_width="@dimen/fragment_metadata_width"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/fragment_metadata_margin_x"
-        android:layout_marginEnd="@dimen/fragment_metadata_margin_x"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/playback_controls"/>
 
-    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                 xmlns:app="http://schemas.android.com/apk/res-auto"
-                 android:layout_width="0dp"
-                 android:layout_height="wrap_content"
-                 android:layout_marginStart="@dimen/playback_seekbar_margin_x"
-                 android:layout_marginEnd="@dimen/playback_seekbar_margin_x"
-                 android:clipChildren="false"
-                 app:layout_constraintStart_toStartOf="parent"
-                 app:layout_constraintEnd_toEndOf="parent"
-                 app:layout_constraintTop_toBottomOf="@+id/metadata_container"
-                 app:layout_constraintBottom_toTopOf="@+id/playback_controls">
-
-        <SeekBar
-            style="@style/SeekBarStyle"
-            android:id="@+id/seek_bar"
-            android:layout_gravity="center"
-            android:clickable="false"
-            android:focusable="false"
-            android:paddingEnd="@dimen/playback_seekbar_padding_x"
-            android:paddingStart="@dimen/playback_seekbar_padding_x"
-            android:progressDrawable="@drawable/seekbar_background"
-            android:thumb="@drawable/seekbar_thumb"
-            android:splitTrack="false"
-            android:progressTint="@color/progress_bar_highlight"
-            android:progressBackgroundTint="@color/progress_bar_background"
-            android:background="@null"
-            tools:progress="70"/>
-
-    </FrameLayout>
+    <SeekBar
+        style="@style/SeekBarStyle"
+        android:id="@+id/seek_bar"
+        android:layout_gravity="center"
+        android:clickable="false"
+        android:focusable="false"
+        android:layout_marginStart="@dimen/playback_seekbar_margin_x"
+        android:layout_marginEnd="@dimen/playback_seekbar_margin_x"
+        android:paddingEnd="@dimen/playback_seekbar_padding_x"
+        android:paddingStart="@dimen/playback_seekbar_padding_x"
+        android:progressDrawable="@drawable/seekbar_background"
+        android:thumb="@drawable/seekbar_thumb"
+        android:thumbOffset="@dimen/playback_seekbar_thumb_offset"
+        android:splitTrack="false"
+        android:progressTint="@color/progress_bar_highlight"
+        android:progressBackgroundTint="@color/progress_bar_background"
+        android:background="@null"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/metadata_container"
+        app:layout_constraintBottom_toTopOf="@+id/playback_controls" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/queue_list"
@@ -78,8 +66,7 @@
 
     <com.android.car.media.common.PlaybackControlsActionBar
         android:id="@+id/playback_controls"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/ControlBar"
         android:layout_marginHorizontal="@dimen/control_bar_margin_x"
         android:layout_marginBottom="@dimen/control_bar_margin_bottom"
         app:columns="5"
@@ -87,5 +74,4 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"/>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
