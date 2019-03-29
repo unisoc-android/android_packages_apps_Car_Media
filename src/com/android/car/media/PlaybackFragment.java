@@ -242,11 +242,13 @@ public class PlaybackFragment extends Fragment {
         TextView albumTitle = view.findViewById(R.id.album_title);
         TextView artist = view.findViewById(R.id.artist);
         SeekBar seekbar = view.findViewById(R.id.seek_bar);
-        TextView time = view.findViewById(R.id.time);
+        View timeGroup =  view.findViewById(R.id.progress_text_container);
+        TextView curTime = view.findViewById(R.id.current_time);
+        TextView maxTime = view.findViewById(R.id.max_time);
         mMetadataController = new MetadataController(getViewLifecycleOwner(),
-                getPlaybackViewModel(), mUpdatesPaused,
-                title, albumTitle, artist, time, seekbar, albumArt, getResources()
-                .getDimensionPixelSize(R.dimen.playback_album_art_size));
+                getPlaybackViewModel(), mUpdatesPaused, title, albumTitle, artist, timeGroup,
+                curTime, maxTime, seekbar, albumArt,
+                getResources().getDimensionPixelSize(R.dimen.playback_album_art_size));
     }
 
     /**
