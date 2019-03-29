@@ -198,9 +198,6 @@ public class BrowseFragment extends Fragment {
         int numColumns = view.getContext().getResources().getInteger(R.integer.num_browse_columns);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), numColumns);
 
-        mBrowseList.setVerticalFadingEdgeEnabled(true);
-        mBrowseList.setFadingEdgeLength(getResources()
-                .getDimensionPixelSize(R.dimen.browse_grid_fading_edge_length));
         mBrowseList.setLayoutManager(gridLayoutManager);
         mBrowseList.addItemDecoration(new GridSpacingItemDecoration(
                 getResources().getDimensionPixelSize(R.dimen.grid_item_spacing),

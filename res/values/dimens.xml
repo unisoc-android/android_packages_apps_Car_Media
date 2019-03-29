@@ -146,6 +146,6 @@
     <dimen name="fragment_metadata_margin_x">@*android:dimen/car_margin</dimen>
 
     <!-- BrowseFragment.xml -->
-    <dimen name="browse_grid_fading_edge_length">@*android:dimen/car_padding_5</dimen>
+    <dimen name="browse_fragment_bottom_padding">@dimen/minimized_control_bar_height</dimen>
 
 </resources>
