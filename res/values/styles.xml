@@ -25,6 +25,7 @@
 
     <style name="PlaybackSubtitleStyle" parent="TextAppearance.Body1">
         <item name="android:textColor">@color/secondary_text_color</item>
+        <item name="android:singleLine">true</item>
     </style>
 
     <style name="MetadataContainerStyle">
