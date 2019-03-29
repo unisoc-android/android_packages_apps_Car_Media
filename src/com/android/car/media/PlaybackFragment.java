@@ -58,6 +58,7 @@ import java.util.Objects;
 public class PlaybackFragment extends Fragment {
     private static final String TAG = "PlaybackFragment";
 
+    private View mExpandedControlBarScrim;
     private PlaybackControlsActionBar mPlaybackControls;
     private QueueItemsAdapter mQueueAdapter;
     private RecyclerView mQueue;
@@ -171,6 +172,8 @@ public class PlaybackFragment extends Fragment {
         mQueueButton.setOnClickListener(button -> onQueueClicked());
         mNavIconContainer = view.findViewById(R.id.nav_icon_container);
         mNavIconContainer.setOnClickListener(nav -> onCollapse());
+        mExpandedControlBarScrim = view.findViewById(R.id.playback_controls_expanded_scrim);
+        mExpandedControlBarScrim.setAlpha(0f);
 
         MediaAppSelectorWidget appIcon = view.findViewById(R.id.app_icon_container);
         appIcon.setFragmentActivity(getActivity());
@@ -197,6 +200,12 @@ public class PlaybackFragment extends Fragment {
         mPlaybackControls = playbackControls;
         mPlaybackControls.setModel(getPlaybackViewModel(), getViewLifecycleOwner());
         mPlaybackControls.setAnimationViewGroup(mRootView);
+        mPlaybackControls.registerExpandCollapseCallback((expanding) ->
+            mExpandedControlBarScrim.animate()
+                    .alpha(expanding ? 1.0f : 0f)
+                    .setDuration(getContext().getResources().getInteger(
+                            expanding ? R.integer.control_bar_expand_anim_duration
+                                    : R.integer.control_bar_collapse_anim_duration)));
     }
 
     private void initQueue() {
