@@ -16,7 +16,7 @@
 -->
 <resources>
     <!-- media_activity.xml -->
-    <dimen name="playback_controls_margin_x">0dp</dimen>
+    <dimen name="media_activity_margin_x">0dp</dimen>
 
     <!-- browse_playback_background.xml -->
     <!-- Scale factor for the background image -->

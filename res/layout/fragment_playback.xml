@@ -21,13 +21,66 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <FrameLayout
+        android:id="@+id/nav_icon_container"
+        android:layout_width="@dimen/appbar_view_nav_button_width"
+        android:layout_height="@dimen/appbar_first_row_height"
+        android:padding="@dimen/app_switch_widget_icon_padding"
+        android:background="@drawable/app_item_background"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent">
+        <ImageView
+            android:id="@+id/nav_icon"
+            android:layout_width="@dimen/appbar_view_icon_size"
+            android:layout_height="@dimen/appbar_view_icon_size"
+            android:src="@drawable/ic_expand_more"
+            android:layout_gravity="center"
+            android:scaleType="fitXY"
+            android:tint="@color/appbar_view_icon_tint"/>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/playback_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:singleLine="true"
+        android:text="@string/fragment_playback_title"
+        app:layout_constraintTop_toTopOf="@id/nav_icon_container"
+        app:layout_constraintBottom_toBottomOf="@id/nav_icon_container"
+        app:layout_constraintLeft_toRightOf="@id/nav_icon_container"
+        app:layout_constraintRight_toLeftOf="@+id/queue_button"/>
+
+    <ImageView
+        android:id="@+id/queue_button"
+        android:layout_width="@dimen/appbar_view_icon_size"
+        android:layout_height="@dimen/appbar_view_icon_size"
+        android:tint="@color/appbar_view_icon_tint"
+        android:src="@drawable/ic_tracklist"
+        app:layout_constraintTop_toTopOf="@id/nav_icon_container"
+        app:layout_constraintBottom_toBottomOf="@id/nav_icon_container"
+        app:layout_constraintRight_toLeftOf="@+id/app_icon_container"/>
+
+    <com.android.car.media.common.MediaAppSelectorWidget
+        android:id="@+id/app_icon_container"
+        android:layout_width="@dimen/app_switch_widget_width"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/app_switch_widget_icon_padding"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/app_item_background"
+        app:switchingEnabled="false"
+        app:layout_constraintTop_toTopOf="@id/nav_icon_container"
+        app:layout_constraintBottom_toBottomOf="@id/nav_icon_container"
+        app:layout_constraintRight_toRightOf="parent"/>
+
     <include
         style="@style/MetadataContainerStyle"
         android:id="@+id/metadata_container"
         layout="@layout/metadata_normal"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toTopOf="@id/queue_button"
         app:layout_constraintBottom_toTopOf="@+id/playback_controls"/>
 
     <SeekBar
@@ -60,8 +113,8 @@
         android:layout_marginTop="@dimen/fragment_metadata_queue_margin_top"
         android:layout_marginBottom="@dimen/playback_controls_margin"
         android:fadingEdgeLength="@dimen/queue_fading_edge_length"
+        app:layout_constraintTop_toBottomOf="@id/queue_button"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
     />
 
     <com.android.car.media.common.PlaybackControlsActionBar

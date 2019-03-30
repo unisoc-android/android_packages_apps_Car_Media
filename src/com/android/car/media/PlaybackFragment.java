@@ -38,11 +38,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.apps.common.util.ViewHelper;
+import com.android.car.media.common.MediaAppSelectorWidget;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.MetadataController;
 import com.android.car.media.common.PlaybackControlsActionBar;
 import com.android.car.media.common.playback.PlaybackViewModel;
-import com.android.car.media.widgets.AppBarView;
 import com.android.car.media.widgets.ViewUtils;
 
 import java.util.ArrayList;
@@ -58,24 +58,41 @@ import java.util.Objects;
 public class PlaybackFragment extends Fragment {
     private static final String TAG = "PlaybackFragment";
 
-    private AppBarView mAppBarView;
     private PlaybackControlsActionBar mPlaybackControls;
     private QueueItemsAdapter mQueueAdapter;
     private RecyclerView mQueue;
     private ConstraintLayout mMetadataContainer;
     private SeekBar mSeekBar;
+    private View mQueueButton;
+    private ViewGroup mNavIconContainer;
 
     private MetadataController mMetadataController;
     private ConstraintLayout mRootView;
+
+    private PlaybackFragmentListener mListener;
 
     private PlaybackViewModel.PlaybackController mController;
     private Long mActiveQueueItemId;
 
     private MutableLiveData<Boolean> mUpdatesPaused = dataOf(false);
 
+    private boolean mHasQueue;
     private boolean mQueueIsVisible;
 
     private int mFadeDuration;
+
+    /**
+     * PlaybackFragment listener
+     */
+    public interface PlaybackFragmentListener {
+        /**
+         * Invoked when the user clicks on the collapse button
+         */
+        void onCollapse();
+
+        /** Invoked when the user clicks on the queue button. */
+        void onQueueClicked();
+    }
 
     public class QueueViewHolder extends RecyclerView.ViewHolder {
 
@@ -150,6 +167,13 @@ public class PlaybackFragment extends Fragment {
         mQueue = view.findViewById(R.id.queue_list);
         mMetadataContainer = view.findViewById(R.id.metadata_container);
         mSeekBar = view.findViewById(R.id.seek_bar);
+        mQueueButton = view.findViewById(R.id.queue_button);
+        mQueueButton.setOnClickListener(button -> onQueueClicked());
+        mNavIconContainer = view.findViewById(R.id.nav_icon_container);
+        mNavIconContainer.setOnClickListener(nav -> onCollapse());
+
+        MediaAppSelectorWidget appIcon = view.findViewById(R.id.app_icon_container);
+        appIcon.setFragmentActivity(getActivity());
 
         getPlaybackViewModel().getPlaybackController().observe(getViewLifecycleOwner(),
                 controller -> mController = controller);
@@ -162,7 +186,6 @@ public class PlaybackFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        mAppBarView = ((AppBarView.AppBarProvider) context).getAppBar();
     }
 
     @Override
@@ -195,11 +218,12 @@ public class PlaybackFragment extends Fragment {
         mQueue.setAdapter(mQueueAdapter);
         mQueue.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        freezable(mUpdatesPaused, getPlaybackViewModel().getQueue()).observe(this, this::setQueue);
+        freezable(mUpdatesPaused, getPlaybackViewModel().getQueue()).observe(this,
+                this::setQueue);
 
         getPlaybackViewModel().hasQueue().observe(getViewLifecycleOwner(), hasQueue -> {
             boolean enableQueue = (hasQueue != null) && hasQueue;
-            mAppBarView.setHasQueue(enableQueue);
+            setHasQueue(enableQueue);
             if (mQueueIsVisible && !enableQueue) {
                 toggleQueueVisibility();
             }
@@ -218,11 +242,13 @@ public class PlaybackFragment extends Fragment {
         TextView albumTitle = view.findViewById(R.id.album_title);
         TextView artist = view.findViewById(R.id.artist);
         SeekBar seekbar = view.findViewById(R.id.seek_bar);
-        TextView time = view.findViewById(R.id.time);
+        View timeGroup =  view.findViewById(R.id.progress_text_container);
+        TextView curTime = view.findViewById(R.id.current_time);
+        TextView maxTime = view.findViewById(R.id.max_time);
         mMetadataController = new MetadataController(getViewLifecycleOwner(),
-                getPlaybackViewModel(), mUpdatesPaused,
-                title, albumTitle, artist, time, seekbar, albumArt, getResources()
-                .getDimensionPixelSize(R.dimen.playback_album_art_size));
+                getPlaybackViewModel(), mUpdatesPaused, title, albumTitle, artist, timeGroup,
+                curTime, maxTime, seekbar, albumArt,
+                getResources().getDimensionPixelSize(R.dimen.playback_album_art_size));
     }
 
     /**
@@ -230,7 +256,7 @@ public class PlaybackFragment extends Fragment {
      */
     public void toggleQueueVisibility() {
         mQueueIsVisible = !mQueueIsVisible;
-        mAppBarView.activateQueueButton(mQueueIsVisible);
+        mQueueButton.setActivated(mQueueIsVisible);
         if (mQueueIsVisible) {
             ViewUtils.hideViewAnimated(mMetadataContainer, mFadeDuration);
             ViewUtils.hideViewAnimated(mSeekBar, mFadeDuration);
@@ -240,6 +266,16 @@ public class PlaybackFragment extends Fragment {
             ViewUtils.showViewAnimated(mMetadataContainer, mFadeDuration);
             ViewUtils.showViewAnimated(mSeekBar, mFadeDuration);
         }
+    }
+
+    /** Sets whether the source has a queue. */
+    private void setHasQueue(boolean hasQueue) {
+        mHasQueue = hasQueue;
+        updateQueueVisibility();
+    }
+
+    private void updateQueueVisibility() {
+        mQueueButton.setVisibility(mHasQueue ? View.VISIBLE : View.GONE);
     }
 
     private void onQueueItemClicked(MediaItemMetadata item) {
@@ -257,5 +293,25 @@ public class PlaybackFragment extends Fragment {
 
     private PlaybackViewModel getPlaybackViewModel() {
         return PlaybackViewModel.get(getActivity().getApplication());
+    }
+
+    /**
+     * Sets a listener of this PlaybackFragment events. In order to avoid memory leaks, consumers
+     * must reset this reference by setting the listener to null.
+     */
+    public void setListener(PlaybackFragmentListener listener) {
+        mListener = listener;
+    }
+
+    private void onCollapse() {
+        if (mListener != null) {
+            mListener.onCollapse();
+        }
+    }
+
+    private void onQueueClicked() {
+        if (mListener != null) {
+            mListener.onQueueClicked();
+        }
     }
 }

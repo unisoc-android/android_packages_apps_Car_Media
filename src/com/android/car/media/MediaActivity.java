@@ -145,12 +145,20 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
             }
             mSearchFragment.updateSearchQuery(query);
         }
-
-        @Override
-        public void onQueueClicked() {
-            mPlaybackFragment.toggleQueueVisibility();
-        }
     };
+
+    private PlaybackFragment.PlaybackFragmentListener mPlaybackFragmentListener =
+            new PlaybackFragment.PlaybackFragmentListener() {
+                @Override
+                public void onCollapse() {
+                    getInnerViewModel().setMode(Mode.BROWSING);
+                }
+
+                @Override
+                public void onQueueClicked() {
+                    mPlaybackFragment.toggleQueueVisibility();
+                }
+            };
 
     /**
      * Possible modes of the application UI
@@ -198,6 +206,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                 mAppBarView::setSearchSupported);
 
         mPlaybackFragment = new PlaybackFragment();
+        mPlaybackFragment.setListener(mPlaybackFragmentListener);
         mSearchFragment = BrowseFragment.newSearchInstance(null);
         mAppSelectionFragment = new AppSelectionFragment();
         int fadeDuration = getResources().getInteger(R.integer.app_selector_fade_duration);
@@ -412,6 +421,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                 ViewUtils.showViewAnimated(mPlaybackContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mBrowseContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mSearchContainer, mFadeDuration);
+                ViewUtils.hideViewAnimated(mAppBarView, mFadeDuration);
                 mAppBarView.setState(AppBarView.State.PLAYING);
                 break;
             case BROWSING:
@@ -419,6 +429,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                 ViewUtils.hideViewAnimated(mPlaybackContainer, mFadeDuration);
                 ViewUtils.showViewAnimated(mBrowseContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mSearchContainer, mFadeDuration);
+                ViewUtils.showViewAnimated(mAppBarView, mFadeDuration);
                 updateBrowsingState();
                 break;
             case SEARCHING:
@@ -426,6 +437,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                 ViewUtils.hideViewAnimated(mPlaybackContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mBrowseContainer, mFadeDuration);
                 ViewUtils.showViewAnimated(mSearchContainer, mFadeDuration);
+                ViewUtils.showViewAnimated(mAppBarView, mFadeDuration);
                 mAppBarView.setState(AppBarView.State.SEARCHING);
                 break;
         }
