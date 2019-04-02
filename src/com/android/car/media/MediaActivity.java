@@ -296,7 +296,6 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
 
     @Override
     public void onBackPressed() {
-        mPlaybackFragment.closeOverflowMenu();
         super.onBackPressed();
     }
 
@@ -462,6 +461,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
             ViewUtils.hideViewAnimated(mBrowseControlsContainer, mFadeDuration);
             ViewUtils.showViewAnimated(mAlbumBackground, mFadeDuration);
         } else {
+            mPlaybackFragment.closeOverflowMenu();
             ViewUtils.showViewAnimated(mBrowseControlsContainer, mFadeDuration);
             ViewUtils.hideViewAnimated(mAlbumBackground, mFadeDuration);
         }

@@ -68,7 +68,6 @@ public class PlaybackFragment extends Fragment {
     private ViewGroup mNavIconContainer;
 
     private MetadataController mMetadataController;
-    private ConstraintLayout mRootView;
 
     private PlaybackFragmentListener mListener;
 
@@ -164,7 +163,6 @@ public class PlaybackFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container,
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_playback, container, false);
-        mRootView = view.findViewById(R.id.playback_container);
         mQueue = view.findViewById(R.id.queue_list);
         mMetadataContainer = view.findViewById(R.id.metadata_container);
         mSeekBar = view.findViewById(R.id.seek_bar);
@@ -174,6 +172,8 @@ public class PlaybackFragment extends Fragment {
         mNavIconContainer.setOnClickListener(nav -> onCollapse());
         mExpandedControlBarScrim = view.findViewById(R.id.playback_controls_expanded_scrim);
         mExpandedControlBarScrim.setAlpha(0f);
+        mExpandedControlBarScrim.setOnClickListener(scrim -> mPlaybackControls.close());
+        mExpandedControlBarScrim.setClickable(false);
 
         MediaAppSelectorWidget appIcon = view.findViewById(R.id.app_icon_container);
         appIcon.setFragmentActivity(getActivity());
@@ -199,13 +199,18 @@ public class PlaybackFragment extends Fragment {
     private void initPlaybackControls(PlaybackControlsActionBar playbackControls) {
         mPlaybackControls = playbackControls;
         mPlaybackControls.setModel(getPlaybackViewModel(), getViewLifecycleOwner());
-        mPlaybackControls.setAnimationViewGroup(mRootView);
-        mPlaybackControls.registerExpandCollapseCallback((expanding) ->
+        mPlaybackControls.registerExpandCollapseCallback((expanding) -> {
+            // We use clickable instead of visibility VISIBLE/GONE because it breaks the
+            // ControlBar's slide animation, causing the ControlBar to jitter at the end.
+            // This should eventually be replaced by a proper animation model
+            // (as well as ControlBar)
+            mExpandedControlBarScrim.setClickable(expanding);
             mExpandedControlBarScrim.animate()
                     .alpha(expanding ? 1.0f : 0f)
                     .setDuration(getContext().getResources().getInteger(
                             expanding ? R.integer.control_bar_expand_anim_duration
-                                    : R.integer.control_bar_collapse_anim_duration)));
+                                    : R.integer.control_bar_collapse_anim_duration));
+        });
     }
 
     private void initQueue() {
