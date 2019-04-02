@@ -105,10 +105,12 @@ public class BrowseFragment extends Fragment {
      * Moves the user one level up in the browse tree, if possible.
      */
     public void navigateBack() {
-        mBrowseStack.pop();
-        mMediaBrowserViewModel.search(mSearchQuery);
-        mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
-        getParent().onBackStackChanged();
+        if (!mBrowseStack.empty()) {
+            mBrowseStack.pop();
+            mMediaBrowserViewModel.search(mSearchQuery);
+            mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
+            getParent().onBackStackChanged();
+        }
     }
 
     @NonNull
