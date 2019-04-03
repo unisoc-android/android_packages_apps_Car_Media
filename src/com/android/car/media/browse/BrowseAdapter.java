@@ -61,7 +61,6 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
     private MediaItemMetadata mParentMediaItem;
     private int mMaxSpanSize = 1;
 
-    private boolean mContentStyleEnabled = false;
     private BrowseItemViewType mRootBrowsableViewType = BrowseItemViewType.LIST_ITEM;
     private BrowseItemViewType mRootPlayableViewType = BrowseItemViewType.LIST_ITEM;
 
@@ -142,10 +141,6 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
      */
     public void setMaxSpanSize(int maxSpanSize) {
         mMaxSpanSize = maxSpanSize;
-    }
-
-    public void setContentStyleEnabled(boolean enabled) {
-        mContentStyleEnabled = enabled;
     }
 
     public void setRootBrowsableViewType(int hintValue) {
@@ -265,7 +260,7 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
         String currentTitleGrouping = null;
         for (MediaItemMetadata item : items) {
             String titleGrouping = item.getTitleGrouping();
-            if (mContentStyleEnabled && !Objects.equals(currentTitleGrouping, titleGrouping)) {
+            if (!Objects.equals(currentTitleGrouping, titleGrouping)) {
                 currentTitleGrouping = titleGrouping;
                 itemsBuilder.addTitle(titleGrouping, null);
             }
@@ -282,7 +277,7 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
     }
 
     private BrowseItemViewType getBrowsableViewType(@Nullable MediaItemMetadata mediaItem) {
-        if (mediaItem == null || !mContentStyleEnabled) {
+        if (mediaItem == null) {
             return BrowseItemViewType.LIST_ITEM;
         }
         if (mediaItem.getBrowsableContentStyleHint() == 0) {
@@ -292,7 +287,7 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
     }
 
     private BrowseItemViewType getPlayableViewType(@Nullable MediaItemMetadata mediaItem) {
-        if (mediaItem == null || !mContentStyleEnabled) {
+        if (mediaItem == null) {
             return BrowseItemViewType.LIST_ITEM;
         }
         if (mediaItem.getPlayableContentStyleHint() == 0) {
