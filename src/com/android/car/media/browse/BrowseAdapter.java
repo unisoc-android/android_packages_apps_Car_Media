@@ -226,8 +226,10 @@ public class BrowseAdapter extends ListAdapter<BrowseViewData, BrowseViewHolder>
             if (title == null) {
                 title = "";
             }
-            result.add(new BrowseViewData(title, BrowseItemViewType.HEADER,
-                    view -> BrowseAdapter.this.notify(notification)));
+            View.OnClickListener listener = notification != null ?
+                    view -> BrowseAdapter.this.notify(notification) :
+                    null;
+            result.add(new BrowseViewData(title, BrowseItemViewType.HEADER, listener));
         }
 
         List<BrowseViewData> build() {
