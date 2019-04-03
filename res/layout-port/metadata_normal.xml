@@ -62,7 +62,6 @@
         android:id="@+id/artist"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="right"
         android:layout_marginTop="@dimen/metadata_normal_artist_margin_top"
         style="@style/PlaybackSubtitleStyle"
         app:layout_constraintStart_toStartOf="parent"
