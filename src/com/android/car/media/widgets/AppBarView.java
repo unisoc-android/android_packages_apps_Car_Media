@@ -412,7 +412,7 @@ public class AppBarView extends ConstraintLayout {
                 break;
             case BROWSING:
                 mNavIcon.setImageDrawable(mArrowBack);
-                mNavIconContainer.setVisibility(View.INVISIBLE);
+                mNavIconContainer.setVisibility(View.GONE);
                 setShowTabs(hasTabs);
                 mTitle.setVisibility(hasTabs ? View.GONE : View.VISIBLE);
                 hideSearchBar();

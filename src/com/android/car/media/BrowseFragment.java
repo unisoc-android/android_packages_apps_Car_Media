@@ -105,10 +105,12 @@ public class BrowseFragment extends Fragment {
      * Moves the user one level up in the browse tree, if possible.
      */
     public void navigateBack() {
-        mBrowseStack.pop();
-        mMediaBrowserViewModel.search(mSearchQuery);
-        mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
-        getParent().onBackStackChanged();
+        if (!mBrowseStack.empty()) {
+            mBrowseStack.pop();
+            mMediaBrowserViewModel.search(mSearchQuery);
+            mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
+            getParent().onBackStackChanged();
+        }
     }
 
     @NonNull
@@ -213,8 +215,6 @@ public class BrowseFragment extends Fragment {
             mMediaBrowserViewModel.search(mSearchQuery);
             mMediaBrowserViewModel.setCurrentBrowseId(getCurrentMediaItemId());
         }
-        mMediaBrowserViewModel.contentStyleEnabled().observe(this, enabled ->
-                mBrowseAdapter.setContentStyleEnabled(enabled));
         mMediaBrowserViewModel.rootBrowsableHint().observe(this, hint ->
                 mBrowseAdapter.setRootBrowsableViewType(hint));
         mMediaBrowserViewModel.rootPlayableHint().observe(this, hint ->
