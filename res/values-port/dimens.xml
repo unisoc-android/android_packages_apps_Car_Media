@@ -27,6 +27,4 @@
     <!-- appbar_view.xml -->
     <dimen name="appbar_view_tabs_margin_left">0dp</dimen>
 
-    <!-- metadata_normal.xml -->
-    <dimen name="art_metadata_metadata_margin_start">48dp</dimen>
 </resources>
