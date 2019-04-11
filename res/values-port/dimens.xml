@@ -26,7 +26,6 @@
 
     <!-- appbar_view.xml -->
     <dimen name="appbar_view_tabs_margin_start">0dp</dimen>
-    <dimen name="appbar_view_title_margin_start">0dp</dimen>
     <dimen name="browse_fragment_top_padding">@dimen/appbar_2_rows_height</dimen>
 
 </resources>
