@@ -88,6 +88,8 @@
     <dimen name="media_activity_margin_x">@*android:dimen/car_margin</dimen>
 
     <!-- BrowseFragment.java -->
+    <!-- Spacer used between the app bar and the top of the browse list/grid -->
+    <dimen name="browse_spacer_height">@*android:dimen/car_padding_2</dimen>
     <dimen name="grid_item_spacing">@*android:dimen/car_padding_4</dimen>
     <dimen name="grid_item_margin_x">0dp</dimen>
 
@@ -152,6 +154,8 @@
     <!-- fragment_browse.xml -->
     <dimen name="browse_fragment_top_padding">@dimen/appbar_first_row_height</dimen>
     <dimen name="browse_fragment_bottom_padding">@dimen/minimized_control_bar_height</dimen>
+    <!-- Top padding to use when at browse levels deeper than the first level -->
+    <dimen name="browse_fragment_top_padding_stacked">@dimen/appbar_first_row_height</dimen>
 
     <!-- fragment_search.xml -->
     <dimen name="search_fragment_top_padding">@dimen/appbar_first_row_height</dimen>
