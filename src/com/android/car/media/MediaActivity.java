@@ -46,6 +46,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.android.car.apps.common.BackgroundImageView;
+import com.android.car.apps.common.util.ViewHelper;
 import com.android.car.media.common.AppSelectionFragment;
 import com.android.car.media.common.MediaAppSelectorWidget;
 import com.android.car.media.common.MediaConstants;
@@ -82,7 +83,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
     private PlaybackFragment mPlaybackFragment;
     private BrowseFragment mSearchFragment;
     private AppSelectionFragment mAppSelectionFragment;
-    private ViewGroup mBrowseControlsContainer;
+    private ViewGroup mMiniPlaybackControls;
     private EmptyFragment mEmptyFragment;
     private ViewGroup mBrowseContainer;
     private ViewGroup mPlaybackContainer;
@@ -92,6 +93,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
 
     /** Current state */
     private Intent mCurrentSourcePreferences;
+    private boolean mCanShowMiniPlaybackControls;
 
     private AppBarView.AppBarListener mAppBarListener = new AppBarView.AppBarListener() {
         @Override
@@ -215,8 +217,8 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                 findViewById(R.id.minimized_playback_controls);
         browsePlaybackControls.setModel(playbackViewModel, this);
 
-        mBrowseControlsContainer = findViewById(R.id.minimized_playback_controls);
-        mBrowseControlsContainer.setOnClickListener(
+        mMiniPlaybackControls = findViewById(R.id.minimized_playback_controls);
+        mMiniPlaybackControls.setOnClickListener(
                 view -> getInnerViewModel().setMode(Mode.PLAYBACK));
 
         mFadeDuration = getResources().getInteger(
@@ -254,6 +256,9 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
     }
 
     private void handlePlaybackState(PlaybackViewModel.PlaybackStateWrapper state) {
+        // TODO(arnaudberry) rethink interactions between customized layouts and dynamic visibility.
+        mCanShowMiniPlaybackControls = (state != null) && state.shouldDisplay();
+        ViewHelper.setVisible(mMiniPlaybackControls, mCanShowMiniPlaybackControls);
         if (state == null) {
             return;
         }
@@ -452,11 +457,13 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
 
     private void updateMetadata(Mode mode) {
         if (mode == Mode.PLAYBACK) {
-            ViewUtils.hideViewAnimated(mBrowseControlsContainer, mFadeDuration);
+            ViewUtils.hideViewAnimated(mMiniPlaybackControls, mFadeDuration);
             ViewUtils.showViewAnimated(mAlbumBackground, mFadeDuration);
         } else {
             mPlaybackFragment.closeOverflowMenu();
-            ViewUtils.showViewAnimated(mBrowseControlsContainer, mFadeDuration);
+            if (mCanShowMiniPlaybackControls) {
+                ViewUtils.showViewAnimated(mMiniPlaybackControls, mFadeDuration);
+            }
             ViewUtils.hideViewAnimated(mAlbumBackground, mFadeDuration);
         }
     }
