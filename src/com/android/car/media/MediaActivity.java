@@ -81,6 +81,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
     private BackgroundImageView mAlbumBackground;
     private PlaybackFragment mPlaybackFragment;
     private BrowseFragment mSearchFragment;
+    private BrowseFragment mBrowseFragment;
     private AppSelectionFragment mAppSelectionFragment;
     private ViewGroup mBrowseControlsContainer;
     private EmptyFragment mEmptyFragment;
@@ -102,9 +103,8 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
 
         @Override
         public void onBack() {
-            Fragment currentFragment = getCurrentFragment();
-            if (currentFragment instanceof BrowseFragment) {
-                BrowseFragment fragment = (BrowseFragment) currentFragment;
+            BrowseFragment fragment = getCurrentBrowseFragment();
+            if (fragment != null) {
                 fragment.navigateBack();
             }
         }
@@ -371,7 +371,8 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
     }
 
     private void showTopItem(@Nullable MediaItemMetadata topItem) {
-        setCurrentFragment(BrowseFragment.newInstance(topItem));
+        mBrowseFragment = BrowseFragment.newInstance(topItem);
+        setCurrentFragment(mBrowseFragment);
         mAppBarView.setActiveItem(topItem);
     }
 
@@ -388,8 +389,10 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
     }
 
     @Nullable
-    private Fragment getCurrentFragment() {
-        return getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+    private BrowseFragment getCurrentBrowseFragment() {
+        return getInnerViewModel().mMode.getValue() == Mode.SEARCHING
+                ? mSearchFragment
+                : mBrowseFragment;
     }
 
     private void handleModeAndErrorState(Mode mode, Boolean isErrorMode) {
@@ -423,7 +426,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                 ViewUtils.showViewAnimated(mBrowseContainer, mFadeDuration);
                 ViewUtils.hideViewAnimated(mSearchContainer, mFadeDuration);
                 ViewUtils.showViewAnimated(mAppBarView, mFadeDuration);
-                updateBrowsingState();
+                updateAppBar(mode);
                 break;
             case SEARCHING:
                 ViewUtils.hideViewAnimated(mErrorContainer, mFadeDuration);
@@ -431,23 +434,19 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                 ViewUtils.hideViewAnimated(mBrowseContainer, mFadeDuration);
                 ViewUtils.showViewAnimated(mSearchContainer, mFadeDuration);
                 ViewUtils.showViewAnimated(mAppBarView, mFadeDuration);
-                mAppBarView.setState(AppBarView.State.SEARCHING);
+                updateAppBar(mode);
                 break;
         }
     }
 
-    private void updateBrowsingState() {
-        Fragment currentFragment = getCurrentFragment();
-        if (currentFragment instanceof BrowseFragment) {
-            BrowseFragment fragment = (BrowseFragment) currentFragment;
-            if (!fragment.isAtTopStack()) {
-                mAppBarView.setTitle(fragment.getCurrentMediaItem().getTitle());
-                mAppBarView.setState(AppBarView.State.STACKED);
-                return;
-            }
-        }
-        mAppBarView.setTitle(null);
-        mAppBarView.setState(AppBarView.State.BROWSING);
+    private void updateAppBar(Mode mode) {
+        BrowseFragment fragment = getCurrentBrowseFragment();
+        boolean isStacked = fragment != null && !fragment.isAtTopStack();
+        AppBarView.State unstackedState = mode == Mode.SEARCHING
+                ? AppBarView.State.SEARCHING
+                : AppBarView.State.BROWSING;
+        mAppBarView.setTitle(isStacked ? fragment.getCurrentMediaItem().getTitle() : null);
+        mAppBarView.setState(isStacked ? AppBarView.State.STACKED : unstackedState);
     }
 
     private void updateMetadata(Mode mode) {
@@ -467,7 +466,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
 
     @Override
     public void onBackStackChanged() {
-        updateBrowsingState();
+        updateAppBar(getInnerViewModel().mMode.getValue());
     }
 
     @Override
