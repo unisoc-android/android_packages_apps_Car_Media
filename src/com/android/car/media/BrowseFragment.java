@@ -25,6 +25,7 @@ import android.annotation.Nullable;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -242,13 +243,17 @@ public class BrowseFragment extends Fragment {
 
         mediaItems.observe(getViewLifecycleOwner(), futureData ->
         {
+            // Prevent showing loading spinner or any error messages if search is uninitialized
+            if (mIsSearchFragment && TextUtils.isEmpty(mSearchQuery)) {
+                return;
+            }
             boolean isLoading = futureData.isLoading();
-            List<MediaItemMetadata> items = futureData.getData();
             if (isLoading) {
                 startLoadingIndicator();
                 return;
             }
             stopLoadingIndicator();
+            List<MediaItemMetadata> items = futureData.getData();
             mBrowseAdapter.submitItems(getCurrentMediaItem(), items);
             if (items == null) {
                 mErrorMessage.setText(R.string.unknown_error);
