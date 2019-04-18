@@ -169,9 +169,20 @@ public class BrowseFragment extends Fragment {
         return fragment;
     }
 
-    public void updateSearchQuery(String query) {
+    public void updateSearchQuery(@Nullable String query) {
         mSearchQuery = query;
         mMediaBrowserViewModel.search(query);
+    }
+
+    /**
+     * Clears search state from this fragment, removes any UI elements from previous results.
+     */
+    public void resetSearchState() {
+        updateSearchQuery(null);
+        mBrowseAdapter.submitItems(null, null);
+        stopLoadingIndicator();
+        ViewUtils.hideViewAnimated(mErrorIcon, mFadeDuration);
+        ViewUtils.hideViewAnimated(mErrorMessage, mFadeDuration);
     }
 
     @Override
