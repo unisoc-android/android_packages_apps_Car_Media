@@ -179,9 +179,10 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
 
         MediaSourceViewModel mediaSourceViewModel = getMediaSourceViewModel();
         PlaybackViewModel playbackViewModel = getPlaybackViewModel();
-        ViewModel localViewModel = ViewModelProviders.of(this).get(ViewModel.class);
+        ViewModel localViewModel = getInnerViewModel();
         if (savedInstanceState == null) {
             localViewModel.init(playbackViewModel);
+            localViewModel.setMode(Mode.BROWSING);
         }
 
         mAppBarView = findViewById(R.id.app_bar);
@@ -241,8 +242,6 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                     mPlaybackController = playbackController;
                 });
 
-        final float backgroundScale =
-                getResources().getFloat(R.dimen.playback_background_image_scale);
         mAlbumBackground.addOnLayoutChangeListener(
                 (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
                     int backgroundImageSize = mAlbumBackground.getDesiredBackgroundSize();
@@ -259,7 +258,12 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
     private void handlePlaybackState(PlaybackViewModel.PlaybackStateWrapper state) {
         // TODO(arnaudberry) rethink interactions between customized layouts and dynamic visibility.
         mCanShowMiniPlaybackControls = (state != null) && state.shouldDisplay();
-        ViewHelper.setVisible(mMiniPlaybackControls, mCanShowMiniPlaybackControls);
+
+        // TODO(b/131252925) clean this up after Google IO.
+        Pair<Mode, Boolean> modeState = getInnerViewModel().getModeAndErrorState().getValue();
+        if (modeState == null || modeState.first != Mode.PLAYBACK) {
+            ViewHelper.setVisible(mMiniPlaybackControls, mCanShowMiniPlaybackControls);
+        }
         if (state == null) {
             return;
         }
@@ -519,6 +523,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
 
         private MutableLiveData<Boolean> mIsErrorState = new MutableLiveData<>();
         private MutableLiveData<Mode> mMode = new MutableLiveData<>();
+        private LiveData<Pair<Mode, Boolean>> mModeAndErrorState = pair(mMode, mIsErrorState);
 
         public ViewModel(@NonNull Application application) {
             super(application);
@@ -539,6 +544,8 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
                             playbackViewModel.getMetadata());
                 }
             });
+
+            mIsErrorState.setValue(false);
         }
 
         void setAlbumArtSize(int width, int height) {
@@ -557,7 +564,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
         }
 
         LiveData<Pair<Mode, Boolean>> getModeAndErrorState() {
-            return pair(mMode, mIsErrorState);
+            return mModeAndErrorState;
         }
 
         void setErrorState(boolean state) {
