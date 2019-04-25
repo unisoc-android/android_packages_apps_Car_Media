@@ -397,7 +397,7 @@ public class AppBarView extends ConstraintLayout {
                 setShowTabs(false);
                 mTitle.setVisibility(View.VISIBLE);
                 hideSearchBar();
-                mSearchButton.setVisibility(View.GONE);
+                mSearchButton.setVisibility(mSearchSupported ? View.VISIBLE : View.GONE);
                 showSettings(true);
                 break;
             case PLAYING:
