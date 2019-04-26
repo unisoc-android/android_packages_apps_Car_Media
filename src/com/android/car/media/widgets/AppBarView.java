@@ -370,9 +370,6 @@ public class AppBarView extends ConstraintLayout {
         mState = state;
         final boolean hasTabs = mTabsContainer.getCarTabCount() > 0;
         final boolean showTitle = !hasTabs || mMaxRows == 2;
-
-        Transition transition = new Fade().setDuration(mFadeDuration);
-        TransitionManager.beginDelayedTransition(this, transition);
         Log.d(TAG, "Updating state: " + state + " (has tabs: " + hasTabs + ")");
         switch (state) {
             case EMPTY:
