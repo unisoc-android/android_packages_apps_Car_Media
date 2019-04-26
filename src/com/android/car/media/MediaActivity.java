@@ -269,8 +269,8 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
         }
         if (mCurrentPlaybackState == null || mCurrentPlaybackState != state.getState()) {
             mCurrentPlaybackState = state.getState();
-            if (Log.isLoggable(TAG, Log.INFO)) {
-                Log.i(TAG, "handlePlaybackState(); state change: " + mCurrentPlaybackState);
+            if (Log.isLoggable(TAG, Log.VERBOSE)) {
+                Log.v(TAG, "handlePlaybackState(); state change: " + mCurrentPlaybackState);
             }
         }
 
@@ -557,10 +557,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
         }
 
         void setMode(Mode mode) {
-            Mode currentMode = mMode.getValue();
-            if (currentMode == null || mode != currentMode) {
-                mMode.setValue(mode);
-            }
+            mMode.setValue(mode);
         }
 
         LiveData<Pair<Mode, Boolean>> getModeAndErrorState() {
@@ -568,10 +565,7 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
         }
 
         void setErrorState(boolean state) {
-            Boolean errorState = mIsErrorState.getValue();
-            if (errorState == null || state != errorState) {
-                mIsErrorState.setValue(state);
-            }
+            mIsErrorState.setValue(state);
         }
     }
 }
