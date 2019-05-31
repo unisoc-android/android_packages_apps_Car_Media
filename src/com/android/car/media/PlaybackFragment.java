@@ -273,7 +273,6 @@ public class PlaybackFragment extends Fragment {
         mPlaybackControls.setModel(getPlaybackViewModel(), getViewLifecycleOwner());
         mPlaybackControls.registerExpandCollapseCallback((expanding) -> {
             mControlBarScrim.setClickable(expanding);
-            // TODO(b/133518484): Fix the control bar animation jank.
             if (expanding) {
                 ViewUtils.showViewAnimated(mControlBarScrim, getContext().getResources().getInteger(
                         R.integer.control_bar_expand_anim_duration));
