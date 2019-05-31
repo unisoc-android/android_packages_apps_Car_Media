@@ -268,6 +268,8 @@ public class MediaActivity extends FragmentActivity implements BrowseFragment.Ca
 
         mAlbumBackground.addOnLayoutChangeListener(
                 (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    // This can be removed when fixing b/133523205. Keeping it prevents blurring
+                    // until the playback view has been shown.
                     int backgroundImageSize = mAlbumBackground.getDesiredBackgroundSize();
                     localViewModel.setAlbumArtSize(backgroundImageSize, backgroundImageSize);
                 });
