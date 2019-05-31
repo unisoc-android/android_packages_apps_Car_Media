@@ -390,6 +390,7 @@ public class PlaybackFragment extends Fragment {
         if (mController != null) {
             mController.skipToQueueItem(item.getQueueId());
         }
+        onQueueClicked();
     }
 
     /**
