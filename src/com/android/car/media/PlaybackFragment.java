@@ -19,6 +19,7 @@ package com.android.car.media;
 import android.annotation.Nullable;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -215,6 +216,25 @@ public class PlaybackFragment extends Fragment {
         }
     }
 
+    private class QueueTopItemDecoration extends RecyclerView.ItemDecoration {
+        int mHeight;
+        int mDecorationPosition;
+
+        QueueTopItemDecoration(int height, int decorationPosition) {
+            mHeight = height;
+            mDecorationPosition = decorationPosition;
+        }
+
+        @Override
+        public void getItemOffsets(Rect outRect, View view, RecyclerView parent,
+                RecyclerView.State state) {
+            super.getItemOffsets(outRect, view, parent, state);
+            if (parent.getChildAdapterPosition(view) == mDecorationPosition) {
+                outRect.top = mHeight;
+            }
+        }
+    }
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container,
             Bundle savedInstanceState) {
@@ -297,6 +317,12 @@ public class PlaybackFragment extends Fragment {
                 R.integer.fragment_playback_queue_fade_duration_ms);
         mPlaybackQueueBackgroundAlpha = getResources().getFloat(
                 R.dimen.playback_queue_background_alpha);
+
+        int decorationHeight = getResources().getDimensionPixelSize(
+                R.dimen.playback_queue_list_padding_top);
+        // Put the decoration above the first item.
+        int decorationPosition = 0;
+        mQueue.addItemDecoration(new QueueTopItemDecoration(decorationHeight, decorationPosition));
 
         mQueue.setVerticalFadingEdgeEnabled(
                 getResources().getBoolean(R.bool.queue_fading_edge_length_enabled));
