@@ -152,6 +152,9 @@
     <dimen name="fragment_metadata_margin_x">@*android:dimen/car_margin</dimen>
     <dimen name="playback_title_margin_end">@*android:dimen/car_padding_3</dimen>
 
+    <!-- PlaybackFragment.java -->
+    <dimen name="playback_queue_list_padding_top">@*android:dimen/car_padding_4</dimen>
+
     <!-- queue_list_item.xml -->
     <dimen name="queue_list_item_height">116dp</dimen>
     <dimen name="queue_list_item_padding_x">@*android:dimen/car_keyline_1</dimen>
