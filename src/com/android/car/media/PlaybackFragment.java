@@ -78,6 +78,7 @@ public class PlaybackFragment extends Fragment {
     private boolean mQueueIsVisible;
     private boolean mShowTimeForActiveQueueItem;
     private boolean mShowIconForActiveQueueItem;
+    private boolean mShowThumbnailForQueueItem;
 
     private int mFadeDuration;
     private float mPlaybackQueueBackgroundAlpha;
@@ -95,6 +96,9 @@ public class PlaybackFragment extends Fragment {
     public class QueueViewHolder extends RecyclerView.ViewHolder {
 
         private final View mView;
+        private final ViewGroup mThumbnailContainer;
+        private final ImageView mThumbnail;
+        private final View mSpacer;
         private final TextView mTitle;
         private final TextView mCurrentTime;
         private final TextView mMaxTime;
@@ -104,6 +108,9 @@ public class PlaybackFragment extends Fragment {
         QueueViewHolder(View itemView) {
             super(itemView);
             mView = itemView;
+            mThumbnailContainer = itemView.findViewById(R.id.thumbnail_container);
+            mThumbnail = itemView.findViewById(R.id.thumbnail);
+            mSpacer = itemView.findViewById(R.id.spacer);
             mTitle = itemView.findViewById(R.id.title);
             mCurrentTime = itemView.findViewById(R.id.current_time);
             mMaxTime = itemView.findViewById(R.id.max_time);
@@ -114,20 +121,31 @@ public class PlaybackFragment extends Fragment {
         boolean bind(MediaItemMetadata item) {
             mView.setOnClickListener(v -> onQueueItemClicked(item));
 
+            ViewUtils.setVisible(mThumbnailContainer, mShowThumbnailForQueueItem);
+            if (mShowThumbnailForQueueItem) {
+                MediaItemMetadata.updateImageView(mThumbnail.getContext(), item, mThumbnail, 0,
+                        true);
+            }
+
+            ViewUtils.setVisible(mSpacer, !mShowThumbnailForQueueItem);
+
             mTitle.setText(item.getTitle());
+
             boolean active = mActiveQueueItemId != null && Objects.equals(mActiveQueueItemId,
                     item.getQueueId());
-            boolean shouldShowTime =
-                    mShowTimeForActiveQueueItem && active && mQueueAdapter.getTimeVisible();
-            boolean shouldShowIcon = mShowIconForActiveQueueItem && active;
-            ViewUtils.setVisible(mCurrentTime, shouldShowTime);
-            ViewUtils.setVisible(mMaxTime, shouldShowTime);
-            ViewUtils.setVisible(mTimeSeparator, shouldShowTime);
-            ViewUtils.setVisible(mActiveIcon, shouldShowIcon);
             if (active) {
                 mCurrentTime.setText(mQueueAdapter.getCurrentTime());
                 mMaxTime.setText(mQueueAdapter.getMaxTime());
             }
+            boolean shouldShowTime =
+                    mShowTimeForActiveQueueItem && active && mQueueAdapter.getTimeVisible();
+            ViewUtils.setVisible(mCurrentTime, shouldShowTime);
+            ViewUtils.setVisible(mMaxTime, shouldShowTime);
+            ViewUtils.setVisible(mTimeSeparator, shouldShowTime);
+
+            boolean shouldShowIcon = mShowIconForActiveQueueItem && active;
+            ViewUtils.setVisible(mActiveIcon, shouldShowIcon);
+
             return active;
         }
     }
@@ -237,6 +255,8 @@ public class PlaybackFragment extends Fragment {
                 R.bool.show_time_for_now_playing_queue_list_item);
         mShowIconForActiveQueueItem = getContext().getResources().getBoolean(
                 R.bool.show_icon_for_now_playing_queue_list_item);
+        mShowThumbnailForQueueItem = getContext().getResources().getBoolean(
+                R.bool.show_thumbnail_for_queue_list_item);
 
         boolean useMediaSourceColor =
                 getContext().getResources().getBoolean(
