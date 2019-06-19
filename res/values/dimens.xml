@@ -156,6 +156,9 @@
     <dimen name="queue_list_item_height">116dp</dimen>
     <dimen name="queue_list_item_padding_x">@*android:dimen/car_keyline_1</dimen>
     <dimen name="queue_list_item_title_time_margin">@*android:dimen/car_padding_4</dimen>
+    <dimen name="queue_list_item_thumbnail_container_width">@*android:dimen/car_keyline_4</dimen>
+    <dimen name="queue_list_item_thumbnail_size">76dp</dimen>
+    <dimen name="queue_list_item_spacer_width">@dimen/queue_list_item_padding_x</dimen>
 
     <!-- fragment_browse.xml -->
     <dimen name="browse_fragment_top_padding">@dimen/appbar_first_row_height</dimen>
